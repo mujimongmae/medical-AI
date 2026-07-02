@@ -18,6 +18,7 @@ import {
 } from "@/lib/collapse-state-machine";
 import { zonesFromDetections, type ZoneRect } from "@/lib/zone-map";
 import { emitEmergencyEvent } from "@/lib/event-bus";
+import { confirmCollapse } from "@/lib/confirm-client";
 import DetectionOverlay from "@/components/DetectionOverlay";
 import type {
   CollapseState,
@@ -69,6 +70,9 @@ export default function HomeCamPage() {
   const [detectorStatus, setDetectorStatus] = useState<DetectorStatus>("idle");
   const [detectorError, setDetectorError] = useState<string | null>(null);
   const [lastEvent, setLastEvent] = useState<EmergencyEvent | null>(null);
+  // True while the Claude 2nd-stage confirmation is in flight (between CANDIDATE
+  // and the actual emit). Drives the "AI 확인 중…" indicator.
+  const [confirming, setConfirming] = useState(false);
 
   // Zone drawing UI.
   const [drawTool, setDrawTool] = useState<DrawableZone | null>(null);
@@ -129,19 +133,56 @@ export default function HomeCamPage() {
     }
   }, [videoRef]);
 
+  // -- Collect a short burst of keyframes for the 2nd-stage Claude check. --
+  // Grabs `count` frames spaced `intervalMs` apart so the VLM sees motion (or
+  // the lack of it). Skips empty captures; safe to return fewer than `count`.
+  const collectKeyframes = useCallback(
+    async (count = 4, intervalMs = 200): Promise<string[]> => {
+      const frames: string[] = [];
+      for (let i = 0; i < count; i += 1) {
+        const kf = captureKeyframe();
+        if (kf) frames.push(kf);
+        if (i < count - 1) {
+          await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        }
+      }
+      return frames;
+    },
+    [captureKeyframe],
+  );
+
   // -- (Re)create the state machine whenever the zones change. --
   useEffect(() => {
     machineRef.current = createCollapseStateMachine({
       cameraId: CAMERA_ID,
       zones,
       captureKeyframe,
+      // CANDIDATE → collect keyframes → Claude 2nd-stage confirm → emit enriched.
+      // The emit is deferred until confirmation resolves (1~3s). Confirmation
+      // never throws (skipped fallback), so the event is always emitted.
       onCandidate: (event) => {
-        emitEmergencyEvent(event);
-        setLastEvent(event);
+        setConfirming(true);
+        void (async () => {
+          try {
+            const burst = await collectKeyframes(4, 200);
+            const keyframes = event.keyframeDataUrl
+              ? [event.keyframeDataUrl, ...burst]
+              : burst;
+            const confirmation = await confirmCollapse(
+              keyframes,
+              event.signals,
+            );
+            const enriched: EmergencyEvent = { ...event, confirmation };
+            emitEmergencyEvent(enriched);
+            setLastEvent(enriched);
+          } finally {
+            setConfirming(false);
+          }
+        })();
       },
     });
     setDisplayState("NORMAL");
-  }, [zones, captureKeyframe]);
+  }, [zones, captureKeyframe, collectKeyframes]);
 
   // -- rAF detection loop (async body reschedules only after detect resolves). --
   useEffect(() => {
@@ -494,6 +535,16 @@ export default function HomeCamPage() {
         )}
       </section>
 
+      {/* AI 2차 확인 진행 표시 (CANDIDATE → Claude 확인 → emit 사이) */}
+      {confirming && (
+        <section className="flex items-center gap-3 rounded-xl border border-purple-800 bg-purple-950/40 p-4">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-purple-300 border-t-transparent" />
+          <p className="text-sm font-semibold text-purple-200">
+            AI 확인 중… 키프레임을 분석하고 있습니다
+          </p>
+        </section>
+      )}
+
       {/* Emitted event / reset */}
       {lastEvent && (
         <section className="rounded-xl border border-red-800 bg-red-950/50 p-4">
@@ -506,6 +557,13 @@ export default function HomeCamPage() {
             {lastEvent.signals.immobileSeconds}초 · 전이{" "}
             {lastEvent.signals.transition === "abrupt" ? "급격" : "점진"}
           </p>
+          {lastEvent.confirmation && (
+            <p className="mt-2 text-sm text-purple-200">
+              {lastEvent.confirmation.source === "claude"
+                ? `🧠 AI 확인: 쓰러짐 ${lastEvent.confirmation.fallen ? "O" : "X"} · 무반응 ${lastEvent.confirmation.motionless ? "O" : "X"} · 신뢰도 ${confidencePct(lastEvent.confirmation.confidence)}%`
+                : "AI 확인 생략(키 미설정)"}
+            </p>
+          )}
           <div className="mt-3 flex gap-2">
             <a
               href="/receiver"
@@ -593,4 +651,11 @@ function zoneKo(zone: Zone): string {
     default:
       return "미상";
   }
+}
+
+/** Confidence → integer percent. Accepts 0..1 fractions or 0..100 values. */
+function confidencePct(confidence: number): number {
+  const raw = Number.isFinite(confidence) ? confidence : 0;
+  const pct = raw <= 1 ? raw * 100 : raw;
+  return Math.max(0, Math.min(100, Math.round(pct)));
 }

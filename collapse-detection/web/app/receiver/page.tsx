@@ -144,6 +144,7 @@ function ConfirmScreen({
       )}
 
       <EventFacts alert={alert} />
+      <ConfirmationBlock confirmation={alert.confirmation} />
 
       <div className="mt-auto flex w-full flex-col items-center gap-3">
         <div className="text-sm text-red-200">
@@ -194,6 +195,7 @@ function EscalatedScreen({
       </ul>
 
       <EventFacts alert={alert} />
+      <ConfirmationBlock confirmation={alert.confirmation} />
 
       <button
         type="button"
@@ -249,6 +251,42 @@ function EventFacts({ alert }: { alert: EmergencyEvent }) {
   );
 }
 
+/**
+ * Second-stage Claude confirmation panel. Renders nothing when the event has no
+ * confirmation attached (older/synthetic events). `claude` shows the verdict;
+ * `skipped` explains the check was bypassed (e.g. missing API key).
+ */
+function ConfirmationBlock({
+  confirmation,
+}: {
+  confirmation: EmergencyEvent["confirmation"];
+}) {
+  if (!confirmation) return null;
+
+  if (confirmation.source === "claude") {
+    return (
+      <div className="w-full rounded-lg border border-purple-800 bg-purple-950/40 p-3 text-left text-xs">
+        <p className="font-semibold text-purple-200">
+          🧠 AI 확인: 쓰러짐 {confirmation.fallen ? "O" : "X"} · 무반응{" "}
+          {confirmation.motionless ? "O" : "X"} · 신뢰도{" "}
+          {confidencePct(confirmation.confidence)}%
+        </p>
+        {confirmation.reason && (
+          <p className="mt-1 leading-snug text-purple-300/80">
+            {confirmation.reason}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-lg border border-neutral-700 bg-neutral-900/60 p-3 text-left text-xs text-neutral-400">
+      AI 확인 생략(키 미설정)
+    </div>
+  );
+}
+
 function Fact({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex flex-col">
@@ -289,6 +327,13 @@ function zoneKo(zone: Zone): string {
     default:
       return "미상";
   }
+}
+
+/** Confidence → integer percent. Accepts 0..1 fractions or 0..100 values. */
+function confidencePct(confidence: number): number {
+  const raw = Number.isFinite(confidence) ? confidence : 0;
+  const pct = raw <= 1 ? raw * 100 : raw;
+  return Math.max(0, Math.min(100, Math.round(pct)));
 }
 
 function postureKo(posture: EmergencyEvent["signals"]["posture"]): string {
