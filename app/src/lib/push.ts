@@ -5,7 +5,9 @@ import { sendPushToken } from "./api";
 // FCM 등록 → 토큰을 브로커에 전달 (화면 꺼짐 알림용).
 // 웹 브라우저에서는 미지원이라 조용히 no-op.
 export async function initPush(userId: string) {
-  if (!Capacitor.isNativePlatform()) return;
+  // 데모: 푸시는 Android(FCM)만 사용. iOS는 유료 APNs가 필요하고, 환자 역할이라 불필요
+  // (앱을 켜두면 WebSocket으로 사이렌이 옴) → iOS/웹은 조용히 건너뛰어 알림 권한 팝업도 없음.
+  if (Capacitor.getPlatform() !== "android") return;
   try {
     let perm = await PushNotifications.checkPermissions();
     if (perm.receive === "prompt") {
