@@ -1,0 +1,5 @@
+.venv/
+__pycache__/
+*.pyc
+# 큰 fallback 체크포인트(5.5MB)는 제외 — state_dict(1.8MB)만으로 동작
+model_src/best_multiscale_stgcn (1).pth
