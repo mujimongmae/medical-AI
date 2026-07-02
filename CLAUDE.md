@@ -17,20 +17,29 @@
 4. 가능하면 **스펙 변경 + 코드 변경을 같은 커밋**에 담아 추적성 유지.
 > 코드 파일(app/lib/components) 편집 시 spec/ 미수정이면 hook이 리마인더를 준다(비차단). 이미 반영했거나 순수 버그픽스면 무시하고 진행.
 
-## 기술 스택 (모바일 웹앱 베이스 — 안드로이드/갤럭시 우선, iOS 옵션)
-- 웹앱: **Next.js (App Router)** + **React 19** + TypeScript — **모바일 우선 반응형 웹**
-- 스타일: **Tailwind CSS** (접근성 고려 큰 폰트/고대비)
-- 백엔드/DB: **Supabase** (Postgres + Auth + Storage + Realtime), RLS 기본 ON
-- AI: **Claude API** — ⚠️ **키를 클라이언트에 넣지 말 것.** 반드시 **Next.js Route Handler(`app/api/**`, 서버)** 로 프록시 호출
-- 웹 배포/데모: **Vercel** (Preview/Prod URL → QR·링크로 어떤 폰이든 브라우저 즉시 실행)
-- 네이티브 앱: **Capacitor** 로 같은 웹을 **래핑만** → .apk/.ipa 산출 ("실제 앱" 요건 충족, 안드로이드 우선)
+## 기술 스택 (2-트랙 — 활성=데모, 목표=프로덕션)
+> 🔑 앱은 **하나**. 역할(환자/이웃)은 *설치*가 아니라 *모드*로 분기. 맥북은 데모용 브로커이며 프로덕션에선 클라우드로 스왑.
+
+**A. 데모 (현재 구현 대상 — 심사장 시연 최우선)**
+- 앱: **React + TypeScript + Tailwind (단일 모바일 웹앱)** — 역할 모드로 화면 분기
+- 브로커/서버: **맥북 로컬 서버** (등록부·WebSocket 허브·Claude 프록시·로컬 저장·앱 서빙) — 언어 TBD(영상인식 프로그램에 맞춤: Node+ws / Python FastAPI)
+- 영상인식: 폰 카메라(유선)→맥북 로컬 쓰러짐 탐지(팀원) → `POST /fall-event`
+- 실시간: **WebSocket** / 저장: **맥북 로컬(SQLite/JSON)** / 접속: **HTTPS 터널(ngrok·cloudflared)** ⚠️ 마이크(getUserMedia)는 HTTPS 필수
+- AI: **Claude API** — ⚠️ **키를 클라이언트에 넣지 말 것.** 반드시 **맥북 서버 프록시** 경유
+
+**B. 프로덕션 목표 (데모 이후)**
+- **Next.js on Vercel + Supabase**(Postgres·Auth·Realtime, RLS ON) + **Capacitor** 래핑(.apk). Claude는 Route Handler 프록시.
+- 이관 매핑: 맥북 registry/ws→Supabase Realtime · 프록시→Route Handler · 로컬저장→Postgres+RLS
+
 - 상세: [`spec/01-architecture/`](./spec/01-architecture/README.md)
 
-## 명령어
-- 개발: `npm run dev` (로컬 웹) — Vercel Preview 배포는 push 시 자동
-- 안드로이드 빌드: `npx cap sync` → `npx cap open android` (Android Studio에서 .apk)
+## 명령어 (데모 기준)
+- 앱 개발: `npm run dev`
+- 맥북 서버: `npm run server` (또는 파이썬이면 `uvicorn ...`)
+- 터널: `ngrok http <port>` (또는 `cloudflared tunnel ...`) → 폰은 발급 HTTPS URL 접속
 - 린트: `npm run lint`
 - 테스트: `npm test`
+- (프로덕션) Vercel push 자동배포 · Capacitor `npx cap sync` → `npx cap open android`
 - Supabase 로컬: `supabase start` / 마이그레이션 `supabase db push`
 
 ## ⚠️ 의료 데이터 규칙 (컨셉과 무관하게 반드시 준수)
@@ -57,10 +66,10 @@
 - **main 으로의 merge/push 는 유저가 명시적으로 지시할 때만** 실시한다. 그 전엔 main 을 건드리지 않는다.
 - 기본 흐름: 목적 브랜치에서 작업·커밋 → PR 생성 → 유저 승인·지시 시에만 main 반영.
 
-## 코드 규칙
-- 화면(라우트) `app/` (Next.js App Router), 서버 API `app/api/`, 재사용 컴포넌트 `components/`, 공용 로직 `lib/`, DB 마이그레이션 `supabase/migrations/`
-- Claude 등 서버 호출은 `app/api/`(Route Handler)에 두고 클라이언트는 이를 호출만 (키 노출 금지)
-- 네이티브 앱은 Capacitor 래퍼일 뿐 — 로직은 전부 웹에 두고, 웹 1벌이 브라우저·WebView 양쪽에서 동일 동작
+## 코드 규칙 (데모 기준)
+- 단일 웹앱 `app/` (역할 모드: `patient/`·`neighbor/`), 재사용 컴포넌트 `components/`, 공용 로직·ws 클라이언트 `lib/`, 맥북 서버 `server/`
+- Claude 등 서버 호출은 `server/`(맥북 브로커)에 두고 클라이언트는 이를 호출만 (키 노출 금지). 프로덕션에선 `app/api/` Route Handler로 이관
+- 앱은 하나 — 역할은 설치가 아니라 모드로 분기. 실시간은 WebSocket
 - 항상 loading/error 상태 포함 (데모는 예외처리 안 하면 깨짐)
 - 커밋: `feat:`/`fix:`/`chore:` 접두사 (한글 OK)
 

@@ -2,71 +2,136 @@
 
 - **Status:** In Progress
 - **Last updated:** 2026-07-02
-- **결정:** **모바일 웹앱(Next.js on Vercel) + Supabase** 를 베이스로 하고, iOS/Android 앱은 이 웹을 **래핑(Capacitor)** 만 한다.
-- **변경 이력:** ~~Expo(React Native) 네이티브~~ → **Next.js 모바일 웹 + 얇은 네이티브 래퍼**로 전환 (2026-07-02). 이유는 아래 참고.
+- **결정(현재 활성):** **데모 = 맥북(메인 컴퓨터) 브로커 + 단일 웹앱(역할 모드).** 심사장에서 눈으로 확인 가능한 시나리오 시연이 최우선.
+- **프로덕션 목표(후순위):** **Next.js on Vercel + Supabase.** 데모의 "맥북 브로커" 역할을 그대로 클라우드로 이관하는 형태.
+- **변경 이력:** Expo(RN) → Next.js 웹+Capacitor(2026-07-02) → **데모는 맥북 브로커 + 단일 웹앱 역할모드로 확정(2026-07-02).** 아래 참고.
 
-## 왜 "웹 베이스 + 래핑"
-- **단일 코드베이스(웹) 하나만** 잘 만들면 데모·심사·배포가 모두 해결된다. 네이티브 코드는 거의 안 짠다.
-- **Vercel 배포 = 즉시 접속 URL.** 심사위원이 QR/링크로 **어떤 폰이든 브라우저에서 바로** 실행 → 설치 마찰 0.
-- iOS/Android "**실제 앱**" 요건은 **Capacitor로 같은 웹을 감싸 .apk/.ipa** 산출해 충족. (WebView 셸 + 네이티브 기능 브리지)
-- Next.js **서버(Route Handler)** 에서 Claude를 호출 → 별도 Edge Function 없이 **키를 서버에 안전 보관** (Vercel 환경변수).
-- Tailwind 그대로, `@supabase/supabase-js` 그대로. 러닝커브 최소.
+> 🔑 **핵심 원칙:** 앱은 **하나**다. 역할(환자/이웃)은 *설치*가 아니라 *모드*로 나뉜다. 맥북은 데모용 브로커이며, 그 역할은 프로덕션에서 클라우드(Supabase/Vercel)로 **스왑 가능**하다. → 두 트랙이 같은 논리 구조를 공유한다.
 
-> 대안 비교: PWA(가장 빠르나 스토어 앱 아님) / Expo·RN(순수 네이티브지만 코드베이스 이원화·러닝커브) / **Capacitor 래핑(웹 1벌로 웹+앱 동시 충족 → 채택)**.
+---
+
+# A. 데모 아키텍처 (현재 구현 대상)
+
+## 왜 맥북 브로커인가
+- 휴대폰 카메라 —(유선)— **맥북 로컬에서 영상인식(쓰러짐 탐지) 프로그램이 이미 구동 중**. 즉 **응급 이벤트의 발원지가 맥북**이다. 여기를 허브로 쓰면 클라우드 왕복이 없고, 행사장 네트워크가 불안해도 로컬에서 완결된다.
+- 앱 하나만 만들고 역할로 분기 → 설치 마찰 0, 심사위원에게 "같은 앱이 역할 따라 달라진다"가 명확.
 
 ## 구성 요소
 | 레이어 | 기술 | 비고 |
 |--------|------|------|
-| 웹앱(클라이언트) | **Next.js (App Router) · React 19 · TypeScript** | 모바일 우선 반응형, `app/` 라우팅 |
-| 스타일 | **Tailwind CSS** | 큰 폰트·고대비(접근성 WCAG AA) |
-| 서버 로직 | **Next.js Route Handlers (`app/api/**`)** | Claude 프록시·민감 로직, Vercel 서버에서 실행 |
-| 배포(웹) | **Vercel** | Preview/Production URL, 환경변수로 시크릿 관리 |
-| 데이터/인증 | **Supabase** (Postgres·Auth·Storage·Realtime) | RLS 기본 ON |
-| AI | **Claude API** | **서버(Route Handler) 경유** 호출 |
-| 네이티브 래퍼 | **Capacitor** (Android 우선, iOS 옵션) | 웹을 감싼 .apk/.ipa, 필요 시 네이티브 플러그인 |
+| 영상인식 | 맥북 로컬 프로그램 (팀원 구현) | 폰 카메라(유선) → 쓰러짐 탐지 → 로컬 이벤트 발생 |
+| **브로커/서버** | **맥북 로컬 서버 (Node+ws 또는 Python/FastAPI)** | 등록부·WebSocket 허브·Claude 프록시·로컬 저장·앱 서빙 (한 프로세스) |
+| 앱(클라이언트) | **React + TypeScript + Tailwind (모바일 웹)** | **단일 앱**, 역할(환자/이웃) 모드로 화면 분기 |
+| 실시간 | **WebSocket** | 서버→앱 소리 알림·프로토콜 push |
+| AI | **Claude API** | **맥북 서버에서 프록시** (키는 맥북에만) |
+| 저장 | **맥북 로컬 (SQLite/JSON)** | 병력·마을·이벤트. 클라우드 의존 제거 = 데모 안정성 |
+| 접속 | **HTTPS 터널 (ngrok / cloudflared)** | 폰이 맥북에 접속 + **마이크(getUserMedia) 위해 HTTPS 필수** |
 
-## 데이터 흐름 (기본)
-```
-[모바일 브라우저  또는  Capacitor 래퍼(WebView)]
-   │  ① 인증·CRUD (Supabase anon key + RLS)
-   ▼
-[Supabase Postgres] ──RLS──> 행 수준 접근 제어
-   ▲
-   │  ② AI 요청 (사용자 세션/JWT 첨부)
-   ▼
-[Next.js Route Handler on Vercel]  ── ANTHROPIC_API_KEY (서버 시크릿) ──> [Claude API]
-   └─ 응답 가공·디스클레이머 부착 후 클라이언트로 반환
-```
-> 같은 웹 코드가 브라우저에서도, Capacitor WebView 안에서도 동일하게 동작한다. 래퍼는 화면을 "감싸기만" 한다.
+> 서버 언어는 **영상인식 프로그램과 붙기 쉬운 쪽**으로 확정(파이썬이면 FastAPI, JS면 Node). 결합은 로컬 HTTP 한 방(`POST /fall-event`)으로 느슨하게 → 팀원 코드와 독립 개발.
 
-## 🔒 보안 불변식 (반드시)
-- **Claude/서드파티 시크릿 키를 클라이언트 번들에 넣지 않는다.** JS 번들·APK는 뜯어보면 다 보인다.
-  → Claude 호출은 **서버(Next.js Route Handler)** 에서만. 클라이언트엔 Supabase `anon key`만 (RLS로 보호).
-- 서버 Route Handler는 사용자 **세션/JWT 검증** 후 처리. 익명 남용 방지.
-- 시크릿은 **Vercel 환경변수**(`ANTHROPIC_API_KEY` 등) 또는 로컬 `.env.local`(커밋 금지)에만.
-  - `NEXT_PUBLIC_` 접두사는 **클라이언트로 노출**되므로 Supabase URL·anon key 등 공개 가능 값에만 사용. 시크릿엔 절대 금지.
-- 실제 환자 데이터 금지, 합성 데이터만. RLS 정책은 [`04-data-model/`](../04-data-model/README.md)에 정의.
-
-## 폴더 구조 (예정)
+## 구조도
 ```
-app/                 # Next.js App Router (화면 라우트)
-├── api/             # Route Handlers (Claude 프록시 등 서버 로직)
-components/          # 재사용 UI
-lib/                 # supabase 클라이언트, 공용 로직, 타입
-supabase/
-└── migrations/      # DB 스키마·RLS
-capacitor.config.ts  # 네이티브 래퍼 설정 (Android 우선)
-android/  ios/       # Capacitor 생성 네이티브 프로젝트 (빌드 산출용)
+┌─────────────── 맥북 (메인 컴퓨터 = 브로커/서버) ───────────────┐
+│  [폰 카메라] ──유선── [영상인식 프로그램(팀원)]                  │
+│                          │ 쓰러짐 이벤트 (로컬 HTTP: POST /fall-event)
+│                          ▼                                      │
+│   ┌──────────── 로컬 서버 (한 프로세스) ────────────┐          │
+│   │ • 등록부(registry): 누가 환자/이웃·마을·위치      │          │
+│   │ • WebSocket 허브: 연결 ↔ 사람 매핑, 실시간 push  │          │
+│   │ • Claude API 프록시 (ANTHROPIC_API_KEY = 맥북)   │          │
+│   │ • 로컬 저장(SQLite/JSON): 병력·이벤트            │          │
+│   │ • 단일 앱 프론트 서빙                             │          │
+│   └───────────────────────────────────────────────┘          │
+└───────────▲───────────────────────────────▲──────────────────┘
+   HTTPS 터널 │ WebSocket           HTTPS 터널 │ WebSocket
+      ┌───────┴───────┐             ┌──────────┴──────────┐
+      │ 앱 (환자 모드) │             │ 앱 (이웃 모드) ×3~4  │
+      │ 폰 A          │             │ 폰 B, C, D          │
+      │ 15초 알림/해제 │             │ 호출 수신 → 프로토콜 │
+      └───────────────┘             └─────────────────────┘
 ```
 
-## 명령어 (예정 — 확정 시 CLAUDE.md 반영)
-- 웹 개발: `npm run dev` (로컬) / Vercel Preview 배포는 push 시 자동
-- 네이티브 래퍼: `npx cap sync` → `npx cap open android` → Android Studio에서 .apk 빌드
-- Supabase 로컬: `supabase start` / 마이그레이션 `supabase db push`
+## 역할 구분 & 타깃 알림 (서버 로직)
+인증까지 안 가고, 데모용 경량 식별로 충분하다.
+
+**1) 등록** — 앱 첫 실행 시 역할 선택 + 정보 입력 → 서버 등록부에 저장. 기기는 자기 `id`를 localStorage에 보관(재접속 시 동일인 인식).
+```
+{ id:"dev-001", role:"patient",  name:"김OO", village:"방림리", home:{lat,lng}, 병력:[...] }
+{ id:"dev-002", role:"neighbor", name:"박OO", village:"방림리", home:{lat,lng} }
+{ id:"dev-003", role:"neighbor", ... }
+```
+**2) 실시간 연결** — 각 기기가 WebSocket 접속 시 자기 `id` 전달 → 서버가 **연결 ↔ 사람** 매핑(누가 온라인인지 앎).
+**3) 응급 발생 → 이웃에게만** —
+```
+환자(dev-001) 응급 → 서버:
+  환자의 village/위치로 role=neighbor 조회
+  → 접속중 + 가까운 3~4명 선별
+  → 그 WebSocket 연결에만 알림 push  (환자 본인·무관자 제외)
+```
+
+## 핵심 흐름 (데모 해피 패스)
+```
+영상인식(맥북) 쓰러짐 탐지 → POST /fall-event
+  → 서버 → 환자앱: 15초 큰 알림음
+       ├─ 터치 해제 → 종료
+       └─ 무반응 → ① 119 자동신고(데모=모의)  ② 이웃 3~4명에게만 push
+             → 이웃앱: 알림 클릭 → 주소·접근법·프로토콜 표시(병력 기반 Claude 우선순위)
+             → 도착 → "음성으로 상황 설명" → Claude 처리
+             → 프로토콜: [호흡 O/X]  O→상황설명 처리 / X→CPR
+             → (추후) 결과를 출동 소방대에 실시간 전달
+```
+
+## 🔒 보안·안전 불변식 (데모에서도 준수)
+- **Claude 키(`ANTHROPIC_API_KEY`)는 맥북 서버에만.** 앱 번들·클라이언트에 절대 노출 금지. Claude 호출은 서버 프록시 경유.
+- 시크릿은 맥북 `.env.local`에만(커밋 금지).
+- **실제 환자/개인정보 금지 — 합성 데이터만.** 병력·주소·이름 전부 가짜.
+- **응급(호흡 없음·심정지)은 119(데모=모의 표시)를 최우선 노출.** 확정 진단·처방 금지, 진단성 출력에 디스클레이머.
+- 영상 촬영 프라이버시·동의는 **추후 보강**(데모엔 동의 문구/화면만).
+
+## 데모 리스크 & 대응 (반드시 사전 세팅)
+- **마이크 = HTTPS 필수** → LAN `http://192.168…`로는 마이크 안 열림 → **HTTPS 터널(ngrok/cloudflared)로 접속.**
+- **네트워크 격리(AP isolation)** → 백업으로 **폰 핫스팟에 맥북+폰 모두 연결.**
+- **백그라운드 푸시 제약** → 데모는 **앱 포그라운드 유지** 전제(WebSocket+오디오 재생). 실서비스 푸시는 후순위.
+
+## 폴더 구조 (데모 · 예정)
+```
+app/            # 단일 웹앱 (React+TS), 역할 모드로 화면 분기 (환자/이웃)
+  patient/      #   환자 모드 화면
+  neighbor/     #   이웃 모드 화면
+components/     # 재사용 UI (큰 폰트·고대비)
+server/         # 맥북 로컬 서버: ws 허브·registry·Claude 프록시·/fall-event·저장
+lib/            # 공용 로직·타입·ws 클라이언트
+```
+
+## 명령어 (데모 · 예정)
+- 앱 개발: `npm run dev`
+- 맥북 서버: `npm run server` (또는 파이썬이면 `uvicorn ...`)
+- 터널: `ngrok http <port>` (또는 `cloudflared tunnel ...`) → 폰은 발급 HTTPS URL 접속
+
+---
+
+# B. 프로덕션 목표 (후순위 — 데모 이후)
+
+데모의 맥북 브로커를 클라우드로 이관한 형태. 논리 구조(단일 앱·역할·중앙 브로커·서버 Claude 프록시)는 동일.
+
+| 레이어 | 기술 |
+|--------|------|
+| 웹앱 | Next.js (App Router) · React 19 · TS · Tailwind (데모 React 코드 재사용) |
+| 서버 로직 | Next.js Route Handlers (`app/api/**`) — Claude 프록시 |
+| 배포 | Vercel |
+| 데이터/인증/실시간 | Supabase (Postgres·Auth·Storage·**Realtime**=WebSocket 대체), RLS 기본 ON |
+| 네이티브 앱 | Capacitor 래핑(.apk/.ipa) — 진짜 푸시·마이크 네이티브 권한 확보 |
+
+- 프로덕션 보안: Claude 키는 Vercel 환경변수, 클라이언트엔 Supabase `anon key`만(RLS 보호). `NEXT_PUBLIC_`은 공개 가능 값만.
+- 이관 매핑: 맥북 registry/ws → **Supabase 테이블 + Realtime** / 맥북 Claude 프록시 → **Route Handler** / 로컬 저장 → **Postgres+RLS**.
+
+---
 
 ## 미해결 / TODO
-- [ ] 인증 방식 확정 (익명 세션 vs 이메일/소셜) — 데모 편의상 익명 우선 검토
-- [ ] Vercel 프로젝트 연결 + 환경변수(`ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SUPABASE_*`) 세팅
-- [ ] Capacitor 초기화 및 Android .apk 빌드 파이프라인 확인
-- [ ] Claude 프록시 Route Handler 스켈레톤(`app/api/ai/route.ts`) + 디스클레이머 부착 로직
-- [ ] Tailwind 접근성 토큰(큰 폰트·고대비) 설정 → [`02-design/`](../02-design/README.md)와 연동
+- [ ] 맥북 서버 언어 확정(영상인식 프로그램 언어에 맞춤: Node vs FastAPI).
+- [ ] `POST /fall-event` 인터페이스 스펙(팀원 영상인식 ↔ 서버) 확정.
+- [ ] WebSocket 메시지 프로토콜(등록·알림·프로토콜 진행) 정의 → [`03-logic/`](../03-logic/README.md).
+- [ ] "가까운 이웃" 선별 기준(마을/거리/명수) 정의 → [`03-logic/`](../03-logic/README.md).
+- [ ] HTTPS 터널 세팅 확인(ngrok/cloudflared) + 마이크 권한 실기기 테스트.
+- [ ] 데이터 모델(사용자·역할·마을·병력·응급이벤트·알림) → [`04-data-model/`](../04-data-model/README.md).
+- [ ] 화면(환자/이웃 모드) → [`02-design/`](../02-design/README.md).
