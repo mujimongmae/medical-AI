@@ -37,7 +37,12 @@ export interface DetectionOverlayProps {
 // Drawing constants (in source-pixel units so they scale with the frame).
 // ---------------------------------------------------------------------------
 
-/** COCO-17 skeleton edges by keypoint name. */
+/**
+ * Skeleton edges by keypoint name. The base set is COCO-17; the extra edges
+ * light up when the BlazePose-33 landmarks are present (hands, feet, mouth) so
+ * the skeleton reads denser. Edges referencing a missing keypoint are skipped
+ * automatically by the renderer, so mixing both sets is safe.
+ */
 const SKELETON_EDGES: ReadonlyArray<readonly [string, string]> = [
   // Face
   ["left_ear", "left_eye"],
@@ -59,6 +64,27 @@ const SKELETON_EDGES: ReadonlyArray<readonly [string, string]> = [
   ["left_knee", "left_ankle"],
   ["right_hip", "right_knee"],
   ["right_knee", "right_ankle"],
+  // --- BlazePose-33 extras (skipped when keypoints are absent) ---
+  // Mouth
+  ["mouth_left", "mouth_right"],
+  // Left hand
+  ["left_wrist", "left_thumb"],
+  ["left_wrist", "left_index"],
+  ["left_wrist", "left_pinky"],
+  ["left_index", "left_pinky"],
+  // Right hand
+  ["right_wrist", "right_thumb"],
+  ["right_wrist", "right_index"],
+  ["right_wrist", "right_pinky"],
+  ["right_index", "right_pinky"],
+  // Left foot
+  ["left_ankle", "left_heel"],
+  ["left_heel", "left_foot_index"],
+  ["left_ankle", "left_foot_index"],
+  // Right foot
+  ["right_ankle", "right_heel"],
+  ["right_heel", "right_foot_index"],
+  ["right_ankle", "right_foot_index"],
 ];
 
 /** Zone stroke/fill colors. */
