@@ -111,6 +111,14 @@ export const THRESHOLDS = {
    */
   DROP_SPEED_NORMALIZED: 1.5,
 
+  /**
+   * Fall GATE: net downward travel of the hip-center over the window, as a
+   * fraction of body height. Robust to single-frame jitter (a spike that
+   * returns nets ~0). e.g. 0.5 => the hip fell half a body-height. A fall needs
+   * this AND a torso flip to horizontal — static posture never triggers.
+   */
+  DROP_DESCENT_NORMALIZED: 0.5,
+
   /** Torso angle (deg from vertical) above which the body counts as horizontal. */
   TORSO_HORIZONTAL_DEG: 60,
 

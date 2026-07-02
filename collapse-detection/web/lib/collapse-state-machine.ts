@@ -73,11 +73,11 @@ interface DownContext {
 
 const {
   DROP_SPEED_NORMALIZED,
+  DROP_DESCENT_NORMALIZED,
   TORSO_HORIZONTAL_DEG,
   TORSO_UPRIGHT_DEG,
   TRANSITION_WINDOW_FRAMES,
   ASPECT_RATIO_UPRIGHT_MAX,
-  ASPECT_RATIO_HORIZONTAL_MIN,
   IMMOBILE_SECONDS,
   IMMOBILE_MOVEMENT_NORMALIZED,
   MIN_POSE_SCORE,
@@ -193,10 +193,12 @@ function extractFeatures(frame: DetectionFrame): FrameFeatures | null {
     if (angle <= TORSO_UPRIGHT_DEG) posture = "upright";
     else if (angle >= TORSO_HORIZONTAL_DEG) posture = "horizontal";
   }
-  // Aspect ratio disambiguates when the torso angle is inconclusive.
-  if (posture === "unknown") {
-    if (aspect >= ASPECT_RATIO_HORIZONTAL_MIN) posture = "horizontal";
-    else if (aspect <= ASPECT_RATIO_UPRIGHT_MAX) posture = "upright";
+  // Aspect only rescues the UPRIGHT case (a narrow box is unambiguously
+  // standing). A WIDE box is NOT trusted as horizontal — a face close to the
+  // camera widens the box while the person is upright. "horizontal" must come
+  // from the torso angle (shoulder→hip), which is distance-invariant.
+  if (posture === "unknown" && aspect <= ASPECT_RATIO_UPRIGHT_MAX) {
+    posture = "upright";
   }
 
   return { t: frame.timestamp / 1000, hip, posture, aspect, bbox, bodyHeight };
@@ -215,48 +217,59 @@ export function createCollapseStateMachine(
   let suspectedFrames = 0;
 
   interface TransitionEval {
+    /** Real, jitter-robust downward hip travel occurred (net descent). */
     dropSignal: boolean;
+    /** The descent was fast (single-frame velocity) ⇒ classify as abrupt. */
+    velocityAbrupt: boolean;
+    /** Torso went vertical→horizontal within the window (a genuine flip). */
     torsoFlip: boolean;
-    aspectFlip: boolean;
-    abrupt: boolean;
-    hasTransition: boolean;
   }
 
-  /** Evaluate the three fall signals over the recent frame window. */
+  /**
+   * Motion-first fall signature over the recent window:
+   *  - dropSignal: NET downward hip travel (max later-minus-earlier), normalized
+   *    by body height. A single jittery spike that returns nets ~0, so this is
+   *    robust to keypoint noise (unlike per-frame velocity).
+   *  - torsoFlip: an actual upright→horizontal torso transition (angle-based,
+   *    distance-invariant — a close-up upright person never reads horizontal).
+   *  A fall requires BOTH — far stronger than the old 2-of-3, which could fire
+   *  on aspect ratio (close-up) or a single jitter frame alone.
+   */
   function evaluateTransition(): TransitionEval {
     const win = history.slice(-TRANSITION_WINDOW_FRAMES);
     const cur = win[win.length - 1];
-    let dropSignal = false;
-    let torsoFlip = false;
-    let aspectFlip = false;
 
+    // Net descent: largest drop from any earlier low point to a later frame.
+    let minY = win[0].hip.y;
+    let netDrop = 0;
+    for (const fr of win) {
+      netDrop = Math.max(netDrop, (fr.hip.y - minY) / cur.bodyHeight);
+      minY = Math.min(minY, fr.hip.y);
+    }
+
+    // Fast single-frame descent ⇒ abrupt (drives severity, not the gate).
+    let velocityAbrupt = false;
     for (let i = 1; i < win.length; i++) {
       const dt = win[i].t - win[i - 1].t;
       if (dt > 0) {
-        const norm = (win[i].hip.y - win[i - 1].hip.y) / dt / win[i].bodyHeight;
-        if (norm >= DROP_SPEED_NORMALIZED) dropSignal = true;
-      }
-    }
-    for (let i = 0; i < win.length - 1; i++) {
-      if (win[i].posture === "upright" && cur.posture === "horizontal") {
-        torsoFlip = true;
-      }
-      if (
-        win[i].aspect <= ASPECT_RATIO_UPRIGHT_MAX &&
-        cur.aspect >= ASPECT_RATIO_HORIZONTAL_MIN
-      ) {
-        aspectFlip = true;
+        const v = (win[i].hip.y - win[i - 1].hip.y) / dt / win[i].bodyHeight;
+        if (v >= DROP_SPEED_NORMALIZED) velocityAbrupt = true;
       }
     }
 
-    const count =
-      (dropSignal ? 1 : 0) + (torsoFlip ? 1 : 0) + (aspectFlip ? 1 : 0);
+    // Torso orientation flip (vertical → horizontal) somewhere in the window.
+    let torsoFlip = false;
+    for (let i = 0; i < win.length - 1; i++) {
+      if (win[i].posture === "upright" && cur.posture === "horizontal") {
+        torsoFlip = true;
+        break;
+      }
+    }
+
     return {
-      dropSignal,
+      dropSignal: netDrop >= DROP_DESCENT_NORMALIZED,
+      velocityAbrupt,
       torsoFlip,
-      aspectFlip,
-      abrupt: count >= 2,
-      hasTransition: count >= 1,
     };
   }
 
@@ -280,7 +293,7 @@ export function createCollapseStateMachine(
     }
     state = "DOWN";
     down = {
-      transition: ev.abrupt ? "abrupt" : "gradual",
+      transition: ev.velocityAbrupt ? "abrupt" : "gradual",
       zone,
       immobileSince: f.t,
       prevHip: f.hip,
@@ -343,25 +356,22 @@ export function createCollapseStateMachine(
 
     switch (state) {
       case "NORMAL": {
-        // MOTION-FIRST: a real downward drop (hip descent normalized by body
-        // height) is REQUIRED to leave NORMAL. Static posture/aspect alone must
-        // never trigger — e.g. a face close to the camera widens the person box
-        // (w>h) and reads "horizontal", but with no drop it is NOT a fall.
-        if (ev.dropSignal) {
-          if (f.posture === "horizontal") {
-            enterDown(f, ev); // drop that already ended horizontal
-          } else {
-            state = "SUSPECTED"; // dropping — wait to see if it ends horizontal
-            suspectedFrames = 0;
-          }
+        // A fall needs BOTH a real descent (dropSignal) AND a torso flip to
+        // horizontal. Static posture, bbox aspect, or hip jitter alone never
+        // trigger — a person who just stays still (even close to the camera)
+        // has no descent and no vertical→horizontal flip.
+        if (ev.dropSignal && ev.torsoFlip && f.posture === "horizontal") {
+          enterDown(f, ev);
+        } else if (ev.dropSignal) {
+          state = "SUSPECTED"; // descending — wait for the horizontal flip
+          suspectedFrames = 0;
         }
         break;
       }
       case "SUSPECTED": {
-        // Reached only after a confirmed drop. Confirm it ended horizontal;
-        // recover if the person is upright or the window elapses.
+        // Descent already seen; confirm it ends in a horizontal torso flip.
         suspectedFrames++;
-        if (f.posture === "horizontal") {
+        if (ev.torsoFlip && f.posture === "horizontal") {
           enterDown(f, ev);
         } else if (f.posture === "upright") {
           toNormal();

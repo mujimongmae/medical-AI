@@ -75,9 +75,10 @@ interface PoseDetectorModel {
 let loadPromise: Promise<Detectors> | null = null;
 
 /**
- * Load COCO-SSD + MoveNet (SinglePose Lightning) and return a Detectors handle.
+ * Load COCO-SSD + MoveNet (SinglePose Thunder) and return a Detectors handle.
  * Idempotent: repeated calls return the same instance. On failure the cached
  * promise is cleared so a later call can retry.
+ * (Pose/object model choice is under research review — see screening/09.)
  */
 export function loadDetectors(): Promise<Detectors> {
   if (!loadPromise) {

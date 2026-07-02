@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import SwCleanup from "./sw-cleanup";
 
 export const metadata: Metadata = {
   title: "홈캠 쓰러짐 감지",
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="min-h-screen bg-neutral-950 text-neutral-100 antialiased">
+        <SwCleanup />
         {children}
       </body>
     </html>
