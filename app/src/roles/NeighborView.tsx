@@ -150,14 +150,19 @@ function NeighborIdle({ name }: { name: string }) {
         대기 중입니다. 마을에 응급상황이 생기면 이 폰으로 호출이 옵니다.
       </p>
       <div className="mt-4 rounded-lg bg-safe/10 p-4 text-safe">● 대기 중</div>
-      <button
-        className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
-        onClick={fire}
-        disabled={busy}
-      >
-        {busy ? "발생시키는 중…" : "[테스트] 응급 상황 발생시키기"}
-      </button>
-      {error && <p className="text-base font-semibold text-danger">{error}</p>}
+      {/* 개발용 트리거 — 릴리스(데모) 빌드에선 숨김. */}
+      {import.meta.env.DEV && (
+        <>
+          <button
+            className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
+            onClick={fire}
+            disabled={busy}
+          >
+            {busy ? "발생시키는 중…" : "[테스트] 응급 상황 발생시키기"}
+          </button>
+          {error && <p className="text-base font-semibold text-danger">{error}</p>}
+        </>
+      )}
     </div>
   );
 }

@@ -91,15 +91,19 @@ function IdleScreen({
         </p>
       )}
 
-      {/* 데모용 mock 트리거 (추후 실제 영상인식으로 대체) */}
-      <button
-        className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
-        onClick={trigger}
-        disabled={busy}
-      >
-        {busy ? "발생시키는 중…" : "[데모] 쓰러짐 발생 시뮬레이션"}
-      </button>
-      {error && <p className="text-base font-semibold text-danger">{error}</p>}
+      {/* 개발용 mock 트리거 — 릴리스(데모) 빌드에선 숨김. 데모 트리거는 /admin 또는 영상인식(/fall-event). */}
+      {import.meta.env.DEV && (
+        <>
+          <button
+            className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
+            onClick={trigger}
+            disabled={busy}
+          >
+            {busy ? "발생시키는 중…" : "[데모] 쓰러짐 발생 시뮬레이션"}
+          </button>
+          {error && <p className="text-base font-semibold text-danger">{error}</p>}
+        </>
+      )}
     </div>
   );
 }

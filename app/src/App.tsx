@@ -159,13 +159,16 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
         </button>
       </div>
 
-      <button
-        className="mt-2 rounded-xl border-2 border-dashed border-gray-400 px-6 py-4 text-base font-bold text-gray-600 disabled:opacity-40"
-        disabled={busy}
-        onClick={startAsSeed}
-      >
-        [데모] 시드 환자(김복순·병력 有)로 바로 시작
-      </button>
+      {/* 개발용 시드 바로가기 — 릴리스(데모) 빌드에선 숨김. */}
+      {import.meta.env.DEV && (
+        <button
+          className="mt-2 rounded-xl border-2 border-dashed border-gray-400 px-6 py-4 text-base font-bold text-gray-600 disabled:opacity-40"
+          disabled={busy}
+          onClick={startAsSeed}
+        >
+          [데모] 시드 환자(김복순·병력 有)로 바로 시작
+        </button>
+      )}
 
       {busy && <p className="text-base text-gray-500">등록 중…</p>}
       {error && <p className="text-base font-semibold text-danger">{error}</p>}
