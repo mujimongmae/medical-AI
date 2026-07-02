@@ -1,0 +1,169 @@
+[
+  {
+    "id": "seed-patient-1",
+    "role": "patient",
+    "name": "김복순(합성)",
+    "village": "방림리",
+    "home": {
+      "lat": 37.512,
+      "lng": 128.401
+    },
+    "history": [
+      "고혈압",
+      "협심증(심장질환)"
+    ],
+    "pushToken": "c9tKQKU8TeSYK6xtvSydOX:APA91bFiMIQXBX-3enb-owa35jwA9QDUNRSjM-X4p3E81sREyC0EwSVKH4x21xy2FWpWv1XCSY72oDnI8ne_76TU-N72ArcsfaWFSRRie7Pd_CeRVt7W_C8"
+  },
+  {
+    "id": "seed-neighbor-1",
+    "role": "neighbor",
+    "name": "이영자(합성)",
+    "village": "방림리",
+    "home": {
+      "lat": 37.5128,
+      "lng": 128.4016
+    },
+    "history": []
+  },
+  {
+    "id": "seed-neighbor-2",
+    "role": "neighbor",
+    "name": "박정길(합성)",
+    "village": "방림리",
+    "home": {
+      "lat": 37.5109,
+      "lng": 128.4024
+    },
+    "history": [
+      "당뇨"
+    ]
+  },
+  {
+    "id": "seed-neighbor-3",
+    "role": "neighbor",
+    "name": "최말자(합성)",
+    "village": "방림리",
+    "home": {
+      "lat": 37.5141,
+      "lng": 128.4001
+    },
+    "history": []
+  },
+  {
+    "id": "seed-neighbor-4",
+    "role": "neighbor",
+    "name": "정순덕(합성)",
+    "village": "방림리",
+    "home": {
+      "lat": 37.5095,
+      "lng": 128.3992
+    },
+    "history": []
+  },
+  {
+    "id": "dev-001",
+    "role": "patient",
+    "name": "김복순",
+    "village": "방림리",
+    "home": {
+      "lat": 37.54674310154079,
+      "lng": 128.40038921860707
+    },
+    "history": [
+      "고혈압",
+      "협심증",
+      "부정맥"
+    ]
+  },
+  {
+    "id": "dev-002",
+    "role": "neighbor",
+    "name": "이영자",
+    "village": "방림리",
+    "home": {
+      "lat": 37.54048574483474,
+      "lng": 128.3939401347876
+    },
+    "history": [
+      "고혈압",
+      "골다공증"
+    ]
+  },
+  {
+    "id": "dev-003",
+    "role": "patient",
+    "name": "김복순",
+    "village": "방림리",
+    "home": {
+      "lat": 37.55560106285654,
+      "lng": 128.39074209550293
+    },
+    "history": [
+      "고혈압",
+      "협심증",
+      "부정맥"
+    ],
+    "pushToken": "c4ceJa8MSsybX96QqL4jdh:APA91bHn96hPNfSo0oFMQtPIoDhxqeVlsA-Obj7PCcfNPxvns6TDNhlIB-XY0C-V5NJCbLCbJo-FNmCEB-xjJ6Dsi8F-PHOSIAlzjZuFBw1xow2cgVZ43bk"
+  },
+  {
+    "id": "dev-004",
+    "role": "neighbor",
+    "name": "aet",
+    "village": "방림리",
+    "home": {
+      "lat": 37.54012829514923,
+      "lng": 128.39180795797114
+    },
+    "history": [
+      "고혈압",
+      "당뇨"
+    ]
+  },
+  {
+    "id": "dev-005",
+    "role": "neighbor",
+    "name": "ㅁㄴㅇㄹ",
+    "village": "방림리",
+    "home": {
+      "lat": 37.556634698682544,
+      "lng": 128.4064312176457
+    },
+    "history": []
+  },
+  {
+    "id": "dev-006",
+    "role": "patient",
+    "name": "김부",
+    "village": "방림리",
+    "home": {
+      "lat": 37.55090315115966,
+      "lng": 128.39334879740494
+    },
+    "history": [
+      "고혈압",
+      "당뇨"
+    ]
+  },
+  {
+    "id": "dev-007",
+    "role": "patient",
+    "name": "연결테스트(삭제해도됨)",
+    "village": "방림리",
+    "home": {
+      "lat": 37.5,
+      "lng": 128.4
+    }
+  },
+  {
+    "id": "dev-008",
+    "role": "neighbor",
+    "name": "깁",
+    "village": "방림리",
+    "home": {
+      "lat": 37.5502028633407,
+      "lng": 128.3949119035239
+    },
+    "history": [],
+    "pushToken": "c_a8rHFzT_CoqUgP3gTcpY:APA91bHRNQjiKpWfVUYelHq4XTaGbKtKAA6sJVpO11rtEjKeQyqgvRfxRKOrxg_8EaQoHJBTJ0frKmnAfQTyINsFSU1XZhEHGxpLbcP6JbXsBFGhZrHoXek"
+  }
+]
