@@ -93,20 +93,34 @@
 - **네트워크 격리(AP isolation)** → 백업으로 **폰 핫스팟에 맥북+폰 모두 연결.**
 - **백그라운드 푸시 제약** → 데모는 **앱 포그라운드 유지** 전제(WebSocket+오디오 재생). 실서비스 푸시는 후순위.
 
-## 폴더 구조 (데모 · 예정)
+## 앱 배포 형태 (다운로드 가능한 네이티브 앱)
+데모 앱도 **Capacitor로 패키징해 스토어/기기에 다운로드 가능한 앱**으로 제작한다. 같은 React 코드가 브라우저에서도, Capacitor WebView에서도 동일 동작하며, 네이티브 마이크/알림음/위치 권한을 확보한다.
+- **패키징 우선순위: iOS(아이폰) 먼저**, Android(갤럭시) 다음. (iOS 빌드는 Mac+Xcode 필요; 기기 설치는 무료 프로비저닝 7일 또는 TestFlight)
+- 네이티브 앱이든 브라우저든 **맥북 브로커(wss/https)** 에 붙는 구조는 동일.
+
+## 폴더 구조 (데모 · 실제 스캐폴드)
 ```
-app/            # 단일 웹앱 (React+TS), 역할 모드로 화면 분기 (환자/이웃)
-  patient/      #   환자 모드 화면
-  neighbor/     #   이웃 모드 화면
-components/     # 재사용 UI (큰 폰트·고대비)
-server/         # 맥북 로컬 서버: ws 허브·registry·Claude 프록시·/fall-event·저장
-lib/            # 공용 로직·타입·ws 클라이언트
+package.json · tsconfig.json · vite.config.ts · tailwind.config.js · postcss.config.js  # 루트 설정
+app/
+├── index.html
+└── src/
+    ├── App.tsx            # 역할 선택 + 환자/이웃 뷰 분기
+    ├── main.tsx · index.css
+    ├── roles/            # PatientView · NeighborView (역할 모드)
+    └── lib/              # api.ts(HTTP) · wsClient.ts(WebSocket)
+server/                    # 맥북 브로커: index.ts(Fastify+ws) · registry.ts (추후 SQLite·Claude 프록시)
+lib/
+├── protocol/messages.ts   # 앱·서버 공유 메시지 계약
+└── first-aid/             # 트리아지·프로토콜·스키마 (오프라인 번들)
+ios/  android/             # (Phase 6) Capacitor 생성 네이티브 프로젝트
 ```
 
-## 명령어 (데모 · 예정)
-- 앱 개발: `npm run dev`
-- 맥북 서버: `npm run server` (또는 파이썬이면 `uvicorn ...`)
-- 터널: `ngrok http <port>` (또는 `cloudflared tunnel ...`) → 폰은 발급 HTTPS URL 접속
+## 명령어 (데모)
+- 앱 개발: `npm run dev` (Vite :5173, `/api`·`/ws`는 브로커로 프록시)
+- 맥북 브로커: `npm run server` (Fastify :8787)
+- 동시 실행: `npm run dev:all`  ·  타입체크: `npm run typecheck`
+- (Phase 6) 네이티브: `npx cap add ios` → `npx cap open ios` (Xcode), 이후 `npx cap add android`
+- 터널: `cloudflared tunnel --url http://localhost:5173` (또는 `ngrok http 5173`) → 폰은 발급 HTTPS URL 접속
 
 ---
 

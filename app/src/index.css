@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-white text-gray-900 antialiased;
+}
+
+/* 접근성: 큰 터치 타깃 기본 (고령 사용자) */
+button {
+  @apply min-h-[56px] touch-manipulation;
+}

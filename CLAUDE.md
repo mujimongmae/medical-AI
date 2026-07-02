@@ -21,9 +21,10 @@
 > 🔑 앱은 **하나**. 역할(환자/이웃)은 *설치*가 아니라 *모드*로 분기. 맥북은 데모용 브로커이며 프로덕션에선 클라우드로 스왑.
 
 **A. 데모 (현재 구현 대상 — 심사장 시연 최우선)**
-- 앱: **React + TypeScript + Tailwind (단일 모바일 웹앱)** — 역할 모드로 화면 분기
-- 브로커/서버: **맥북 로컬 서버** (등록부·WebSocket 허브·Claude 프록시·로컬 저장·앱 서빙) — 언어 TBD(영상인식 프로그램에 맞춤: Node+ws / Python FastAPI)
-- 영상인식: 폰 카메라(유선)→맥북 로컬 쓰러짐 탐지(팀원) → `POST /fall-event`
+- 앱: **React + Vite + TS + Tailwind (단일 앱)** — 역할 모드로 화면 분기. **다운로드 가능한 네이티브 앱 = Capacitor 패키징(iOS 우선, Android 다음)**
+- 브로커/서버: **맥북 로컬 서버 = Node + TS(Fastify + ws)** (등록부·WebSocket 허브·Claude 프록시·로컬 저장). 영상인식이 파이썬이어도 `/fall-event` HTTP로 무관
+- 영상인식: **미확정 — "있다고 가정" + mock 이벤트 생성**(데모 버튼/CLI)로 `POST /fall-event`. 추후 실제 프로그램 스왑
+- 음성: **온디바이스 STT → 텍스트 → Claude** (Claude 오디오 직접입력 불가)
 - 실시간: **WebSocket** / 저장: **맥북 로컬(SQLite/JSON)** / 접속: **HTTPS 터널(ngrok·cloudflared)** ⚠️ 마이크(getUserMedia)는 HTTPS 필수
 - AI: **Claude API** — ⚠️ **키를 클라이언트에 넣지 말 것.** 반드시 **맥북 서버 프록시** 경유
 
@@ -39,7 +40,9 @@
 - 터널: `ngrok http <port>` (또는 `cloudflared tunnel ...`) → 폰은 발급 HTTPS URL 접속
 - 린트: `npm run lint`
 - 테스트: `npm test`
-- (프로덕션) Vercel push 자동배포 · Capacitor `npx cap sync` → `npx cap open android`
+- 동시 실행: `npm run dev:all` · 타입체크: `npm run typecheck`
+- 네이티브 패키징(다운로드 앱): **iOS 우선** `npx cap add ios` → `npx cap open ios`, 이후 Android
+- (프로덕션) Vercel push 자동배포
 - Supabase 로컬: `supabase start` / 마이그레이션 `supabase db push`
 
 ## ⚠️ 의료 데이터 규칙 (컨셉과 무관하게 반드시 준수)
