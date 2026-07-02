@@ -27,6 +27,8 @@ build/
 *.apk
 
 # Firebase 시크릿 (커밋 금지)
-android/app/google-services.json
+google-services.json
+**/google-services.json
+*firebase-adminsdk*.json
 **/service-account*.json
 firebase-service-account.json

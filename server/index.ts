@@ -25,7 +25,8 @@ import {
 } from "./registry";
 import { seedRegistry, SEED_PATIENT_ID } from "./seed";
 import { summarizeVoice } from "./claude";
-import type { VoiceReq, VoiceRes } from "../lib/protocol/messages";
+import type { VoiceReq, VoiceRes, PushTokenReq } from "../lib/protocol/messages";
+import { initPush, sendPush } from "./push";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // 데모: 네이티브(capacitor://)·터널 등 모든 오리진 허용
@@ -109,6 +110,13 @@ function escalate(eventId: string) {
   );
   for (const nid of neighbors) {
     send(nid, { type: "NEIGHBOR_ALERT", eventId, patient: card, priorityHint });
+    // 화면 꺼짐 대비 푸시 (이웃)
+    const n = users.get(nid);
+    void sendPush(n?.pushToken, {
+      title: "🚨 응급 호출",
+      body: `${card.name} 님에게 지금 가주세요 (${card.addressText})`,
+      data: { kind: "NEIGHBOR_ALERT", eventId },
+    });
   }
 }
 
@@ -144,9 +152,25 @@ app.post("/api/fall-event", async (req, reply) => {
   const ev: EmergencyEvent = { eventId, patientId: b.patientId, state: "alerting_self" };
   events.set(eventId, ev);
   send(patient.id, { type: "ALERT_SELF", eventId, timeoutSec: ALERT_TIMEOUT_SEC });
+  // 화면 꺼짐 대비 푸시 (환자 본인 깨우기)
+  void sendPush(patient.pushToken, {
+    title: "괜찮으신가요?",
+    body: `${ALERT_TIMEOUT_SEC}초 안에 응답하지 않으면 119와 이웃에게 도움을 요청합니다.`,
+    data: { kind: "ALERT_SELF", eventId },
+  });
   ev.timer = setTimeout(() => escalate(eventId), ALERT_TIMEOUT_SEC * 1000);
   app.log.info(`fall-event ${eventId} → ALERT_SELF to ${patient.id}`);
   return { eventId };
+});
+
+// FCM 토큰 등록 (앱이 토큰 받은 뒤 호출)
+app.post("/api/push-token", async (req, reply) => {
+  const b = req.body as PushTokenReq;
+  const u = users.get(b.id);
+  if (!u) return reply.code(404).send({ error: "user not found" });
+  u.pushToken = b.token;
+  app.log.info(`push-token 등록 ${b.id} (${b.platform ?? "?"})`);
+  return { ok: true };
 });
 
 // 데모/테스트용: 시드 환자로 응급을 즉시 발생(15초 대기 생략) → 이웃 화면 바로 호출.
@@ -219,6 +243,7 @@ seedRegistry();
 app.log.info(
   `seeded registry: ${users.size} users (demo patient=${SEED_PATIENT_ID})`,
 );
+initPush((m) => app.log.info(`[push] ${m}`));
 
 const PORT = Number(process.env.PORT ?? 8787);
 app.listen({ port: PORT, host: "0.0.0.0" }).then(() => {

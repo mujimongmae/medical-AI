@@ -16,6 +16,14 @@ export interface RegisteredUser {
   village: string;
   home: GeoPoint;
   history?: string[]; // 병력 (합성)
+  pushToken?: string; // FCM 토큰 (화면 꺼짐 알림용)
+}
+
+/** FCM 토큰 등록 (앱이 토큰 받은 뒤 브로커에 전달) */
+export interface PushTokenReq {
+  id: string;
+  token: string;
+  platform?: string;
 }
 
 // ───────── HTTP ─────────

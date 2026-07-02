@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Role } from "@lib/protocol/messages";
 import { GLOBAL_DISCLAIMER } from "@lib/first-aid/schema";
 import { register } from "./lib/api";
+import { initPush } from "./lib/push";
 import PatientView from "./roles/PatientView";
 import NeighborView from "./roles/NeighborView";
 
@@ -21,6 +22,11 @@ function loadMe(): Me | null {
 
 export default function App() {
   const [me, setMe] = useState<Me | null>(loadMe);
+
+  // 로그인(역할 확정)되면 FCM 토큰 등록 (네이티브에서만 동작)
+  useEffect(() => {
+    if (me) void initPush(me.id);
+  }, [me]);
 
   if (!me) return <RolePicker onDone={setMe} />;
 
