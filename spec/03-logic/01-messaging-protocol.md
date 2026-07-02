@@ -85,10 +85,11 @@
         (추후) 프로토콜 결과를 출동 소방대에 실시간 전달
 ```
 
-### 3.3 "가까운 이웃" 선별 규칙 (초안 — 확정 TODO)
-- 1차: `village` 동일 + `role:"neighbor"` + **현재 ws 접속중**.
+### 3.3 "가까운 이웃" 선별 규칙
+- 1차: `village` 동일 + `role:"neighbor"` + **(ws 접속중 OR `pushToken` 보유)**.
+  - ⚠️ **접속중만 고르면 안 됨** — 화면 꺼진(=ws 끊긴) 이웃은 푸시로 깨워야 하므로 **토큰 보유자도 대상**.
 - 2차: 환자 `home` 기준 거리 오름차순 상위 **3~4명**.
-- 미접속·본인·환자는 제외. (거리/명수 파라미터는 확정 필요)
+- 전송: 각 대상에 ws `NEIGHBOR_ALERT`(접속중이면) + FCM 푸시(토큰 있으면). 둘 다 그래이스풀.
 
 ### 3.4 프로토콜 규칙 (요지 — 상세: [`02-first-aid-protocol.md`](./02-first-aid-protocol.md))
 - **트리아지·프로토콜 콘텐츠는 [`02-first-aid-protocol.md`](./02-first-aid-protocol.md) + `lib/first-aid/`가 진실 원천.** `step`은 트리아지 노드(`Q1`,`Q2`,`Q3`,`S1`, 루트 `TRIAGE_ROOT="Q1"`), `protocolId`는 프로토콜 id(`P-CPR` 등)와 매핑.

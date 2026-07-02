@@ -54,14 +54,15 @@ function distKm(a: GeoPoint, b: GeoPoint): number {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** 같은 마을 + 접속중 이웃, 거리순 상위 N (spec 03-logic §3.3) */
+/** 같은 마을 이웃, 거리순 상위 N. ws 접속중이거나 푸시 토큰 보유(=화면 꺼도 푸시 가능)면 대상.
+ *  (푸시의 목적이 '꺼진 폰 깨우기'이므로 접속중만 고르면 안 됨) — spec 03-logic §3.3 */
 function selectNeighbors(patient: RegisteredUser, max = 4): string[] {
   return [...users.values()]
     .filter(
       (u) =>
         u.role === "neighbor" &&
         u.village === patient.village &&
-        sockets.has(u.id),
+        (sockets.has(u.id) || !!u.pushToken),
     )
     .map((u) => ({ id: u.id, d: distKm(u.home, patient.home) }))
     .sort((a, b) => a.d - b.d)
