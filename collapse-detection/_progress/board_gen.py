@@ -75,7 +75,7 @@ def render():
     started, done = journal_counts()
     cmts = commits()
     mod_commits = [c for c in cmts if "modules" in c]
-    finished = os.path.exists(TASK_OUT)
+    finished = is_done()
 
     # 단계 상태
     types_ok = lines(f"{WEB}/lib/types.ts") >= 15
@@ -175,12 +175,12 @@ ul{{margin:0;padding-left:18px}}li{{margin:2px 0}}.muted{{color:var(--mut)}}
 def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     for _ in range(450):  # 최대 ~30분 (4초 * 450)
-        with open(OUT, "w", encoding="utf-8") as f:
-            f.write(render())
-        if os.path.exists(TASK_OUT):
-            # 완료 후 마지막 한 번 더 렌더하고 종료
+        try:
             with open(OUT, "w", encoding="utf-8") as f:
                 f.write(render())
+        except Exception:
+            pass
+        if is_done():
             break
         time.sleep(4)
 
