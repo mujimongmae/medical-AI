@@ -365,7 +365,7 @@ function drawLabel(
   let by = y;
   if (anchor === "above") by = y - bh;
   if (by < 0) by = y; // clamp into view
-  let bx = Math.max(0, Math.min(x, ctx.canvas.width - bw));
+  const bx = Math.max(0, Math.min(x, ctx.canvas.width - bw));
 
   ctx.fillStyle = bg;
   ctx.fillRect(bx, by, bw, bh);

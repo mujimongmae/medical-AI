@@ -170,7 +170,7 @@ function extractFeatures(frame: DetectionFrame): FrameFeatures | null {
 
   // Prefer the COCO-SSD person box (fuller extent); fall back to keypoint box.
   let bbox: BBox | null = null;
-  let bestScore = MIN_OBJECT_SCORE;
+  let bestScore: number = MIN_OBJECT_SCORE;
   for (const o of frame.objects) {
     if (o.class === "person" && o.score >= bestScore) {
       bbox = o.bbox;
