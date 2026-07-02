@@ -94,6 +94,41 @@ function priorityHintFromHistory(history?: string[]): string[] | undefined {
   return hints.length ? hints : undefined;
 }
 
+/** 환자 → 이웃에게 보여줄 카드(합성 주소·병력요약). escalate·재접속 복원·/patient 공용. */
+function patientCard(p: RegisteredUser): PatientCard {
+  return {
+    name: p.name,
+    addressText: `${p.village} (합성 주소)`,
+    accessNote: "현관 확인 후 진입",
+    historySummary: (p.history ?? []).join(", ") || "특이사항 없음",
+  };
+}
+
+/** 진행 중(notifying_neighbors) 이벤트를 재접속한 이웃에게 재전송.
+ *  푸시 탭으로 앱을 열면(콜드스타트/재접속) WS로 이미 보낸 NEIGHBOR_ALERT를 놓쳤으므로,
+ *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다. */
+function resendActiveAlerts(userId: string) {
+  const u = users.get(userId);
+  if (!u || u.role !== "neighbor") return;
+  // 가장 최근 진행 중 호출 1건만 복원 (테스트 반복으로 이벤트가 쌓여도 최신만).
+  let latest: EmergencyEvent | undefined;
+  for (const ev of events.values()) {
+    if (ev.state !== "notifying_neighbors") continue;
+    const patient = users.get(ev.patientId);
+    if (!patient || patient.id === u.id || patient.village !== u.village) continue;
+    latest = ev; // Map은 삽입순 → 마지막 매칭이 최신
+  }
+  if (!latest) return;
+  const patient = users.get(latest.patientId)!;
+  send(userId, {
+    type: "NEIGHBOR_ALERT",
+    eventId: latest.eventId,
+    patient: patientCard(patient),
+    priorityHint: priorityHintFromHistory(patient.history),
+  });
+  app.log.info(`재접속 복원: NEIGHBOR_ALERT ${latest.eventId} → ${userId}`);
+}
+
 /** 15초 무반응 → 119 모의신고 + 이웃 호출 */
 function escalate(eventId: string) {
   const ev = events.get(eventId);
@@ -104,12 +139,7 @@ function escalate(eventId: string) {
 
   app.log.warn(`[MOCK 119] 자동 신고 — event=${eventId} patient=${patient.name}`);
 
-  const card: PatientCard = {
-    name: patient.name,
-    addressText: `${patient.village} (합성 주소)`,
-    accessNote: "현관 확인 후 진입",
-    historySummary: (patient.history ?? []).join(", ") || "특이사항 없음",
-  };
+  const card = patientCard(patient);
   const neighbors = selectNeighbors(patient);
   const priorityHint = priorityHintFromHistory(patient.history);
   app.log.info(
@@ -176,13 +206,7 @@ app.post("/api/register", async (req) => {
 app.get<{ Params: { id: string } }>("/api/patient/:id", async (req, reply) => {
   const p = users.get(req.params.id);
   if (!p) return reply.code(404).send({ error: "not found" });
-  const card: PatientCard = {
-    name: p.name,
-    addressText: `${p.village} (합성 주소)`,
-    accessNote: "현관 확인 후 진입",
-    historySummary: (p.history ?? []).join(", ") || "특이사항 없음",
-  };
-  return card;
+  return patientCard(p);
 });
 
 // mock 이벤트 진입점 (지금은 이게 이벤트 소스. 추후 실제 영상인식으로 스왑)
@@ -278,6 +302,7 @@ app.get(WS_PATH, { websocket: true }, (socket) => {
         myId = msg.id;
         sockets.set(msg.id, socket);
         app.log.info(`ws HELLO ${msg.id} (online=${sockets.size})`);
+        resendActiveAlerts(msg.id); // 푸시 탭/재접속 시 진행 중 호출 복원
         break;
       case "SELF_CANCEL": {
         const ev = events.get(msg.eventId);
