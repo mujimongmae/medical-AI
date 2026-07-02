@@ -72,7 +72,8 @@ export type UpMessage =
 /** 서버 → 앱 */
 export type DownMessage =
   | { type: "ALERT_SELF"; eventId: string; timeoutSec: number }
-  | { type: "NEIGHBOR_ALERT"; eventId: string; patient: PatientCard; protocolId?: string }
+  // priorityHint: 환자 병력 기반 우선 프로토콜 id 순서(힌트). 트리아지 분기 자체는 클라 triage.ts가 결정.
+  | { type: "NEIGHBOR_ALERT"; eventId: string; patient: PatientCard; protocolId?: string; priorityHint?: string[] }
   | { type: "PROTOCOL_STEP"; eventId: string; step: string; prompt: string; inputType: string; options?: string[] }
   | { type: "EVENT_RESOLVED"; eventId: string; reason: string };
 

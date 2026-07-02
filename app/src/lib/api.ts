@@ -3,6 +3,7 @@ import type {
   RegisterRes,
   FallEventRes,
   PatientCard,
+  VoiceRes,
 } from "@lib/protocol/messages";
 import { HTTP_BASE } from "../config";
 
@@ -30,3 +31,7 @@ export async function getPatient(id: string): Promise<PatientCard> {
   if (!r.ok) throw new Error(`patient ${r.status}`);
   return r.json();
 }
+
+/** 온디바이스 STT 텍스트 → 서버(Claude) 짧은 상황 요약. 키 없으면 서버가 에코 폴백. */
+export const sendVoice = (eventId: string, transcript: string) =>
+  post<VoiceRes>("/voice", { eventId, transcript });

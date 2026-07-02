@@ -23,6 +23,9 @@ import {
   nextEventId,
   type EmergencyEvent,
 } from "./registry";
+import { seedRegistry, SEED_PATIENT_ID } from "./seed";
+import { summarizeVoice } from "./claude";
+import type { VoiceReq, VoiceRes } from "../lib/protocol/messages";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // 데모: 네이티브(capacitor://)·터널 등 모든 오리진 허용
@@ -62,6 +65,27 @@ function selectNeighbors(patient: RegisteredUser, max = 4): string[] {
     .map((x) => x.id);
 }
 
+/**
+ * 환자 병력(합성) → 우선 노출할 프로토콜 id 순서(힌트).
+ * ⚠️ 힌트일 뿐 — 실제 위험도 분기는 클라 lib/first-aid/triage.ts(결정트리)가 담당. LLM 위임 없음.
+ */
+function priorityHintFromHistory(history?: string[]): string[] | undefined {
+  if (!history?.length) return undefined;
+  const h = history.join(" ");
+  const hints: string[] = [];
+  const add = (id: string) => {
+    if (!hints.includes(id)) hints.push(id);
+  };
+  if (/심장|협심증|심근|부정맥|심정지/.test(h)) {
+    add("P-CPR");
+    add("P-AED");
+  }
+  if (/뇌졸중|뇌경색|뇌출혈|고혈압/.test(h)) add("P-STROKE");
+  if (/뇌전증|간질|경련/.test(h)) add("P-SEIZURE");
+  if (/당뇨|저혈당/.test(h)) add("P-SYNCOPE");
+  return hints.length ? hints : undefined;
+}
+
 /** 15초 무반응 → 119 모의신고 + 이웃 호출 */
 function escalate(eventId: string) {
   const ev = events.get(eventId);
@@ -79,9 +103,12 @@ function escalate(eventId: string) {
     historySummary: (patient.history ?? []).join(", ") || "특이사항 없음",
   };
   const neighbors = selectNeighbors(patient);
-  app.log.info(`이웃 호출 ${neighbors.length}명: ${neighbors.join(", ")}`);
+  const priorityHint = priorityHintFromHistory(patient.history);
+  app.log.info(
+    `이웃 호출 ${neighbors.length}명: ${neighbors.join(", ")}${priorityHint ? ` (우선힌트 ${priorityHint.join(">")})` : ""}`,
+  );
   for (const nid of neighbors) {
-    send(nid, { type: "NEIGHBOR_ALERT", eventId, patient: card });
+    send(nid, { type: "NEIGHBOR_ALERT", eventId, patient: card, priorityHint });
   }
 }
 
@@ -122,7 +149,22 @@ app.post("/api/fall-event", async (req, reply) => {
   return { eventId };
 });
 
-// TODO(Phase 1): POST /voice — 온디바이스 STT 텍스트 → Claude 요약
+// 온디바이스 STT 텍스트 → Claude 짧은 상황 요약 (키 없으면 fallback 에코). spec/03-logic/01 §2.2
+app.post("/api/voice", async (req, reply) => {
+  const b = req.body as VoiceReq;
+  if (!b || typeof b.transcript !== "string") {
+    return reply.code(400).send({ error: "transcript required" });
+  }
+  // 진행 중 이벤트의 환자 병력을 요약 맥락으로 참고(있으면). 합성 데이터만.
+  const ev = b.eventId ? events.get(b.eventId) : undefined;
+  const patient = ev ? users.get(ev.patientId) : undefined;
+  const context = patient?.history?.length ? patient.history.join(", ") : undefined;
+
+  const { summary, source } = await summarizeVoice(b.transcript, context);
+  app.log.info(`voice summary (${source}) event=${b.eventId ?? "-"}`);
+  const res: VoiceRes = { summary };
+  return res;
+});
 
 // ───────── WebSocket ─────────
 app.get(WS_PATH, { websocket: true }, (socket) => {
@@ -159,6 +201,12 @@ app.get(WS_PATH, { websocket: true }, (socket) => {
     if (myId) sockets.delete(myId);
   });
 });
+
+// 데모 페르소나 시드 (환자1 + 이웃4, 마을 "방림리"). mock fall-event 대상: SEED_PATIENT_ID.
+seedRegistry();
+app.log.info(
+  `seeded registry: ${users.size} users (demo patient=${SEED_PATIENT_ID})`,
+);
 
 const PORT = Number(process.env.PORT ?? 8787);
 app.listen({ port: PORT, host: "0.0.0.0" }).then(() => {

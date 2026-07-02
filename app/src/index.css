@@ -14,5 +14,17 @@ body {
 
 /* 접근성: 큰 터치 타깃 기본 (고령 사용자) */
 button {
-  @apply min-h-[56px] touch-manipulation;
+  @apply min-h-[56px] touch-manipulation select-none transition;
+}
+
+button:disabled {
+  @apply cursor-not-allowed;
+}
+
+/* 접근성: 키보드/보조기기 포커스 가시성 (고대비 링) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  @apply outline-none ring-4 ring-blue-500/60;
 }
