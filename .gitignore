@@ -22,3 +22,11 @@ build/
 .DS_Store
 *.log
 .vercel
+
+# 빌드 산출물 apk
+*.apk
+
+# Firebase 시크릿 (커밋 금지)
+android/app/google-services.json
+**/service-account*.json
+firebase-service-account.json

@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.1",
+    "@capacitor/android": "^7.6.7",
     "@capacitor/core": "^7.6.7",
     "@capacitor/ios": "^7.6.7",
     "@fastify/cors": "^11.2.0",
