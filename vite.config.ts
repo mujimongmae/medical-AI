@@ -14,6 +14,7 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true, // 실기기(폰)에서 접속 가능하게 LAN 노출
+    allowedHosts: true, // 데모: cloudflared/ngrok 터널 호스트 허용 (dev 전용)
     fs: { allow: [".."] }, // app 밖의 lib import 허용
     proxy: {
       // 웹 dev: 앱 → 브로커(:8787) same-origin 프록시 (CORS 회피). 브로커 라우트가 이미 /api.
