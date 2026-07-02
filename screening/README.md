@@ -14,6 +14,7 @@
 | 07 | [07-fall-vs-lying-datasets.md](./07-fall-vs-lying-datasets.md) | 낙상 vs 눕기 구별 + 심정지 감지 데이터셋·논문 (기술 설계 근거) | ✅ 완료 (핵심 데이터셋·논문 URL 검증) |
 | 08 | [08-medical-collapse-cv.md](./08-medical-collapse-cv.md) | 쓰러짐 행태→의학적 응급 판별 가능성 (CV·Physical AI 문헌, 냉정 평가) | ✅ 완료 (핵심 논문 URL 검증) |
 | 09 | [09-detection-architecture.md](./09-detection-architecture.md) | 감지 아키텍처 강화 (논문+HF 모델/데이터+Claude Vision, 배포 티어) | ✅ 완료 (HF repo 실재 검증) |
+| 10 | [10-temporal-fall-models.md](./10-temporal-fall-models.md) | 시계열 낙상 모델 실물 탐색 (arisu04 33kp 입력정합, punpayut MIT 등) | ✅ 완료 (가중치 파일 직접 검증) |
 
 전체 소스 목록(약 53개, 검증 여부 표시): [SOURCES.md](./SOURCES.md)
 
