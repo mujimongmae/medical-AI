@@ -9,6 +9,8 @@
 | 03 | [03-ems-dispatch-problems.md](./03-ems-dispatch-problems.md) | 강원도 구급차 출동·이송 체계 문제 (비응급 신고, 도착 지연, 뺑뺑이 등) | ✅ 완료 (경량 리서치, 핵심 수치 교차검증) |
 | 04 | [04-ems-bottleneck-deepdive.md](./04-ems-bottleneck-deepdive.md) | 03 심화: 병원 선정·재이송·비응급 수요 병목 + 기존 해결 시도의 공백 | ✅ 완료 (경량 리서치, 핵심 수치 교차검증) |
 
+| 05 | [05-sources-digest.md](./05-sources-digest.md) | 소스 50개 원문 직독 — 자료별 문제·핵심 수치·한계 정리 | ✅ 완료 (전 자료 접근 성공) |
+
 전체 소스 목록(약 53개, 검증 여부 표시): [SOURCES.md](./SOURCES.md)
 
 > 주제 확정 시 `spec/00-overview.md`에 기록 후 설계로 이동 (spec-first 원칙).
