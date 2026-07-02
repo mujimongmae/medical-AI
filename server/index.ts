@@ -1,5 +1,7 @@
 // 맥북 브로커 서버 — 등록부·WebSocket 허브·mock 이벤트·(추후) Claude 프록시
 // spec/03-logic/01-messaging-protocol.md  ·  spec/01-architecture/README.md (데모 아키텍처)
+import { config as loadEnv } from "dotenv";
+loadEnv({ path: ".env.local" }); // ANTHROPIC_API_KEY 등 로컬 시크릿 로드 (커밋 안 됨)
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
 import cors from "@fastify/cors";
