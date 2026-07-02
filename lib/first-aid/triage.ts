@@ -1,73 +1,60 @@
-// 트리아지 결정트리 (진입 = 홈캠이 "쓰러진 사람" 감지) — spec/logic/first-aid-protocol.md §4
+// 트리아지 결정트리 — 진입 = 홈캠이 "쓰러짐" 감지 (spec/logic/first-aid-protocol.md §4)
+// 전제: 119 신고는 자동. 트리아지는 신고 단계를 두지 않고 CPR 판단까지 최소 질문(반응→호흡)으로 도달.
 // 위험도 분기는 이 결정적 데이터로 수행. LLM은 안내 문구 자연화·보조 질의응답에만 사용.
 import type { TriageNode } from "./schema";
 
-export const TRIAGE_ROOT = "T0";
+export const TRIAGE_ROOT = "Q1";
 
 export const TRIAGE: Record<string, TriageNode> = {
-  T0: {
-    id: "T0",
-    prompt: "현장이 안전한가요? (차량·전기·화재·추락 위험 확인)",
-    hint: "위험하면 안전한 곳으로 옮긴 뒤 진행하세요.",
+  // ── 최단 CPR 경로: Q1(반응) → Q2(호흡) → P-CPR (질문 2개) ──
+  Q1: {
+    id: "Q1",
+    prompt: "어깨를 두드리며 크게 불러보세요. 반응(눈뜸·움직임·대답)이 있나요?",
+    hint: "119는 자동으로 신고됩니다. 현장이 위험하면 안전부터 확보하세요.",
     options: [
-      { label: "안전함 — 다가가겠습니다", next: "T1" },
-      { label: "위험함", next: "T0-danger" },
+      { label: "무반응", next: "Q2" },
+      { label: "반응이 있음", next: "S1" },
     ],
   },
-  "T0-danger": {
-    id: "T0-danger",
-    prompt: "먼저 119에 신고하고, 안전이 확보되면 접근하세요.",
-    hint: "본인 안전이 최우선입니다. 무리하게 진입하지 마세요.",
-    options: [{ label: "안전 확보됨", next: "T1" }],
-  },
-  T1: {
-    id: "T1",
+  Q2: {
+    id: "Q2",
     prompt:
-      "양쪽 어깨를 두드리며 크게 불러보세요. 반응(눈뜸·움직임·대답)이 있나요?",
+      "숨을 정상적으로 쉬나요? 가슴·배가 오르내리는지 10초 안에 확인하세요.",
+    hint: "헐떡이듯 이상하게 쉬거나 확실하지 않으면 '아니오'로 판단하세요. 늦는 것보다 낫습니다.",
     options: [
-      { label: "무반응", next: "T2" },
-      { label: "반응 있음", next: "T5" },
+      { label: "아니오 — 숨을 안 쉬거나 헐떡임", protocolId: "P-CPR" },
+      { label: "예 — 정상적으로 숨을 쉼", next: "Q3" },
     ],
   },
-  T2: {
-    id: "T2",
-    prompt:
-      "119에 신고하고 자동심장충격기(AED)를 요청하세요. (주변 사람을 특정해 지목)",
-    hint: "혼자면 스피커폰으로 119와 통화하며 진행합니다.",
-    options: [{ label: "신고했습니다", next: "T3" }],
-  },
-  T3: {
-    id: "T3",
-    prompt:
-      "10초 안에 호흡을 확인하세요. 가슴·배가 정상적으로 오르내리나요? (헐떡임은 비정상)",
-    hint: "헐떡이듯 이상하게 쉬면 '없음'으로 판단하세요.",
-    options: [
-      { label: "무호흡 또는 비정상(헐떡임)", protocolId: "P-CPR" },
-      { label: "정상 호흡", next: "T4" },
-    ],
-  },
-  // 무반응이지만 호흡이 있는 상태 — 회복자세로 보내기 전에 눈에 보이는 위중 징후를 먼저 분기
-  // (경련·대량출혈 환자가 회복자세로 흡수되어 해당 프로토콜에 못 가던 결함 보정)
-  T4: {
-    id: "T4",
-    prompt: "숨은 쉽니다. 눈에 보이는 다음 징후가 있나요?",
-    hint: "119는 이미 신고된 상태입니다. 해당 징후가 있으면 그 처치를 먼저 하세요.",
+  // ── 무반응 + 정상호흡: 회복자세 전에 눈에 보이는 위중 징후를 먼저 걸러냄 ──
+  Q3: {
+    id: "Q3",
+    prompt: "숨은 쉽니다. 눈에 보이는 다음 상태가 있나요?",
+    hint: "해당 징후가 있으면 그 처치를 먼저 하세요.",
     options: [
       { label: "전신이 떨리거나 뻣뻣한 경련", protocolId: "P-SEIZURE" },
       { label: "멈추지 않는 심한 출혈", protocolId: "P-BLEED" },
       { label: "특별한 징후 없음", protocolId: "P-RECOVERY" },
     ],
   },
-  T5: {
-    id: "T5",
-    prompt: "가장 두드러진 증상은 무엇인가요?",
-    hint: "여러 개면 가장 위급해 보이는 것을 고르세요. 확실치 않으면 119에 물어보며 진행하세요.",
+  // ── 반응 있음: 환자에게 물어 증상 파악 → 해당 프로토콜 ──
+  S1: {
+    id: "S1",
+    prompt: "환자에게 물어보며 가장 두드러진 증상을 확인하세요. 무엇인가요?",
+    hint: "여러 개면 가장 위급해 보이는 것부터. 잘 모르겠으면 '해당 없음'을 고르세요.",
     options: [
       { label: "목을 움켜쥠 · 숨/기침/말을 못 함 (질식)", protocolId: "P-CHOKING" },
-      { label: "한쪽 얼굴 처짐 · 팔 마비 · 말 어눌 (뇌졸중)", protocolId: "P-STROKE" },
+      { label: "한쪽 얼굴 처짐 · 팔 마비 · 말 어눌 (뇌졸중 의심)", protocolId: "P-STROKE" },
       { label: "멈추지 않는 심한 출혈", protocolId: "P-BLEED" },
-      { label: "전신 경련 · 발작", protocolId: "P-SEIZURE" },
-      { label: "잠깐 정신을 잃음 · 어지러움 (실신)", protocolId: "P-SYNCOPE" },
+      { label: "잠깐 정신을 잃었다 깸 · 어지러움 (실신)", protocolId: "P-SYNCOPE" },
+      { label: "위 증상 없음 / 잘 모르겠음", next: "S1-observe" },
     ],
+  },
+  "S1-observe": {
+    id: "S1-observe",
+    prompt:
+      "환자를 편한 자세로 안정시키고 곁에서 상태 변화를 지켜보세요. 119 구급상황실 안내에 따르세요.",
+    hint: "새 증상이 나타나거나 반응이 없어지면, 처음(반응 확인)부터 다시 확인하세요.",
+    // 종착 안내 노드 — 별도 프로토콜 없음
   },
 };

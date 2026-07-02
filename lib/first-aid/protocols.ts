@@ -34,46 +34,18 @@ export const PROTOCOLS: FirstAidProtocol[] = [
     callEmergencyFirst: true,
     steps: [
       {
-        id: "cpr-safety",
+        id: "cpr-aed",
         order: 1,
-        title: "현장이 안전한지 먼저 확인하세요",
+        title: "주변에 자동심장충격기(AED)를 가져오라고 요청하세요",
         detail:
-          "차량·전기·화재·추락 등 위험이 없는지 확인한 뒤 환자에게 다가갑니다. 위험하면 안전한 곳으로 옮긴 후 시작하세요.",
-        media: "scene-safety",
-      },
-      {
-        id: "cpr-response",
-        order: 2,
-        title: "양쪽 어깨를 두드리며 크게 불러 반응을 확인하세요",
-        detail:
-          "\"괜찮으세요?\"라고 큰 소리로 물으며 양 어깨를 가볍게 두드립니다. 눈뜸·움직임·대답이 없으면 무반응입니다.",
-        durationSec: 5,
-        media: "check-response",
-      },
-      {
-        id: "cpr-call",
-        order: 3,
-        title: "119에 신고하고 자동심장충격기(AED)를 요청하세요",
-        detail:
-          "주변 사람을 특정해 지목하세요. \"거기 계신 분, 119에 신고해 주세요\", \"누구든 자동심장충격기(AED)를 가져와 주세요\". 혼자면 휴대폰 스피커폰으로 119와 통화하며 진행합니다.",
+          "119는 자동으로 신고되었습니다. 곁에 사람이 있으면 한 명을 특정해 지목하세요: \"거기 계신 분, 자동심장충격기(AED)를 가져와 주세요.\" 혼자면 AED를 기다리지 말고 바로 가슴압박을 시작합니다.",
         caution:
-          "막연히 \"누가 신고 좀\"이라고 하면 아무도 안 움직입니다. 반드시 한 사람을 지목하세요.",
-        media: "call-119",
-      },
-      {
-        id: "cpr-breathing",
-        order: 4,
-        title: "10초 안에 호흡을 확인하세요",
-        detail:
-          "환자의 가슴과 배가 오르내리는지 봅니다. 숨을 안 쉬거나, 헐떡이듯 이상하게 쉬면 심정지로 보고 즉시 가슴압박을 시작합니다.",
-        durationSec: 10,
-        caution:
-          "헐떡임(agonal gasping)은 정상 호흡이 아닙니다. '숨은 쉬는 것 같다'고 멈추지 마세요.",
-        media: "check-breathing",
+          "막연히 \"누가 좀\"이라고 하면 아무도 안 움직입니다. 한 사람을 지목하세요. AED를 찾느라 압박을 미루지 마세요.",
+        media: "aed-request",
       },
       {
         id: "cpr-position",
-        order: 5,
+        order: 2,
         title: "환자를 딱딱한 바닥에 등을 대고 눕히세요",
         detail:
           "침대·소파처럼 푹신한 곳이면 바닥으로 옮깁니다. 압박 위치는 '가슴 정중앙(복장뼈 아래쪽 절반)'입니다.",
@@ -81,7 +53,7 @@ export const PROTOCOLS: FirstAidProtocol[] = [
       },
       {
         id: "cpr-compress",
-        order: 6,
+        order: 3,
         title: "가슴을 세게, 빠르게 압박하세요",
         detail:
           "손꿈치를 가슴 정중앙에 대고 다른 손을 포개 깍지 낍니다. 팔꿈치를 펴고 어깨가 손 바로 위에 오도록 수직으로 누릅니다. 매번 가슴이 완전히 올라오도록 힘을 뺍니다.",
@@ -102,7 +74,7 @@ export const PROTOCOLS: FirstAidProtocol[] = [
       },
       {
         id: "cpr-breaths-optional",
-        order: 7,
+        order: 4,
         title: "(선택) 인공호흡을 할 수 있으면 30:2로 하세요",
         detail:
           "인공호흡 훈련이 되어 있고 할 의지가 있으면, 가슴압박 30회마다 인공호흡 2회를 합니다. 머리를 젖히고 턱을 들어 기도를 연 뒤 코를 막고 1초씩 2번 불어넣습니다. 자신 없으면 가슴압박만 계속하세요.",
@@ -210,11 +182,12 @@ export const PROTOCOLS: FirstAidProtocol[] = [
     callEmergencyFirst: true,
     steps: [
       {
-        id: "rec-call",
+        id: "rec-context",
         order: 1,
-        title: "먼저 119에 신고하세요",
-        detail: "무반응 상태는 응급입니다. 호흡이 있어도 반드시 119에 신고합니다.",
-        media: "call-119",
+        title: "숨은 쉬지만 무반응입니다 — 옆으로 눕힐 준비를 하세요",
+        detail:
+          "119는 이미 자동으로 신고되었습니다. 구급대가 올 때까지 기도가 막히지 않도록 옆으로 눕혀 지켜보는 것이 핵심입니다.",
+        media: "monitor",
       },
       {
         id: "rec-position",
@@ -267,9 +240,10 @@ export const PROTOCOLS: FirstAidProtocol[] = [
       {
         id: "chk-call",
         order: 2,
-        title: "완전 폐쇄면 주변에 119 신고를 요청하세요",
-        detail: "한 사람을 지목해 119에 신고하게 하고, 처치를 바로 시작합니다.",
-        media: "call-119",
+        title: "완전히 막혔으면 지체 없이 처치를 시작하세요",
+        detail:
+          "119는 자동으로 신고됩니다. 신고를 기다리지 말고 바로 다음 등 두드리기·복부 밀어내기를 시작하세요.",
+        media: "choking-assess",
       },
       {
         id: "chk-back",
@@ -339,12 +313,12 @@ export const PROTOCOLS: FirstAidProtocol[] = [
       {
         id: "stroke-time",
         order: 2,
-        title: "T(Time): 증상 시작 시각을 기억하고 즉시 119",
+        title: "T(Time): 증상 시작 시각을 기억하세요",
         detail:
-          "\"마지막으로 멀쩡했던 시각\"을 기억하세요. 뇌졸중은 시간이 생명입니다. 곧바로 119에 신고합니다.",
+          "119는 자동으로 신고됩니다. \"마지막으로 멀쩡했던 시각\"을 기억해 구급대에 꼭 전달하세요. 뇌졸중은 시간이 생명입니다.",
         caution:
           "증상 시작 시각은 혈전용해 치료 가능 여부를 결정합니다. 반드시 기록·전달하세요.",
-        media: "call-119",
+        media: "clock",
       },
       {
         id: "stroke-care",
@@ -379,11 +353,12 @@ export const PROTOCOLS: FirstAidProtocol[] = [
     callEmergencyFirst: true,
     steps: [
       {
-        id: "bleed-call",
+        id: "bleed-ready",
         order: 1,
-        title: "심한 출혈이면 119에 신고하세요",
-        detail: "피가 솟구치거나 멈추지 않으면 즉시 신고합니다. 가능하면 장갑 등으로 감염을 예방합니다.",
-        media: "call-119",
+        title: "지혈할 준비를 하세요 (가능하면 손 보호)",
+        detail:
+          "119는 자동으로 신고됩니다. 가능하면 장갑·비닐봉지 등으로 손을 보호해 감염을 예방한 뒤 바로 압박을 시작합니다.",
+        media: "bleed-ready",
       },
       {
         id: "bleed-press",
@@ -455,10 +430,10 @@ export const PROTOCOLS: FirstAidProtocol[] = [
       {
         id: "seiz-call",
         order: 3,
-        title: "다음이면 즉시 119에 신고하세요",
+        title: "다음이면 특히 위급 — 구급상황실에 즉시 알리세요",
         detail:
-          "① 경련이 5분 이상 지속 ② 멈췄다 다시 반복 ③ 첫 발작 ④ 호흡이 힘들거나 얼굴이 파래짐 ⑤ 임신 중 ⑥ 다쳤거나 물에 빠짐 ⑦ 경련 후에도 의식이 안 돌아옴.",
-        media: "call-119",
+          "119는 자동 신고됩니다. 다음이면 위급하니 구급상황실(전화 연결 시)에 꼭 알리세요: ① 경련이 5분 이상 지속 ② 멈췄다 다시 반복 ③ 첫 발작 ④ 호흡이 힘들거나 얼굴이 파래짐 ⑤ 임신 중 ⑥ 다쳤거나 물에 빠짐 ⑦ 경련 후에도 의식이 안 돌아옴.",
+        media: "alert",
       },
       {
         id: "seiz-recovery",
@@ -515,7 +490,7 @@ export const PROTOCOLS: FirstAidProtocol[] = [
         detail:
           "보통 1~2분 내 회복됩니다. 회복 후에도 갑자기 일으키지 말고 잠시 앉혔다 세웁니다.",
         caution:
-          "① 금방 안 깨어남 ② 가슴 통증·호흡곤란 ③ 머리를 심하게 부딪힘 ④ 임신·고령·기저질환 ⑤ 반복 실신이면 119에 신고하세요.",
+          "119는 자동 신고됩니다. 다음이면 특히 위급하니 구급상황실에 알리세요: ① 금방 안 깨어남 ② 가슴 통증·호흡곤란 ③ 머리를 심하게 부딪힘 ④ 임신·고령·기저질환 ⑤ 반복 실신.",
         media: "observe",
       },
     ],
