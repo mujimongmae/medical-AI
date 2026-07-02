@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DownMessage } from "@lib/protocol/messages";
 import { connectWs, type WsHandle } from "../lib/wsClient";
 import { triggerFall } from "../lib/api";
+import { getPrimedCtx } from "../lib/audio";
 
 type State =
   | { kind: "idle" }
@@ -117,10 +118,16 @@ function AlertScreen({
 
   useEffect(() => {
     // 사이렌 소리(두 음 왕복) + 진동. 오디오 미지원/차단이어도 앱은 계속 동작.
-    let ctx: AudioContext | null = null;
+    // iOS 대비: 역할 선택 때 무장해 둔 AudioContext를 재사용(없으면 새로 생성).
+    const primed = getPrimedCtx();
+    let ctx: AudioContext | null = primed;
+    let ownsCtx = false;
     let osc: OscillatorNode | null = null;
     try {
-      ctx = new AudioContext();
+      if (!ctx) {
+        ctx = new AudioContext();
+        ownsCtx = true;
+      }
       void ctx.resume?.();
       osc = ctx.createOscillator();
       const g = ctx.createGain();
@@ -164,7 +171,7 @@ function AlertScreen({
       } catch {
         /* noop */
       }
-      ctx?.close().catch(() => {});
+      if (ownsCtx) ctx?.close().catch(() => {}); // 무장된 공유 ctx는 닫지 않음
     };
   }, []);
 

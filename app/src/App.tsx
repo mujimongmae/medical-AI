@@ -3,6 +3,7 @@ import type { Role } from "@lib/protocol/messages";
 import { GLOBAL_DISCLAIMER } from "@lib/first-aid/schema";
 import { register } from "./lib/api";
 import { initPush } from "./lib/push";
+import { primeAudio } from "./lib/audio";
 import PatientView from "./roles/PatientView";
 import NeighborView from "./roles/NeighborView";
 
@@ -76,6 +77,7 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
 
   async function pick(role: Role) {
     if (!name.trim() || busy) return;
+    primeAudio(); // 사용자 탭 시점에 오디오 무장(iOS 사이렌 대비)
     setBusy(true);
     setError("");
     try {
@@ -99,6 +101,7 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
 
   // 데모: 타이핑 없이 시드 환자(병력 有)로 바로 시작 → 등록부에 이미 있는 seed-patient-1에 바인딩
   function startAsSeed() {
+    primeAudio(); // 사용자 탭 시점에 오디오 무장
     save({ id: "seed-patient-1", role: "patient", name: "김복순(합성)" });
   }
 
