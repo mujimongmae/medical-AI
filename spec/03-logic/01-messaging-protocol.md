@@ -26,7 +26,7 @@
 |------|--------|------|------|
 | `POST /register` | 앱 | `{role, name, village, home:{lat,lng}, 병력?}` | `{id}` |
 | `POST /fall-event` | **영상인식(미확정) 또는 mock 생성기** | `{patientId, confidence?, snapshotRef?}` ⚠️ **잠정** | `{eventId}` |
-| `POST /voice` | 이웃앱 | `{eventId, transcript}` (온디바이스 STT 결과 텍스트) | `{summary}` (Claude 처리). ⚠️ Claude는 오디오 직접 입력 불가 → 기기에서 STT 후 텍스트 전송 |
+| `POST /voice` | 이웃앱 | `{eventId, transcript}` (온디바이스 STT 텍스트) | `{summary, likelyCondition, recommendation, protocolId?}` — Claude가 **병력+증상 종합 → 가장 가능성 높은 상태 1개 + 추천 응급처치**. ⚠️ 확정진단 금지("가능성" 표현)·119 우선. Claude 오디오 직접입력 불가 → 기기 STT 후 텍스트 전송 |
 | `GET /patient/:id` | 이웃앱 | — | `{name, addressText, accessNote, 병력요약}` |
 
 > 🔌 **영상인식 = 교체 가능한 이벤트 소스.** 영상인식 프로그램·이벤트 출력 형식은 **미확정**. 지금은 "영상인식이 있다고 가정"하고 **mock 이벤트 생성기**(예: 데모용 버튼 / 타이머 / CLI)가 `POST /fall-event`로 이벤트를 **가상 생성**한다. 서버는 이 엔드포인트 뒤로 로직이 동일하므로, 나중에 실제 영상인식으로 **갈아끼우기만** 하면 된다. → `/fall-event` payload는 잠정(위)이며 실제 프로그램 확정 시 합의·갱신.
@@ -86,9 +86,9 @@
 
 ### 3.4 프로토콜 규칙 (요지 — 상세: [`02-first-aid-protocol.md`](./02-first-aid-protocol.md))
 - **트리아지·프로토콜 콘텐츠는 [`02-first-aid-protocol.md`](./02-first-aid-protocol.md) + `lib/first-aid/`가 진실 원천.** `step`은 트리아지 노드(`Q1`,`Q2`,`Q3`,`S1`, 루트 `TRIAGE_ROOT="Q1"`), `protocolId`는 프로토콜 id(`P-CPR` 등)와 매핑.
-- **위험도 분기는 결정적 데이터(`triage.ts`)로 수행**, LLM에 위임하지 않는다. **119는 자동 전제** → 트리아지 최단 경로 = `Q1`(반응)→`Q2`(호흡): 호흡 없음=`P-CPR`, 있음=`Q3`(위중징후) / 반응 있음=`S1`(증상 분기).
-- 단계 우선순위·문구는 환자 **병력 기반으로 Claude가 정렬/자연화** (예: 심장질환 이력 → 심정지 대응 우선), 단 분기 자체는 결정트리 유지.
-- 프로토콜 = **사전 정의된 조치 리스트**에서 제시(자유 생성 아님) → 안전·예측가능.
+- **CPR 여부(생명 직결)는 규칙 기반**: `Q1`(의식)→`Q2`(호흡). 둘 다 없음 → **CPR 화면**(GIF+압박위치+메트로놈, 로컬). LLM 위임 없음.
+- **그 외(의식/호흡 있음) → AI 음성 추천**: 음성→STT→`/voice`→Claude가 **병력+증상 종합 → 가장 가능성 높은 상태 + 추천 처치**. 확정진단 금지·119 우선.
+- 상세 흐름은 [`02-first-aid-protocol.md`](./02-first-aid-protocol.md) §3~§6.
 
 ### 3.5 엣지 케이스
 - 접속한 이웃 0명 → 119 모의신고만 유지 + 서버 로그 경고 (데모용 폴백).
