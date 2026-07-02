@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.109.1",
+    "@mediapipe/tasks-vision": "^0.10.14",
     "@supabase/supabase-js": "^2.45.4",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow-models/pose-detection": "^2.1.3",

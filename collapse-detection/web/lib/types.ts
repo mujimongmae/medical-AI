@@ -47,6 +47,19 @@ export interface EmergencyEvent {
   };
   /** Optional JPEG/PNG data URL keyframe for the app to show. */
   keyframeDataUrl?: string;
+  /**
+   * Optional second-stage confirmation. `source` is "claude" when a VLM/LLM
+   * pass reviewed the keyframe, or "skipped" when confirmation was bypassed
+   * (e.g. missing API key or fast-path demo). Fields describe the review.
+   */
+  confirmation?: {
+    source: "claude" | "skipped";
+    fallen: boolean;
+    motionless: boolean;
+    needsHelp: boolean;
+    confidence: number;
+    reason: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -158,3 +171,45 @@ export type Thresholds = typeof THRESHOLDS;
 
 /** BroadcastChannel name shared by the emitter (homecam) and receiver (app). */
 export const EVENT_CHANNEL = "collapse-events" as const;
+
+// ---------------------------------------------------------------------------
+// BlazePose / MediaPipe Pose landmark names, in canonical index order (0..32).
+// The COCO-17 names the state machine relies on ("left_hip", "right_hip",
+// "left_shoulder", "right_shoulder") are all present here, so switching the
+// pose backend to BlazePose keeps those references valid.
+// ---------------------------------------------------------------------------
+export const BLAZEPOSE_33_NAMES = [
+  "nose",
+  "left_eye_inner",
+  "left_eye",
+  "left_eye_outer",
+  "right_eye_inner",
+  "right_eye",
+  "right_eye_outer",
+  "left_ear",
+  "right_ear",
+  "mouth_left",
+  "mouth_right",
+  "left_shoulder",
+  "right_shoulder",
+  "left_elbow",
+  "right_elbow",
+  "left_wrist",
+  "right_wrist",
+  "left_pinky",
+  "right_pinky",
+  "left_index",
+  "right_index",
+  "left_thumb",
+  "right_thumb",
+  "left_hip",
+  "right_hip",
+  "left_knee",
+  "right_knee",
+  "left_ankle",
+  "right_ankle",
+  "left_heel",
+  "right_heel",
+  "left_foot_index",
+  "right_foot_index",
+] as const;
