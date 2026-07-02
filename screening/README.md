@@ -12,6 +12,7 @@
 | 05 | [05-sources-digest.md](./05-sources-digest.md) | 소스 50개 원문 직독 — 자료별 문제·핵심 수치·한계 정리 | ✅ 완료 (전 자료 접근 성공) |
 | 06 | [06-auto-alert-efficacy.md](./06-auto-alert-efficacy.md) | 심뇌혈관 자동 감지·신고 서비스 효용성 (시간=생존율, 자동신고 시간단축) | ✅ 완료 (경량 리서치, 핵심 수치 교차검증) |
 | 07 | [07-fall-vs-lying-datasets.md](./07-fall-vs-lying-datasets.md) | 낙상 vs 눕기 구별 + 심정지 감지 데이터셋·논문 (기술 설계 근거) | ✅ 완료 (핵심 데이터셋·논문 URL 검증) |
+| 08 | [08-medical-collapse-cv.md](./08-medical-collapse-cv.md) | 쓰러짐 행태→의학적 응급 판별 가능성 (CV·Physical AI 문헌, 냉정 평가) | ✅ 완료 (핵심 논문 URL 검증) |
 
 전체 소스 목록(약 53개, 검증 여부 표시): [SOURCES.md](./SOURCES.md)
 
