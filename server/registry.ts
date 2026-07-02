@@ -12,8 +12,6 @@ export interface EmergencyEvent {
   patientId: string;
   state: "alerting_self" | "notifying_neighbors" | "resolved";
   timer?: ReturnType<typeof setTimeout>;
-  ts?: number; // 생성 시각(ms) — 재접속 복원 시 만료 판단용
-  notified?: Set<string>; // 실제로 호출(NEIGHBOR_ALERT)을 보낸 이웃 id들 — 복원 대상 한정
 }
 export const events = new Map<string, EmergencyEvent>();
 

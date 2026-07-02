@@ -31,6 +31,124 @@ import type { VoiceReq, VoiceRes, PushTokenReq } from "../lib/protocol/messages"
 import { initPush, sendPush } from "./push";
 import { loadStore, saveStore } from "./store";
 
+// ───────── 가상 심평원(HIRA) 병력 DB — 데모용 하드코딩 100명(전부 합성·실개인정보 아님) ─────────
+// 노인 흔한 이름 + {고혈압·당뇨병·심부전·협심증·뇌졸중·골다공증·부정맥} 중 인당 2~4개.
+// 앱 첫 화면 "병력 불러오기"가 입력한 이름으로 조회해 채운다.
+const HIRA_DB: { name: string; conditions: string[] }[] = [
+  { name: "김순자", conditions: ["고혈압", "당뇨병"] },
+  { name: "김복순", conditions: ["고혈압", "협심증", "부정맥"] },
+  { name: "이영자", conditions: ["고혈압", "골다공증"] },
+  { name: "박정숙", conditions: ["당뇨병", "골다공증", "고혈압"] },
+  { name: "최말순", conditions: ["고혈압", "뇌졸중"] },
+  { name: "정영수", conditions: ["당뇨병", "심부전"] },
+  { name: "강옥순", conditions: ["고혈압", "당뇨병", "골다공증"] },
+  { name: "조순남", conditions: ["협심증", "부정맥"] },
+  { name: "윤명자", conditions: ["고혈압", "골다공증", "당뇨병"] },
+  { name: "장금자", conditions: ["당뇨병", "뇌졸중", "고혈압"] },
+  { name: "임춘자", conditions: ["고혈압", "부정맥"] },
+  { name: "한영순", conditions: ["골다공증", "고혈압"] },
+  { name: "오정자", conditions: ["당뇨병", "협심증"] },
+  { name: "서말자", conditions: ["고혈압", "당뇨병", "심부전"] },
+  { name: "신복자", conditions: ["뇌졸중", "고혈압"] },
+  { name: "권순옥", conditions: ["고혈압", "골다공증", "부정맥"] },
+  { name: "황미자", conditions: ["당뇨병", "골다공증"] },
+  { name: "안영숙", conditions: ["고혈압", "협심증"] },
+  { name: "송정순", conditions: ["당뇨병", "고혈압", "뇌졸중"] },
+  { name: "류필순", conditions: ["골다공증", "부정맥"] },
+  { name: "홍순덕", conditions: ["고혈압", "심부전", "당뇨병"] },
+  { name: "전영희", conditions: ["고혈압", "당뇨병"] },
+  { name: "고말임", conditions: ["골다공증", "고혈압", "협심증"] },
+  { name: "문순례", conditions: ["당뇨병", "부정맥"] },
+  { name: "손정례", conditions: ["고혈압", "뇌졸중", "골다공증"] },
+  { name: "배옥자", conditions: ["당뇨병", "협심증", "고혈압"] },
+  { name: "조말녀", conditions: ["고혈압", "골다공증"] },
+  { name: "백순임", conditions: ["당뇨병", "심부전"] },
+  { name: "허영자", conditions: ["고혈압", "당뇨병", "부정맥"] },
+  { name: "유정임", conditions: ["골다공증", "뇌졸중"] },
+  { name: "남복순", conditions: ["고혈압", "협심증", "당뇨병"] },
+  { name: "심말순", conditions: ["당뇨병", "골다공증"] },
+  { name: "노영수", conditions: ["고혈압", "심부전", "부정맥"] },
+  { name: "하정자", conditions: ["당뇨병", "고혈압"] },
+  { name: "곽순자", conditions: ["골다공증", "협심증"] },
+  { name: "성영자", conditions: ["고혈압", "당뇨병", "뇌졸중"] },
+  { name: "차정숙", conditions: ["부정맥", "고혈압"] },
+  { name: "주말순", conditions: ["당뇨병", "골다공증", "심부전"] },
+  { name: "우영순", conditions: ["고혈압", "협심증"] },
+  { name: "구옥순", conditions: ["당뇨병", "뇌졸중"] },
+  { name: "김철수", conditions: ["고혈압", "당뇨병", "협심증"] },
+  { name: "이병철", conditions: ["심부전", "부정맥"] },
+  { name: "박종수", conditions: ["고혈압", "뇌졸중"] },
+  { name: "최상철", conditions: ["당뇨병", "고혈압", "협심증"] },
+  { name: "정기석", conditions: ["부정맥", "고혈압"] },
+  { name: "강정호", conditions: ["당뇨병", "심부전"] },
+  { name: "조영근", conditions: ["고혈압", "협심증", "뇌졸중"] },
+  { name: "윤성태", conditions: ["당뇨병", "고혈압"] },
+  { name: "장병수", conditions: ["협심증", "부정맥", "고혈압"] },
+  { name: "임재복", conditions: ["뇌졸중", "당뇨병"] },
+  { name: "한덕수", conditions: ["고혈압", "심부전"] },
+  { name: "오만식", conditions: ["당뇨병", "협심증", "고혈압"] },
+  { name: "서광수", conditions: ["부정맥", "뇌졸중"] },
+  { name: "신경식", conditions: ["고혈압", "당뇨병"] },
+  { name: "권태호", conditions: ["협심증", "심부전", "고혈압"] },
+  { name: "황보석", conditions: ["당뇨병", "부정맥"] },
+  { name: "안창수", conditions: ["고혈압", "뇌졸중", "당뇨병"] },
+  { name: "송기남", conditions: ["협심증", "고혈압"] },
+  { name: "류형수", conditions: ["당뇨병", "심부전", "부정맥"] },
+  { name: "홍판식", conditions: ["고혈압", "협심증"] },
+  { name: "전용길", conditions: ["뇌졸중", "고혈압", "당뇨병"] },
+  { name: "고재구", conditions: ["부정맥", "협심증"] },
+  { name: "문상길", conditions: ["고혈압", "당뇨병"] },
+  { name: "손종철", conditions: ["심부전", "뇌졸중", "고혈압"] },
+  { name: "배정근", conditions: ["당뇨병", "협심증"] },
+  { name: "백남수", conditions: ["고혈압", "부정맥", "당뇨병"] },
+  { name: "허경수", conditions: ["협심증", "뇌졸중"] },
+  { name: "유창식", conditions: ["고혈압", "당뇨병", "심부전"] },
+  { name: "남기철", conditions: ["부정맥", "고혈압"] },
+  { name: "심재영", conditions: ["당뇨병", "협심증"] },
+  { name: "노판돌", conditions: ["고혈압", "뇌졸중", "부정맥"] },
+  { name: "하동식", conditions: ["당뇨병", "심부전"] },
+  { name: "곽병주", conditions: ["고혈압", "협심증"] },
+  { name: "성만수", conditions: ["부정맥", "당뇨병", "고혈압"] },
+  { name: "차용대", conditions: ["뇌졸중", "협심증"] },
+  { name: "주광호", conditions: ["고혈압", "당뇨병"] },
+  { name: "우점례", conditions: ["골다공증", "고혈압", "부정맥"] },
+  { name: "구말녀", conditions: ["당뇨병", "골다공증"] },
+  { name: "김옥분", conditions: ["고혈압", "협심증", "골다공증"] },
+  { name: "이순덕", conditions: ["당뇨병", "뇌졸중"] },
+  { name: "박영달", conditions: ["고혈압", "부정맥"] },
+  { name: "최봉순", conditions: ["골다공증", "당뇨병", "고혈압"] },
+  { name: "정귀남", conditions: ["협심증", "골다공증"] },
+  { name: "강막례", conditions: ["고혈압", "당뇨병", "뇌졸중"] },
+  { name: "조필녀", conditions: ["골다공증", "부정맥"] },
+  { name: "윤삼순", conditions: ["고혈압", "협심증"] },
+  { name: "장분옥", conditions: ["당뇨병", "골다공증", "심부전"] },
+  { name: "임끝순", conditions: ["고혈압", "뇌졸중"] },
+  { name: "한월자", conditions: ["골다공증", "당뇨병"] },
+  { name: "오간난", conditions: ["고혈압", "부정맥", "협심증"] },
+  { name: "서봉자", conditions: ["당뇨병", "골다공증"] },
+  { name: "신덕순", conditions: ["고혈압", "심부전"] },
+  { name: "권말선", conditions: ["골다공증", "협심증", "고혈압"] },
+  { name: "황춘식", conditions: ["당뇨병", "부정맥"] },
+  { name: "안점순", conditions: ["고혈압", "골다공증", "뇌졸중"] },
+  { name: "송병규", conditions: ["당뇨병", "협심증"] },
+  { name: "류옥례", conditions: ["골다공증", "고혈압"] },
+  { name: "홍기택", conditions: ["부정맥", "심부전", "고혈압"] },
+  { name: "전순화", conditions: ["당뇨병", "골다공증"] },
+  { name: "고영달", conditions: ["고혈압", "협심증", "뇌졸중"] },
+];
+
+/** 이름 정규화: 괄호주석·공백 제거 후 비교 (예: "김순자 (합성)" → "김순자"). */
+function normalizeName(s: string): string {
+  return s.replace(/\(.*?\)/g, "").replace(/\s/g, "").trim();
+}
+/** 이름으로 심평원 병력 조회. 없으면 null. */
+function lookupHira(name: string): string[] | null {
+  const q = normalizeName(name);
+  if (!q) return null;
+  const hit = HIRA_DB.find((p) => normalizeName(p.name) === q);
+  return hit ? hit.conditions : null;
+}
+
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // 데모: 네이티브(capacitor://)·터널 등 모든 오리진 허용
 await app.register(websocket);
@@ -99,29 +217,23 @@ function patientCard(p: RegisteredUser): PatientCard {
   return {
     name: p.name,
     addressText: `${p.village} (합성 주소)`,
-    accessNote: "현관 확인 후 진입",
+    accessNote: "현관 옆 화분 및 열쇠 있음",
     historySummary: (p.history ?? []).join(", ") || "특이사항 없음",
   };
 }
 
 /** 진행 중(notifying_neighbors) 이벤트를 재접속한 이웃에게 재전송.
  *  푸시 탭으로 앱을 열면(콜드스타트/재접속) WS로 이미 보낸 NEIGHBOR_ALERT를 놓쳤으므로,
- *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다.
- *  ⚠️ 복원 대상은 **실제로 그 호출을 받았던 이웃(ev.notified)** 으로 한정 + **최근(TTL 내)** 이벤트만.
- *  (그렇지 않으면 새로 등록한 다른 이웃에게 지난 테스트 호출이 되살아남) */
-const ALERT_RESTORE_TTL_MS = 3 * 60 * 1000; // 3분
+ *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다. */
 function resendActiveAlerts(userId: string) {
   const u = users.get(userId);
   if (!u || u.role !== "neighbor") return;
-  const now = Date.now();
   // 가장 최근 진행 중 호출 1건만 복원 (테스트 반복으로 이벤트가 쌓여도 최신만).
   let latest: EmergencyEvent | undefined;
   for (const ev of events.values()) {
     if (ev.state !== "notifying_neighbors") continue;
-    if (!ev.notified?.has(userId)) continue; // 원래 호출받은 이웃만
-    if (ev.ts && now - ev.ts > ALERT_RESTORE_TTL_MS) continue; // 만료된 지난 이벤트 제외
     const patient = users.get(ev.patientId);
-    if (!patient) continue;
+    if (!patient || patient.id === u.id || patient.village !== u.village) continue;
     latest = ev; // Map은 삽입순 → 마지막 매칭이 최신
   }
   if (!latest) return;
@@ -147,7 +259,6 @@ function escalate(eventId: string) {
 
   const card = patientCard(patient);
   const neighbors = selectNeighbors(patient);
-  ev.notified = new Set(neighbors); // 복원은 이들에게만 (지난 테스트 호출이 새 이웃에게 되살아나지 않게)
   const priorityHint = priorityHintFromHistory(patient.history);
   app.log.info(
     `이웃 호출 ${neighbors.length}명: ${neighbors.join(", ")}${priorityHint ? ` (우선힌트 ${priorityHint.join(">")})` : ""}`,
@@ -178,6 +289,13 @@ app.get("/api/users", async () =>
     hasToken: !!u.pushToken,
   })),
 );
+
+// 가상 심평원 병력 조회 — 앱 첫화면 "병력 불러오기"(이름으로 조회)
+app.get<{ Querystring: { name?: string } }>("/api/hira", async (req) => {
+  const name = req.query.name ?? "";
+  const conditions = lookupHira(name);
+  return { found: !!conditions, name, history: conditions ?? [] };
+});
 
 // 관제/테스트: 브라우저에서 특정 폰(환자/이웃) 푸시 테스트용 간이 페이지
 app.get("/admin", async (_req, reply) => {
@@ -221,8 +339,15 @@ app.post("/api/fall-event", async (req, reply) => {
   const b = req.body as FallEventReq;
   const patient = users.get(b.patientId);
   if (!patient) return reply.code(404).send({ error: "patient not found" });
+  // 환자 WebSocket이 열려 있을 때만 처리한다. 앱이 안 켜져 있으면(=WS 미연결)
+  // 감지 이벤트를 무시(이벤트/푸시/에스컬레이션 없음). — 실 감지→환자앱 실시간 경로 전용.
+  const psock = sockets.get(patient.id);
+  if (!psock || psock.readyState !== 1) {
+    app.log.info(`fall-event 무시 — 환자 ${patient.id} WS 미연결(앱 미접속)`);
+    return reply.code(200).send({ ignored: true, reason: "patient ws not open" });
+  }
   const eventId = nextEventId();
-  const ev: EmergencyEvent = { eventId, patientId: b.patientId, state: "alerting_self", ts: Date.now() };
+  const ev: EmergencyEvent = { eventId, patientId: b.patientId, state: "alerting_self" };
   events.set(eventId, ev);
   send(patient.id, { type: "ALERT_SELF", eventId, timeoutSec: ALERT_TIMEOUT_SEC });
   // 화면 꺼짐 대비 푸시 (환자 본인 깨우기)
@@ -264,7 +389,7 @@ app.post("/api/demo/trigger", async (req, reply) => {
   const patient = users.get(SEED_PATIENT_ID);
   if (!patient) return reply.code(404).send({ error: "seed patient missing" });
   const eventId = nextEventId();
-  events.set(eventId, { eventId, patientId: SEED_PATIENT_ID, state: "alerting_self", ts: Date.now() });
+  events.set(eventId, { eventId, patientId: SEED_PATIENT_ID, state: "alerting_self" });
   escalate(eventId); // 즉시 이웃 호출 (테스트 편의)
   app.log.info(`demo trigger ${eventId} (patient=${SEED_PATIENT_ID}) → 이웃 즉시 호출`);
   return { eventId };

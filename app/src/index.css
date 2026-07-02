@@ -21,12 +21,53 @@ button:disabled {
   @apply cursor-not-allowed;
 }
 
-/* 접근성: 키보드/보조기기 포커스 가시성 (고대비 링) */
+/* 접근성: 키보드/보조기기 포커스 가시성 (브랜드 청, 고대비 링) */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  @apply outline-none ring-4 ring-blue-500/60;
+  @apply outline-none ring-4 ring-ai/70;
+}
+
+/* ── 컴포넌트 톤 (매크로 디자인 중앙화) ────────────────────────
+   레이아웃/마크업은 뷰가 소유. 여기엔 색·타이포·엘리베이션(톤)만 둔다.
+   시맨틱: 위급=danger / 안전·수락=safe / 경고·대기=caution / AI·정보=ai */
+@layer components {
+  /* 상태 필 (아이콘+라벨 이중 코딩 전제) */
+  .pill-ok {
+    @apply bg-safe/10 text-safe;
+  }
+  .pill-wait {
+    @apply bg-caution-50 text-caution-900;
+  }
+
+  /* 시맨틱 배너 */
+  .banner-danger {
+    @apply bg-danger text-white;
+  }
+  .banner-ai {
+    @apply bg-ai text-white;
+  }
+
+  /* AI·정보 카드 표면 */
+  .surface-ai {
+    @apply bg-ai-50;
+  }
+
+  /* 참고용 디스클레이머 — 안전문구 가독 대비 상향(gray-700, 9.4:1) */
+  .disclaimer {
+    @apply bg-gray-50 text-gray-700;
+  }
+
+  /* 강조 CTA — 소프트 엘리베이션 + 스프링 프레스 */
+  .cta-emph {
+    @apply shadow-soft active:scale-[0.98];
+  }
+
+  /* 흰 카드(정보 박스) 공통 톤 — 흰 배경 위에서 쉐도우로 뜨게. 곡률은 뷰가 rounded-*로 지정. */
+  .surface-card {
+    @apply bg-white shadow-soft;
+  }
 }
 
 /* CPR 압박 애니메이션 — 분당 약 110회(0.545s/회). 오프라인 자체 렌더(GIF 대체) */
