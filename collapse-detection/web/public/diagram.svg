@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 700" width="1280" height="700" font-family="'Apple SD Gothic Neo','Malgun Gothic','Pretendard',system-ui,-apple-system,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#64748b"/></marker>
+    <marker id="arrB" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#3b82f6"/></marker>
+    <marker id="arrP" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#a855f7"/></marker>
+    <marker id="arrR" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#dc2626"/></marker>
+    <marker id="arrG" markerWidth="10" markerHeight="10" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#16a34a"/></marker>
+    <style>
+      .title{font-size:25px;font-weight:800;fill:#0f172a}
+      .sec{font-size:15px;font-weight:700;fill:#475569}
+      .bt{font-size:13.5px;font-weight:700;fill:#0f172a}
+      .bs{font-size:11px;fill:#475569}
+      .lbl{font-size:11.5px;font-weight:700;fill:#334155}
+      .and{font-size:12px;font-weight:800;fill:#3b82f6}
+      .foot{font-size:11.5px;fill:#64748b}
+      .star{font-size:11px;font-weight:700;fill:#a855f7}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="700" fill="#ffffff"/>
+  <text x="40" y="42" class="title">홈캠 쓰러짐 감지 · 모델 레이어 &amp; 판별 로직</text>
+
+  <!-- ================= SECTION A : 모델 레이어 ================= -->
+  <text x="40" y="80" class="sec">① 모델 레이어 (파이프라인)</text>
+
+  <!-- box 1: camera -->
+  <rect x="40" y="95" width="175" height="105" rx="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="127" y="131" text-anchor="middle" class="bt">카메라 · L0</text>
+  <text x="127" y="153" text-anchor="middle" class="bs">아이폰 · 웹캠</text>
+  <text x="127" y="171" text-anchor="middle" class="bs">영상 프레임</text>
+
+  <!-- box 2: pose+object -->
+  <rect x="237" y="95" width="175" height="105" rx="12" fill="#ecfeff" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="324" y="131" text-anchor="middle" class="bt">포즈·사물 인식 · L1</text>
+  <text x="324" y="153" text-anchor="middle" class="bs">MediaPipe 33 · COCO-SSD</text>
+  <text x="324" y="171" text-anchor="middle" class="bs">관절·사람박스</text>
+  <text x="324" y="188" text-anchor="middle" class="bs" fill="#0891b2">쓰러짐 개념 없음</text>
+
+  <!-- box 3: heuristic -->
+  <rect x="434" y="95" width="175" height="105" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="521" y="131" text-anchor="middle" class="bt">휴리스틱 상태머신</text>
+  <text x="521" y="153" text-anchor="middle" class="bs">하강+수평+무동작</text>
+  <text x="521" y="171" text-anchor="middle" class="bs">= 쓰러진 상태 감지</text>
+  <text x="521" y="188" text-anchor="middle" class="bs" fill="#2563eb">L1.5 · 규칙 기반</text>
+
+  <!-- box 4: ST-GCN -->
+  <rect x="631" y="95" width="175" height="105" rx="12" fill="#faf5ff" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="718" y="131" text-anchor="middle" class="bt">ST-GCN · L2</text>
+  <text x="718" y="153" text-anchor="middle" class="bs">MultiScaleTCNAttn</text>
+  <text x="718" y="171" text-anchor="middle" class="bs">낙상 행위 판정</text>
+  <text x="718" y="188" text-anchor="middle" class="bs" fill="#9333ea" font-weight="700">★ 최종 결정</text>
+
+  <!-- box 5: Claude -->
+  <rect x="828" y="95" width="175" height="105" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="915" y="131" text-anchor="middle" class="bt">Claude Vision · L3</text>
+  <text x="915" y="153" text-anchor="middle" class="bs">의미 확인 (보조)</text>
+  <text x="915" y="171" text-anchor="middle" class="bs">요가·낮잠 오탐 제거</text>
+
+  <!-- box 6: emit -->
+  <rect x="1025" y="95" width="175" height="105" rx="12" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="1112" y="131" text-anchor="middle" class="bt">이벤트 발행</text>
+  <text x="1112" y="153" text-anchor="middle" class="bs">EmergencyEvent</text>
+  <text x="1112" y="171" text-anchor="middle" class="bs">→ 앱 · 119</text>
+
+  <!-- pipeline arrows -->
+  <line x1="217" y1="147" x2="234" y2="147" stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="414" y1="147" x2="431" y2="147" stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="611" y1="147" x2="628" y2="147" stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="808" y1="147" x2="825" y2="147" stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="1005" y1="147" x2="1022" y2="147" stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
+
+  <line x1="40" y1="218" x2="1200" y2="218" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ================= SECTION B : 판별 로직 ================= -->
+  <text x="40" y="252" class="sec">② 판별 로직 — 휴리스틱 3개 체크포인트(AND) → ST-GCN 결정</text>
+
+  <!-- checkpoint 1 -->
+  <rect x="190" y="272" width="200" height="88" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="290" y="304" text-anchor="middle" class="bt">① 하강</text>
+  <text x="290" y="326" text-anchor="middle" class="bs">엉덩이 하강 ≥ 기준</text>
+  <text x="290" y="344" text-anchor="middle" class="bs">하강 발생 감지 (휴리스틱)</text>
+
+  <!-- checkpoint 2 -->
+  <rect x="540" y="272" width="200" height="88" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="640" y="304" text-anchor="middle" class="bt">② 쓰러진 자세</text>
+  <text x="640" y="326" text-anchor="middle" class="bs">몸통 각도 ≥ 수평 기준</text>
+  <text x="640" y="344" text-anchor="middle" class="bs">어깨–엉덩이 각 (휴리스틱)</text>
+
+  <!-- checkpoint 3 -->
+  <rect x="890" y="272" width="200" height="88" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="990" y="304" text-anchor="middle" class="bt">③ 무동작</text>
+  <text x="990" y="326" text-anchor="middle" class="bs">약 2초 정지 유지</text>
+  <text x="990" y="344" text-anchor="middle" class="bs">움직이면 리셋 (휴리스틱)</text>
+
+  <text x="465" y="322" text-anchor="middle" class="and">AND</text>
+  <text x="815" y="322" text-anchor="middle" class="and">AND</text>
+
+  <!-- AND bus -> confirmed box -->
+  <line x1="290" y1="360" x2="290" y2="380" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="640" y1="360" x2="640" y2="380" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="990" y1="360" x2="990" y2="380" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="290" y1="380" x2="990" y2="380" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="640" y1="380" x2="640" y2="404" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrB)"/>
+
+  <!-- confirmed (VERIFYING) box -->
+  <rect x="470" y="406" width="340" height="66" rx="12" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+  <text x="640" y="434" text-anchor="middle" class="bt">쓰러진 상태 확정 (VERIFYING)</text>
+  <text x="640" y="456" text-anchor="middle" class="bs">3개 모두 충족 · 알람 아직 없음 → ST-GCN 실행</text>
+
+  <line x1="640" y1="472" x2="640" y2="502" stroke="#a855f7" stroke-width="2" marker-end="url(#arrP)"/>
+
+  <!-- ST-GCN decision diamond -->
+  <polygon points="640,504 742,562 640,620 538,562" fill="#faf5ff" stroke="#a855f7" stroke-width="2"/>
+  <text x="640" y="556" text-anchor="middle" class="lbl" fill="#7e22ce">ST-GCN 낙상확률</text>
+  <text x="640" y="574" text-anchor="middle" class="lbl" fill="#7e22ce">≥ 기준 ?</text>
+
+  <!-- YES -> alarm (right) -->
+  <line x1="742" y1="562" x2="898" y2="562" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrR)"/>
+  <text x="822" y="551" text-anchor="middle" class="lbl" fill="#16a34a">낙상 O</text>
+  <rect x="900" y="528" width="330" height="68" rx="12" fill="#dc2626" stroke="#b91c1c" stroke-width="2"/>
+  <text x="1065" y="557" text-anchor="middle" class="bt" fill="#ffffff">쓰러짐! · 이벤트 발행</text>
+  <text x="1065" y="579" text-anchor="middle" class="bs" fill="#fee2e2">→ 환자앱 · 주변인 · 119</text>
+
+  <!-- NO -> suppress (left) -->
+  <line x1="538" y1="562" x2="382" y2="562" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrG)"/>
+  <text x="460" y="551" text-anchor="middle" class="lbl" fill="#dc2626">낙상 X</text>
+  <rect x="50" y="528" width="330" height="68" rx="12" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+  <text x="215" y="557" text-anchor="middle" class="bt" fill="#166534">억제 · 정상 복귀 (NORMAL)</text>
+  <text x="215" y="579" text-anchor="middle" class="bs" fill="#15803d">누웠을 뿐 / 이미 누워 있음</text>
+
+  <!-- footer -->
+  <line x1="40" y1="640" x2="1240" y2="640" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="40" y="664" class="star">★ 최종 발행 결정은 ST-GCN. 휴리스틱은 "쓰러진 상태"까지만 감지 (하강 = 낙상 판정 아님).</text>
+  <text x="40" y="684" class="foot">본 정보는 참고용이며 의학적 진단이 아닙니다. · 홈캠 쓰러짐 감지 파트</text>
+</svg>

@@ -120,6 +120,9 @@ export type CollapseState =
   | "SUSPECTED"
   | "DOWN"
   | "IMMOBILE_CONFIRM"
+  // Down-state confirmed + immobile; halted while Layer 2 (ST-GCN) decides
+  // whether an actual fall ACTION occurred. No alarm yet (shown as "확인 중").
+  | "VERIFYING"
   | "CANDIDATE_EMITTED";
 
 // ---------------------------------------------------------------------------
@@ -151,6 +154,16 @@ export const THRESHOLDS = {
   /** Torso angle (deg from vertical) below which the body counts as upright. */
   TORSO_UPRIGHT_DEG: 30,
 
+  /**
+   * Vertical-collapse ratio: the body counts as "down" if the person's current
+   * vertical pixel span (keypoint head→foot extent) drops to ≤ this fraction of
+   * its recent tallest span in the window. Catches falls the torso ANGLE misses
+   * (away/toward the camera, high-angle CCTV) WITHOUT firing on a standing
+   * person close to the camera — who stays tall (ratio ~1). e.g. 0.6 => the body
+   * became ≤60% of its recent standing height.
+   */
+  VERTICAL_COLLAPSE_RATIO: 0.6,
+
   /** Frame window over which the vertical→horizontal flip must occur. */
   TRANSITION_WINDOW_FRAMES: 25,
 
@@ -163,8 +176,11 @@ export const THRESHOLDS = {
   ASPECT_RATIO_UPRIGHT_MAX: 0.6,
   ASPECT_RATIO_HORIZONTAL_MIN: 1.0,
 
-  /** Seconds the person must stay immobile after DOWN to confirm a candidate. */
-  IMMOBILE_SECONDS: 3,
+  /**
+   * Seconds the person must stay immobile after DOWN before handing off to the
+   * ST-GCN verification (i.e. "fell, then ~2s still" ⇒ run the fall-action model).
+   */
+  IMMOBILE_SECONDS: 2,
 
   /**
    * Movement threshold while immobile: max allowed hip-center displacement per

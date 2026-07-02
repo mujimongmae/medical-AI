@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>쓰러짐 감지 — 모델 레이어 & 판별 로직 다이어그램</title>
+<style>
+  body{margin:0;background:#0b0f17;color:#e8edf4;
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,sans-serif;
+    padding:28px 20px 60px}
+  .wrap{max-width:1320px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  p.sub{color:#9aa7b8;margin:0 0 18px}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
+  a.btn,button.btn{display:inline-block;background:#1f6feb;color:#fff;border:none;
+    padding:9px 16px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer}
+  a.btn.alt{background:#21262d;border:1px solid #30363d}
+  .frame{background:#fff;border-radius:12px;padding:8px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  .frame img{display:block;width:100%;height:auto;border-radius:6px}
+  .tip{color:#9aa7b8;font-size:13px;margin-top:16px;line-height:1.7}
+  code{background:#161b22;padding:2px 6px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🖼️ 쓰러짐 감지 — 모델 레이어 &amp; 판별 로직</h1>
+  <p class="sub">PPT에 넣을 수 있는 벡터(SVG) 다이어그램. 확대해도 깨지지 않습니다.</p>
+
+  <div class="bar">
+    <a class="btn" href="diagram.svg" download="collapse-detection-diagram.svg">⬇ SVG 다운로드 (PPT 삽입용)</a>
+    <a class="btn alt" href="diagram.svg" target="_blank" rel="noreferrer">↗ SVG 원본 열기</a>
+  </div>
+
+  <div class="frame">
+    <img src="diagram.svg" alt="모델 레이어 및 판별 로직 다이어그램" />
+  </div>
+
+  <p class="tip">
+    <b>PPT 삽입 방법</b> — 파워포인트(2016+)/구글 슬라이드: <code>삽입 → 그림</code>에서 내려받은
+    <code>collapse-detection-diagram.svg</code>를 선택하면 벡터로 들어가 크기를 키워도 선명합니다.
+    편집이 필요하면 PPT에서 SVG 우클릭 → <code>도형으로 변환</code> 후 색·글자 수정 가능.<br>
+    이미지(PNG)가 필요하면 이 페이지에서 다이어그램을 우클릭 → 이미지로 저장하거나, SVG를 연 뒤 스크린샷하세요.
+  </p>
+</div>
+</body>
+</html>

@@ -114,9 +114,17 @@ export function emitEmergencyEvent(event: EmergencyEvent): void {
   if (bc) {
     try {
       bc.postMessage(envelope);
+      console.info(
+        "[event-bus] ➡️ 전송 (BroadcastChannel)",
+        event.eventId,
+        `severity=${event.severity}`,
+      );
     } catch {
       // BroadcastChannel unsupported — Supabase (if any) still carries the event.
+      console.warn("[event-bus] ⚠️ BroadcastChannel 전송 실패", event.eventId);
     }
+  } else {
+    console.warn("[event-bus] ⚠️ 전송 채널 없음 (비브라우저?)", event.eventId);
   }
 
   // 2) Optional Supabase transport — fire-and-forget.
@@ -162,6 +170,7 @@ export function subscribeEmergencyEvents(
       if (seen.has(id)) return;
       seen.add(id);
     }
+    console.info("[event-bus] ⬅️ 수신 (receiver)", id, `severity=${envelope.event.severity}`);
     cb(envelope.event);
   };
 

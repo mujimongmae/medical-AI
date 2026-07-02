@@ -88,13 +88,36 @@ describe("collapse state machine", () => {
 
     expect(events).toHaveLength(1);
     const e = events[0];
-    expect(sm.getState()).toBe("CANDIDATE_EMITTED");
+    // Heuristic confirmed the down-state; it now HALTS in VERIFYING and hands
+    // off to ST-GCN. The alarm (CANDIDATE_EMITTED) only comes via confirm().
+    expect(sm.getState()).toBe("VERIFYING");
     expect(e.severity).toBe("critical");
     expect(e.signals.transition).toBe("abrupt");
     expect(e.signals.zone).toBe("floor");
     expect(e.signals.posture).toBe("horizontal");
-    expect(e.signals.immobileSeconds).toBeGreaterThanOrEqual(3);
+    expect(e.signals.immobileSeconds).toBeGreaterThanOrEqual(2);
     expect(e.status).toBe("candidate");
+
+    // ST-GCN confirms the fall action -> alarm; a later reset returns to NORMAL.
+    sm.confirm();
+    expect(sm.getState()).toBe("CANDIDATE_EMITTED");
+    sm.reset();
+    expect(sm.getState()).toBe("NORMAL");
+  });
+
+  it("(f) VERIFYING -> reset (ST-GCN says not a fall) suppresses, back to NORMAL", () => {
+    const { sm, events } = makeSM(FLOOR);
+    for (let i = 0; i <= 4; i++) sm.update(standing(i * 0.1));
+    sm.update(lying(0.5));
+    for (let t = 0.6; t <= 3.0; t += 0.1) sm.update(lying(Number(t.toFixed(1))));
+
+    // A candidate was handed off, machine halted for the decision.
+    expect(events).toHaveLength(1);
+    expect(sm.getState()).toBe("VERIFYING");
+
+    // ST-GCN rejects it -> reset -> NORMAL, ready to detect the next fall.
+    sm.reset();
+    expect(sm.getState()).toBe("NORMAL");
   });
 
   it("(b) slow lying down in bed => no candidate (zone suppression)", () => {
@@ -168,5 +191,32 @@ describe("collapse state machine", () => {
 
     expect(events).toHaveLength(0);
     expect(sm.getState()).toBe("NORMAL");
+  });
+
+  it("(e) onDown fires once at the DOWN moment, before emit", () => {
+    const events: EmergencyEvent[] = [];
+    // Record whether the emit had already happened when onDown fired.
+    const downMarkers: string[] = [];
+    const sm = createCollapseStateMachine({
+      cameraId: "cam-test",
+      zones: FLOOR,
+      onCandidate: (e) => events.push(e),
+      onDown: () =>
+        downMarkers.push(events.length === 0 ? "before-emit" : "after-emit"),
+    });
+
+    for (let i = 0; i <= 4; i++) sm.update(standing(i * 0.1));
+    sm.update(lying(0.5)); // fall completes -> DOWN
+
+    // onDown must have fired exactly once, at the fall, and BEFORE any emit.
+    expect(downMarkers).toEqual(["before-emit"]);
+    expect(events).toHaveLength(0); // immobility not yet satisfied
+
+    // Hold immobile past IMMOBILE_SECONDS -> emit; onDown does not fire again.
+    for (let t = 0.6; t <= 3.8; t += 0.1) {
+      sm.update(lying(Number(t.toFixed(1))));
+    }
+    expect(events).toHaveLength(1);
+    expect(downMarkers).toEqual(["before-emit"]);
   });
 });

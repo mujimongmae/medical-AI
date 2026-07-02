@@ -100,6 +100,18 @@ const ZONE_LABEL: Record<ZoneRect["zone"], string> = {
   couch: "소파",
 };
 
+/** COCO classes worth drawing (zone-relevant furniture). Everything else —
+ *  incl. spurious "keyboard"/"tv"/"cell phone" boxes — is hidden to keep the
+ *  demo clean. The person is drawn separately, so it's not in this set. */
+const RELEVANT_OBJECTS = new Set<string>([
+  "bed",
+  "couch",
+  "sofa",
+  "chair",
+  "dining table",
+  "bench",
+]);
+
 interface BannerStyle {
   text: string;
   bg: string;
@@ -107,7 +119,13 @@ interface BannerStyle {
   blink: boolean;
 }
 
-/** Maps a collapse state to its banner appearance. */
+/**
+ * Maps a collapse state to its banner appearance.
+ * IMPORTANT: the red "쓰러짐!" alarm appears ONLY at CANDIDATE_EMITTED — i.e.
+ * AFTER Layer 2 (ST-GCN) has confirmed an actual fall action. Every earlier
+ * down-state (heuristic-only) shows an orange "확인 중" so a person merely lying
+ * down / being verified never triggers a false red alarm.
+ */
 function bannerFor(state: CollapseState): BannerStyle {
   switch (state) {
     case "NORMAL":
@@ -116,6 +134,9 @@ function bannerFor(state: CollapseState): BannerStyle {
       return { text: "쓰러짐 의심", bg: "#f59e0b", blink: false }; // orange
     case "DOWN":
     case "IMMOBILE_CONFIRM":
+      return { text: "쓰러짐 확인 중…", bg: "#f59e0b", blink: false }; // orange
+    case "VERIFYING":
+      return { text: "AI 낙상 판정 중…", bg: "#f59e0b", blink: true }; // orange, pulsing
     case "CANDIDATE_EMITTED":
       return { text: "쓰러짐!", bg: "#dc2626", blink: true }; // red, blinking
     default:
@@ -211,9 +232,13 @@ export default function DetectionOverlay({
       const person = frame ? findPerson(frame.objects) : null;
 
       // 2) Object boxes + labels (skip person; drawn specially below).
+      //    Only furniture relevant to zones is drawn — this hides COCO-SSD
+      //    misdetections (e.g. a whole outdoor scene boxed as "keyboard"/"tv")
+      //    that would otherwise clutter the demo.
       if (frame) {
         for (const o of frame.objects) {
           if (o === person) continue;
+          if (!RELEVANT_OBJECTS.has(o.class)) continue;
           if (o.score < THRESHOLDS.MIN_OBJECT_SCORE) continue;
           const [ox, oy, ow, oh] = o.bbox;
           ctx.save();

@@ -117,7 +117,11 @@ export async function POST(req: Request): Promise<Response> {
             {
               type: "text",
               text:
-                "이 순차 키프레임에서 사람이 실제로 쓰러져(단순히 앉거나 누운 게 아니라) 움직이지 않는가? 진단이 아니라 신고 판단 보조다. report_collapse로만 답하라. 신호: " +
+                "홈캠 순차 키프레임이다. 사람이 갑자기 쓰러져(무너지듯/실신하듯) 움직이지 않는 응급 상황인지 판정하라. 진단이 아니라 119 신고 판단 보조다.\n" +
+                "- fallen: 사람이 통제 불능으로 무너져 내렸으면 true. **바닥뿐 아니라 소파·침대·의자 위로 쓰러진 경우도 포함**한다. 스스로 편하게 앉거나 눕는 '의도적·안정적' 자세는 false.\n" +
+                "- 구분 단서: 급격/부자연스러운 하강, 어색하게 늘어진(slumped) 끝자세, 이후 무반응. 아래 신호가 급격(abrupt)이고 무동작이 지속됐다면, 가구 위여도 fallen=true 쪽으로 판단하라(명백히 편안한 자세가 아니면).\n" +
+                "- motionless: 움직임이 없으면 true. needsHelp: 쓰러져 무반응으로 도움이 필요해 보이면 true.\n" +
+                "report_collapse로만 답하라. 신호(전이/구역/무동작초/자세): " +
                 JSON.stringify(signals),
             },
           ],

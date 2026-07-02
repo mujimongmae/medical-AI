@@ -100,12 +100,12 @@
       <div class="n">LAYER 1 · 포즈 + 트리거</div>
       <h3>MediaPipe Pose Landmarker (33 landmark) + 휴리스틱 상태머신</h3>
       골격 33개(3D)를 실시간 추출하고, <b>동작</b>으로 쓰러짐을 1차 감지합니다.
-      <div class="why">판정 규칙(동작 기반): <b>① 실제 누적 하강(net descent, 지터에 강건)</b> <b>AND</b> <b>② 몸통이 수직→수평으로 전환</b> — 둘 다 만족해야 트리거. 가만히 있거나 얼굴만 카메라에 가까워도(박스가 넓어져도) <b>하강+전환이 없으면 발동 안 함</b>. 침대·소파 존은 억제, 바닥은 의심.</div>
+      <div class="why">판정 규칙(동작 기반): <b>① 실제 누적 하강(net descent, 지터에 강건)</b> <b>AND</b> <b>② 쓰러진 자세(몸통 수평 <u>또는</u> 박스가 옆으로 퍼짐)</b> — 둘 다 만족해야 트리거. 가만히 있거나 얼굴만 카메라에 가까워도(박스가 넓어져도) <b>하강이 없으면 발동 안 함</b>. 침대·소파 존은 억제, 바닥은 의심. <span class="mut">(자세한 규칙·파라미터는 §4·§5)</span></div>
     </div>
     <div class="layer l2">
       <div class="n">LAYER 2 · 학습된 동작 인식</div>
       <h3>로컬 ST-GCN 낙상 모델 (MultiScaleTCNAttn)</h3>
-      트리거 순간, 최근 keypoint <b>시퀀스</b>를 학습된 모델에 보내 "낙하 동작" 확률을 받습니다. 휴리스틱이 놓치거나 헷갈리는 경우를 학습 모델이 보강.
+      <b>낙상 완료(DOWN) 순간</b>에 스냅샷한 최근 keypoint <b>시퀀스</b>를 학습된 모델에 보내 "낙하 동작" 확률을 받습니다. (발행 후가 아니라 DOWN 순간에 잘라, 탄도적 급락이 창의 최신 프레임에 오게 함.) 휴리스틱이 놓치거나 헷갈리는 경우를 학습 모델이 보강.
       <div class="why">이 노트북의 <b>로컬 파이썬(FastAPI) 백엔드</b>에서 PyTorch로 직접 추론 — 클라우드 없음. 입력이 우리 MediaPipe 33 keypoint와 <b>정확히 일치</b>(x, y, visibility)해 좌표 변환이 필요 없음.</div>
     </div>
     <div class="layer l3">
@@ -116,9 +116,162 @@
     </div>
   </div>
 
-  <h2>3. 왜 이 모델들인가 — 대안 비교 & 선정 이유</h2>
+  <h2>3. 레이어별 부품 이해 — 각 레이어가 무엇인가</h2>
+  <p class="mut">파이프라인의 각 레이어에 쓰이는 부품이 무엇이고, 무엇을 입력받아 무엇을 내놓는지. 핵심은 <b>L0·L1의 카메라/포즈/사물 모델에는 "쓰러짐" 개념이 없다</b>는 것 — "쓰러짐"은 L1.5에서 우리가 규칙으로 정의하고(§4), L2·L3가 이를 학습모델·VLM으로 보강합니다.</p>
 
-  <h3>3-1. 포즈 추정: MoveNet(17) → MediaPipe(33 3D)</h3>
+  <div class="card">
+    <div class="n" style="color:var(--mut);font-size:12px;font-weight:700">LAYER 0 · 입력</div>
+    <h3 style="margin-top:2px">카메라 (아이폰 연속성 카메라 / 웹캠)</h3>
+    <ul>
+      <li><b>무엇</b>: 홈캠 역할. 아이폰을 Mac의 웹캠으로 잡는 <b>연속성 카메라(Continuity Camera)</b>, 또는 일반 웹캠.</li>
+      <li><b>입력 → 출력</b>: 실세계 영상 → 브라우저 <code>getUserMedia</code>가 <code>&lt;video&gt;</code> 스트림으로 제공. 매 프레임을 L1이 소비.</li>
+      <li class="mut">localhost는 보안 컨텍스트(secure context)라 카메라 권한이 정상 동작. 시연 땐 심사위원이 볼 홈캠 = 발표자 아이폰.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="n" style="color:var(--cyan);font-size:12px;font-weight:700">LAYER 1 · 포즈 + 사물</div>
+    <h3 style="margin-top:2px">① MediaPipe Pose Landmarker (BlazePose)</h3>
+    <ul>
+      <li><b>무엇</b>: Google의 실시간 인체 포즈 추정 모델. 브라우저에서 WASM으로 구동.</li>
+      <li><b>입력 → 출력</b>: 카메라 프레임 한 장 → 신체 관절 <b>33개</b>의 <code>(x, y, z, visibility)</code>. (코·눈·어깨·팔꿈치·손목·엉덩이·무릎·발목 등)</li>
+      <li><b>우리 용도</b>: <b>어깨·엉덩이</b> 좌표로 몸통 각도(수직/수평)와 엉덩이 중심의 하강을 계산.</li>
+      <li class="mut">⚠️ "쓰러짐"을 모름 — "여기 어깨/엉덩이가 있다"까지만. 낙하·자세 판단은 우리 규칙의 몫.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">② COCO-SSD</h3>
+    <ul>
+      <li><b>무엇</b>: <b>COCO</b> 데이터셋으로 학습된 <b>SSD</b> 객체 탐지 모델(TensorFlow.js, 브라우저 구동).
+        <ul>
+          <li><b>COCO</b> = <i>Common Objects in Context</i>. 일상 사물 <b>80개 클래스</b>(person, bed, couch, chair, tv…).</li>
+          <li><b>SSD</b> = <i>Single Shot MultiBox Detector</i>. 이미지를 <b>한 번</b> 통과시켜 여러 사물의 박스+클래스를 동시에 예측하는 경량 탐지 구조(그래서 실시간).</li>
+        </ul>
+      </li>
+      <li><b>입력 → 출력</b>: 프레임 → <code>[클래스, 신뢰도, 박스(x,y,w,h)]</code> 목록.</li>
+      <li><b>우리 용도 2가지</b>:
+        <ul>
+          <li><b>사람 박스(person)</b> — 몸 크기(bodyHeight)와 가로세로비(aspect) 계산의 기준. 포즈 관절만으로도 박스를 만들 수 있지만(fallback), 사람 박스가 더 안정적.</li>
+          <li><b>구역 자동 감지</b> — bed·couch·chair를 찾아 "여긴 침대" 억제 구역으로. 침대에 눕는 건 응급이 아니므로 오탐 억제.</li>
+        </ul>
+      </li>
+      <li class="mut">⚠️ COCO 80클래스에 <b>"fall"이 없음</b> → COCO-SSD도 쓰러짐을 직접 알려주지 못함.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="n" style="color:var(--cyan);font-size:12px;font-weight:700">LAYER 1.5 · 트리거</div>
+    <h3 style="margin-top:2px">휴리스틱 상태머신 (우리가 작성)</h3>
+    <ul>
+      <li><b>무엇</b>: 학습 모델이 아니라 <b>손으로 짠 규칙 엔진</b>. L1의 관절·박스를 시간축으로 보고 "쓰러짐"을 판정.</li>
+      <li><b>입력 → 출력</b>: 프레임별 관절·박스 → 상태(NORMAL/SUSPECTED/DOWN…) + 쓰러짐 후보 이벤트.</li>
+      <li><b>왜 필요</b>: L0·L1이 "쓰러짐"을 안 주므로 누군가는 정의해야 함. 규칙이라 <b>왜 울렸는지 설명 가능</b>(블랙박스 아님)하고 임계값을 실시간 조절 가능.</li>
+      <li class="mut">→ 신호·상태 전이·파라미터 상세는 §4·§5.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="n" style="color:var(--purple);font-size:12px;font-weight:700">LAYER 2 · 학습된 동작 인식</div>
+    <h3 style="margin-top:2px">② 로컬 ST-GCN 낙상 모델 (arisu04 · MultiScaleTCNAttn)</h3>
+    <ul>
+      <li><b>무엇</b>: <b>낙상 데이터로 실제 훈련된</b> 딥러닝 분류기 — 우리 5개 레이어 중 "쓰러짐"을 학습한 <b>유일한</b> 모델.</li>
+      <li><b>ST-GCN이란</b>: <i>Spatial-Temporal Graph Convolutional Network</i>. 관절을 그래프 노드로, 시간축을 따라 <b>골격의 움직임 패턴</b>을 학습하는 동작 인식 표준 구조. (한 프레임이 아니라 시퀀스를 봄)</li>
+      <li><b>MultiScaleTCNAttn이란</b>: 이 구현체의 이름.
+        <ul>
+          <li><b>TCN</b> = <i>Temporal Convolutional Network</i>, 시간 방향 1D 합성곱으로 동작의 시간 패턴을 포착.</li>
+          <li><b>MultiScale</b> = 여러 시간창(64·128·256 프레임)을 동시에 봐 빠른 낙하~느린 붕괴를 모두 커버.</li>
+          <li><b>Attn(Attention/SE)</b> = 중요한 관절·채널에 가중치. (그래프 einsum이 없는 <b>순수 Conv2d</b>라 로컬·ONNX 친화)</li>
+        </ul>
+      </li>
+      <li><b>입력 → 출력</b>: MediaPipe 33관절 시퀀스 <code>(x, y, visibility)</code> → <b>"낙하 동작 확률"</b> + 지속(sustained) 여부.</li>
+      <li><b>언제 자르나</b>: <b>DOWN 전이(낙상 완료) 순간</b>에 최근 160프레임 버퍼를 스냅샷 → 급락이 창의 최신 프레임에 위치(무동작 대기로 희석되지 않음).</li>
+      <li><b>어디서 도나</b>: 이 노트북의 <b>로컬 파이썬(FastAPI)</b> 백엔드(<code>localhost:8000/fall</code>)에서 PyTorch로 직접 추론. 클라우드 없음.</li>
+      <li><b>우리 용도</b>: 트리거 순간 규칙 판정을 <b>보강/교차검증</b>(주 판정 아님). 지표·라이선스 불명이라 데모 보조로.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="n" style="color:var(--warn);font-size:12px;font-weight:700">LAYER 3 · 의미 확인</div>
+    <h3 style="margin-top:2px">③ Claude Vision (VLM)</h3>
+    <ul>
+      <li><b>무엇</b>: <b>VLM</b>(<i>Vision-Language Model</i>) — 이미지를 보고 언어로 추론하는 멀티모달 모델. 전용 낙상 분류기가 아니라 <b>범용 시각-언어 이해</b>.</li>
+      <li><b>입력 → 출력</b>: 트리거 순간의 <b>키프레임 여러 장</b>(multi-image) → "정말 쓰러져 무반응인가"를 <b>구조화 JSON</b>으로. (<code>fallen / motionless / needsHelp / confidence / reason</code>)</li>
+      <li><b>tool_use란</b>: 모델이 자유 문장이 아니라 <b>정해진 함수 스키마(JSON)로 답하게</b> 강제하는 기능. 프로그램이 바로 파싱 가능 → 오류 없는 연동.</li>
+      <li><b>어디서 도나</b>: Next.js 서버 라우트 <code>/api/confirm</code> → Claude API. <span class="mut">(<code>ANTHROPIC_API_KEY</code> 없으면 자동 "생략"되고 앱은 정상 동작)</span></li>
+      <li><b>우리 용도</b>: 요가·낮잠 등 규칙·학습모델이 놓친 <b>오탐을 의미적으로 최종 제거</b>. "챗봇 이상의 에이전트 워크플로우" 요건 충족.</li>
+    </ul>
+  </div>
+
+  <h2>4. 쓰러짐을 어떻게 정의했나 — 규칙 기반 상태머신</h2>
+  <p class="mut">사전학습 모델이 "쓰러짐"을 안 주므로, 관절 좌표의 <b>시간적 움직임</b>으로 우리가 정의합니다. 3개 신호 + 상태머신(<code>lib/collapse-state-machine.ts</code>).</p>
+
+  <div class="card">
+    <h3 style="margin-top:0">3개 신호 (매 프레임, 최근 시간창 기준으로 계산)</h3>
+    <ul>
+      <li><b>① 낙하 (dropSignal)</b> — 엉덩이 중심(좌·우 hip 중점)의 세로 위치가 시간창 안에서 <b>실제로 얼마나 내려갔는가</b>(net descent). 내려갔다 올라오면 상쇄되므로 <b>순간 튐/지터에 강건</b>. 몸 크기로 정규화해 <b>거리와 무관</b>. 기준 이상이면 낙하 인정.</li>
+      <li><b>② 쓰러진 자세 (endedDown)</b> — 지금 몸이 서 있지 않은가. 아래 <b>둘 중 하나</b>면 인정:
+        <ul>
+          <li><b>몸통 수평</b>: 어깨→엉덩이 선의 각도가 수평 기준 이상 (옆으로 넘어짐)</li>
+          <li><b>박스 퍼짐</b>: 사람 박스의 가로/세로 비가 기준 이상 (<b>카메라 쪽/뒤로</b> 넘어져 2D 각도가 안 나와도 박스가 옆으로 퍼지면 인정)</li>
+        </ul>
+      </li>
+      <li><b>③ 무동작 (immobility)</b> — 쓰러진 뒤 일정 시간 엉덩이 이동이 미미한가. 움직이면 타이머 리셋.</li>
+    </ul>
+    <div class="why"><b>핵심 안전장치</b>: 트리거는 <b>①낙하 AND ②쓰러진자세</b>를 모두 요구. 정적 자세나 근접 얼굴은 박스가 아무리 퍼져도 <b>낙하(descent)가 없어</b> 발동 안 함 → 오탐 방지. (예전엔 얼굴만 확대돼도 오탐났던 문제를 이 이중 게이트로 해결)</div>
+  </div>
+
+  <div class="flow">상태 전이:
+NORMAL ──(①낙하 + ②쓰러진자세)──▶ DOWN ──(③무동작 N초 유지)──▶ 후보 발행 ──▶ 앱 확인·119
+   │                                    │
+   └─(①낙하만, 자세 미충족)─▶ SUSPECTED ─┘   ▲
+        (곧 자세 충족 시 진행 / 아니면 복귀)   │
+   ※ 침대·소파 구역이면 억제(눕는 건 정상)     │
+   ※ 도중에 다시 일어서면(직립) ───────────────┘ NORMAL 복귀</div>
+
+  <h2>5. 파라미터(임계값) 설명</h2>
+  <p class="mut">단일 출처: <code>lib/types.ts</code>의 <code>THRESHOLDS</code>. 앞 4개는 홈캠 화면에서 <b>실시간 슬라이더</b>로 조절 가능하며, <b>값을 올리면 모두 "더 둔감"</b>(오탐↓·미탐↑) 방향으로 통일했습니다.</p>
+
+  <h3>실시간 조절 파라미터 (슬라이더)</h3>
+  <table>
+    <tr><th>슬라이더</th><th>코드명</th><th>의미</th><th>기본값</th><th>값 ↑ 올리면</th></tr>
+    <tr>
+      <td><b>낙하 민감도</b></td><td><code>DROP_DESCENT_NORMALIZED</code></td>
+      <td>엉덩이가 몸높이의 <b>몇 배</b> 내려가야 "낙하"로 볼지</td>
+      <td>0.20</td><td class="mut">더 많이 떨어져야 인정 → <b>둔감</b></td>
+    </tr>
+    <tr>
+      <td><b>쓰러짐 폭(박스)</b></td><td><code>ASPECT_RATIO_HORIZONTAL_MIN</code></td>
+      <td>박스 <b>가로/세로 비</b>가 얼마 이상이면 "누움"으로 볼지</td>
+      <td>1.0</td><td class="mut">더 옆으로 퍼져야 인정 → <b>둔감</b></td>
+    </tr>
+    <tr>
+      <td><b>수평 각도</b></td><td><code>TORSO_HORIZONTAL_DEG</code></td>
+      <td>몸통 각도(수직=0°)가 <b>몇 도</b> 이상이면 "수평"인지</td>
+      <td>60°</td><td class="mut">더 눕혀져야 수평 → <b>둔감</b></td>
+    </tr>
+    <tr>
+      <td><b>무동작 시간</b></td><td><code>IMMOBILE_SECONDS</code></td>
+      <td>쓰러진 뒤 <b>몇 초</b> 안 움직여야 신고할지</td>
+      <td>3초</td><td class="mut">더 오래 기다림 → <b>둔감</b>(신고 느려짐)</td>
+    </tr>
+  </table>
+
+  <h3>고정 보조 파라미터 (규칙 내부, 슬라이더 없음)</h3>
+  <table>
+    <tr><th>코드명</th><th>기본값</th><th>역할</th></tr>
+    <tr><td><code>DROP_SPEED_NORMALIZED</code></td><td>1.5</td><td>낙하 <b>속도</b>가 이 이상이면 "급격(abrupt)"으로 분류 → <b>심각도(critical) 판정</b>에만 영향. 트리거 게이트는 아님</td></tr>
+    <tr><td><code>TORSO_UPRIGHT_DEG</code></td><td>30°</td><td>몸통 각도가 이 이하면 "직립"으로 판단 → 다시 일어서면 NORMAL 복귀</td></tr>
+    <tr><td><code>ASPECT_RATIO_UPRIGHT_MAX</code></td><td>0.6</td><td>박스가 이보다 세로로 길면 "서 있음"으로 간주(자세 보조)</td></tr>
+    <tr><td><code>TRANSITION_WINDOW_FRAMES</code></td><td>25</td><td>낙하·자세 변화를 살피는 <b>시간창</b> 프레임 수(~1초)</td></tr>
+    <tr><td><code>IMMOBILE_MOVEMENT_NORMALIZED</code></td><td>0.05</td><td>무동작 판정 시 허용 이동량(몸높이 대비). 넘으면 타이머 리셋</td></tr>
+    <tr><td><code>MIN_POSE_SCORE</code> / <code>MIN_KEYPOINT_SCORE</code> / <code>MIN_OBJECT_SCORE</code></td><td>0.3 / 0.3 / 0.5</td><td>신뢰도 하한 — 이하의 포즈·관절·사물은 무시(노이즈 차단)</td></tr>
+  </table>
+  <div class="why">앞 4개가 슬라이더인 이유: <b>주 감지가 학습 모델이 아니라 "규칙"</b>이기 때문. 규칙의 임계값을 사람이 카메라 환경에 맞춰 직접 돌립니다. 순수 학습 모델이면 이런 노브가 없습니다. → 이것이 §6에서 <b>규칙 주력 + 모델 보조</b>를 택한 이유와 직결됩니다.</div>
+
+  <h2>6. 왜 이 모델들인가 — 대안 비교 & 선정 이유</h2>
+
+  <h3>6-1. 포즈 추정: MoveNet(17) → MediaPipe(33 3D)</h3>
   <table>
     <tr><th>후보</th><th>마커</th><th>특징</th><th>판정</th></tr>
     <tr><td>MoveNet Lightning/Thunder</td><td>17 (2D)</td><td>가장 빠름, 하지만 마커 수·깊이 부족</td><td class="maybe">초기안</td></tr>
@@ -127,7 +280,7 @@
   </table>
   <div class="why">채택 이유: 리서치 1순위. 마커가 거의 2배 + 3D 깊이로 낙하 기하를 더 정밀하게, 그리고 <b>브라우저에서 실시간</b>으로 돕니다.</div>
 
-  <h3>3-2. 시계열(동작) 낙상 모델 — 이게 핵심 선택</h3>
+  <h3>6-2. 시계열(동작) 낙상 모델 — 이게 핵심 선택</h3>
   <p class="mut">"넘어짐"은 한 장의 자세가 아니라 <b>시간에 걸친 동작</b>이라, 프레임 하나가 아닌 시퀀스를 보는 학습 모델이 필요합니다. 실물 가중치가 있는 후보를 전수 검증했습니다:</p>
   <table>
     <tr><th>후보</th><th>입력</th><th>배포</th><th>판정 / 이유</th></tr>
@@ -171,7 +324,7 @@
   <div class="why"><b>최종 선택: arisu04 MultiScaleTCNAttn.</b> 8개 실물 후보 중 유일하게 입력이 우리 포즈(33×3)와 100% 같아 오늘 밤 붙이는 마찰이 최소이고, 순수 Conv2d라 나중에 ONNX로 브라우저 이관도 깨끗합니다.</div>
   <div class="warnbox"><b>정직한 한계:</b> arisu04는 공개 성능 지표·라이선스가 없어 <b>데모/실증용</b>으로 씁니다. 발표에서 “검증된 정확도”라 주장하지 않습니다. 근거가 필요하면 MIT·지표 있는 <b>punpayut</b>로 교체하거나 병렬 앙상블합니다.</div>
 
-  <h3>3-3. 의미 확인 VLM: Claude Vision</h3>
+  <h3>6-3. 의미 확인 VLM: Claude Vision</h3>
   <table>
     <tr><th>후보</th><th>판정 / 이유</th></tr>
     <tr><td><b>Claude Vision</b></td><td class="pick">✅ 채택 — 스택이 이미 Claude API, multi-image + tool_use로 구조화 판정, 통합 최소</td></tr>
@@ -179,7 +332,7 @@
     <tr><td>Qwen2-VL 등 (서버)</td><td class="maybe">오픈 VLM 대안 (서버 필요)</td></tr>
   </table>
 
-  <h2>4. 왜 “캐스케이드”인가</h2>
+  <h2>7. 왜 “캐스케이드”인가</h2>
   <div class="card">
     경량·상시 트리거(포즈+휴리스틱)로 후보를 잡고, <b>무거운 확인(학습 모델 + VLM)은 트리거 순간에만</b> 돌립니다.
     <ul>
@@ -189,7 +342,7 @@
     </ul>
   </div>
 
-  <h2>5. 정직한 한계 (발표 방어)</h2>
+  <h2>8. 정직한 한계 (발표 방어)</h2>
   <div class="card mut">
     <ul>
       <li>영상만으로 <b>실신 vs 낮잠 구별·의학적 원인 진단은 불가</b> — 임상 gold-standard(의사)조차 주관적. 그래서 “진단”이 아니라 <b>“위험한 붕괴 패턴 감지 → 신고 지원”</b>으로 포지셔닝.</li>
@@ -199,7 +352,7 @@
     </ul>
   </div>
 
-  <h2>6. 기술 스택 & 실행</h2>
+  <h2>9. 기술 스택 & 실행</h2>
   <div class="card">
     <b>프론트</b> Next.js 15 · MediaPipe tasks-vision · TF.js(COCO-SSD) · Canvas 오버레이 (<code>localhost:3000</code>)<br>
     <b>로컬 모델 백엔드</b> Python 3.12 · FastAPI · PyTorch (<code>localhost:8000/fall</code>)<br>

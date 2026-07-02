@@ -37,14 +37,40 @@ interface Tuning {
   aspectHorizontalMin: number;
   torsoHorizontalDeg: number;
   immobileSeconds: number;
+  /** ST-GCN fall-action probability required to CONFIRM the alarm (page-level). */
+  fallActionProb: number;
 }
+
+/** Default ST-GCN decision threshold. Empirically: still ~0.28 vs fall ~0.51.
+ *  Kept modest because arisu04 is unproven — the final decision ORs it with the
+ *  (more reliable) Claude check, so a low ST-GCN score alone can't veto a fall. */
+const DEFAULT_FALL_ACTION_PROB = 0.3;
 
 const DEFAULT_TUNING: Tuning = {
   dropDescent: THRESHOLDS.DROP_DESCENT_NORMALIZED,
   aspectHorizontalMin: THRESHOLDS.ASPECT_RATIO_HORIZONTAL_MIN,
   torsoHorizontalDeg: THRESHOLDS.TORSO_HORIZONTAL_DEG,
   immobileSeconds: THRESHOLDS.IMMOBILE_SECONDS,
+  fallActionProb: DEFAULT_FALL_ACTION_PROB,
 };
+
+/**
+ * Combined fall verdict surfaced to the HUD. The final decision ORs the two
+ * models (safety-biased; the app-side cancel gate is the backstop): a fall is
+ * confirmed if EITHER the ST-GCN OR Claude says fall — so the unproven ST-GCN
+ * can't veto a real fall that Claude catches.
+ */
+interface FallVerdict {
+  isFall: boolean; // final combined decision
+  threshold: number;
+  stgcnRan: boolean;
+  stgcnProb: number;
+  stgcnFall: boolean;
+  claudeRan: boolean;
+  claudeFall: boolean;
+  /** No model ran → decided on geometry alone (false-positive-biased). */
+  undecided: boolean;
+}
 
 const CAMERA_ID = "homecam-1";
 
@@ -62,8 +88,9 @@ const ZONE_META: Record<DrawableZone, { label: string; color: string }> = {
 const STATE_LABEL: Record<CollapseState, string> = {
   NORMAL: "정상 감시 중",
   SUSPECTED: "쓰러짐 의심",
-  DOWN: "쓰러짐 감지",
+  DOWN: "쓰러진 자세 감지",
   IMMOBILE_CONFIRM: "무동작 확인 중",
+  VERIFYING: "AI 낙상 판정 중",
   CANDIDATE_EMITTED: "응급 신호 전송됨",
 };
 
@@ -96,6 +123,13 @@ export default function HomeCamPage() {
   const [fallBackendUp, setFallBackendUp] = useState(false);
   // Live diagnostic snapshot from the state machine (drives the debug HUD).
   const [debug, setDebug] = useState<CollapseDebug | null>(null);
+  // Last ST-GCN fall-action verdict (shown in the HUD under the heuristic).
+  const [lastVerdict, setLastVerdict] = useState<FallVerdict | null>(null);
+  // Test-video mode: run detection on an uploaded clip instead of the live cam.
+  const [videoMode, setVideoMode] = useState<"camera" | "file">("camera");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [videoLoop, setVideoLoop] = useState(false);
+  const fileUrlRef = useRef<string | null>(null);
   // Live-tunable detection thresholds (sliders). Read every frame via a ref so
   // a change takes effect instantly without recreating the state machine.
   const [tuning, setTuning] = useState<Tuning>(DEFAULT_TUNING);
@@ -118,6 +152,10 @@ export default function HomeCamPage() {
   // Rolling buffer of recent frames' keypoints (normalized 0..1 x,y,visibility)
   // for the local ST-GCN fall model. Filled in the rAF loop; read on trigger.
   const poseBufferRef = useRef<number[][][]>([]);
+  // Snapshot of the keypoint window captured at the DOWN moment (fall just
+  // completed) — this is what the ST-GCN scores, so the ballistic descent is the
+  // freshest motion rather than being diluted by the post-fall immobility wait.
+  const fallWindowRef = useRef<number[][][]>([]);
 
   // -- Poll the local ST-GCN fall backend so the UI shows its status. --
   useEffect(() => {
@@ -203,17 +241,45 @@ export default function HomeCamPage() {
       zones,
       captureKeyframe,
       getThresholds,
+      // Fall just completed → snapshot the recent keypoint window NOW so the
+      // ST-GCN sees the ballistic descent as the freshest motion (not diluted
+      // by the 3s immobility wait that precedes emission). The current frame is
+      // already pushed to the buffer before update() runs, so it's included.
+      onDown: () => {
+        fallWindowRef.current = poseBufferRef.current.slice(-160);
+      },
       // CANDIDATE → collect keyframes → Claude 2nd-stage confirm → emit enriched.
       // The emit is deferred until confirmation resolves (1~3s). Confirmation
       // never throws (skipped fallback), so the event is always emitted.
       onCandidate: (event) => {
         setConfirming(true);
-        // Snapshot the keypoint window at trigger time for the ST-GCN model.
-        const window = poseBufferRef.current.slice(-160);
+        // Heuristic confirmed a DOWN state and handed off. The machine is now
+        // halted in VERIFYING — NO alarm yet. We run Layer 2 (ST-GCN) to decide
+        // whether an actual fall ACTION occurred, then confirm() or reset().
+        console.info(
+          "[collapse] 🟠 쓰러진 상태 감지 → ST-GCN 판정 시작 (verify)",
+          event.eventId,
+          event.signals,
+        );
+        // Window snapshotted at the DOWN moment (descent-centered).
+        const poseWindow = fallWindowRef.current.length
+          ? fallWindowRef.current
+          : poseBufferRef.current.slice(-160);
+        const threshold = tuningRef.current.fallActionProb;
         void (async () => {
+          let enriched: EmergencyEvent = event;
+          let verdict: FallVerdict = {
+            isFall: true,
+            threshold,
+            stgcnRan: false,
+            stgcnProb: 0,
+            stgcnFall: false,
+            claudeRan: false,
+            claudeFall: false,
+            undecided: true,
+          };
           try {
-            // Layer 2 (local ST-GCN model) + Layer 3 (Claude Vision) run in
-            // parallel; both are graceful (skipped result if backend is down).
+            // Layer 2 (ST-GCN) + Layer 3 (Claude) run in parallel.
             const [confirmation, fallModel] = await Promise.all([
               collectKeyframes(4, 200).then((burst) =>
                 confirmCollapse(
@@ -223,16 +289,63 @@ export default function HomeCamPage() {
                   event.signals,
                 ),
               ),
-              scoreFall(window),
+              scoreFall(poseWindow),
             ]);
-            const enriched: EmergencyEvent = {
-              ...event,
-              confirmation,
-              fallModel,
+            enriched = { ...event, confirmation, fallModel };
+
+            const stgcnRan = fallModel.source === "local-stgcn";
+            const stgcnFall =
+              stgcnRan &&
+              (fallModel.probability >= threshold ||
+                (fallModel.sustained && fallModel.probability >= threshold - 0.1));
+            const claudeRan = confirmation.source === "claude";
+            const claudeFall = claudeRan && confirmation.fallen;
+            const anyRan = stgcnRan || claudeRan;
+            // DECISION: fall if EITHER model agrees. Neither ran → geometry only.
+            const isFall = anyRan ? stgcnFall || claudeFall : true;
+            verdict = {
+              isFall,
+              threshold,
+              stgcnRan,
+              stgcnProb: fallModel.probability,
+              stgcnFall,
+              claudeRan,
+              claudeFall,
+              undecided: !anyRan,
             };
-            emitEmergencyEvent(enriched);
-            setLastEvent(enriched);
+          } catch (err) {
+            console.warn("[collapse] 판정 단계 실패 — 기하 기반으로 발행", err);
+            verdict = { ...verdict, isFall: true, undecided: true };
           } finally {
+            setLastVerdict(verdict);
+            if (verdict.isFall) {
+              // Confirmed fall → promote to alarm + emit to the receiver/app.
+              machineRef.current?.confirm();
+              emitEmergencyEvent(enriched);
+              setLastEvent(enriched);
+              setDisplayState("CANDIDATE_EMITTED");
+              console.info("[collapse] 🚨 낙상 확정 → 발행", enriched.eventId, {
+                stgcn: verdict.stgcnRan
+                  ? `${verdict.stgcnProb.toFixed(2)}${verdict.stgcnFall ? "✓" : "✗"}`
+                  : "none",
+                claude: verdict.claudeRan
+                  ? verdict.claudeFall
+                    ? "fall✓"
+                    : "no✗"
+                  : "none",
+              });
+            } else {
+              // Down state but NEITHER model says fall → suppress + recover.
+              machineRef.current?.reset();
+              setDisplayState("NORMAL");
+              console.info("[collapse] ⏹️ 낙상 행위 아님 → 억제/복귀", {
+                stgcn: verdict.stgcnRan
+                  ? verdict.stgcnProb.toFixed(2)
+                  : "none",
+                claude: verdict.claudeRan ? "no" : "none",
+                threshold,
+              });
+            }
             setConfirming(false);
           }
         })();
@@ -370,7 +483,97 @@ export default function HomeCamPage() {
     machineRef.current?.reset();
     setDisplayState("NORMAL");
     setLastEvent(null);
+    setLastVerdict(null);
   }, []);
+
+  // Clear all detection state (machine + rolling buffers + UI) for a fresh run.
+  const clearDetectionState = useCallback(() => {
+    machineRef.current?.reset();
+    poseBufferRef.current = [];
+    fallWindowRef.current = [];
+    setDisplayState("NORMAL");
+    setLastEvent(null);
+    setLastVerdict(null);
+  }, []);
+
+  // -- Load a local video file and run the SAME detection pipeline on it. --
+  const loadVideoFile = useCallback(
+    (file: File) => {
+      const video = videoRef.current;
+      if (!video) return;
+      // Release the live camera so the device/light turns off.
+      const s = video.srcObject as MediaStream | null;
+      if (s) s.getTracks().forEach((t) => t.stop());
+      video.srcObject = null;
+      if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
+      const url = URL.createObjectURL(file);
+      fileUrlRef.current = url;
+      video.src = url;
+      video.loop = videoLoop;
+      video.muted = true;
+      video.playsInline = true;
+      // Slow playback so the (heavy) per-frame detection samples the fall's brief
+      // horizontal moment reliably — at 1x + ~15fps analysis it's flaky and can
+      // miss the collapse frames entirely (detect vs "정상" varies run to run).
+      video.playbackRate = 0.5;
+      video.currentTime = 0;
+      void video.play().catch(() => {});
+      setVideoMode("file");
+      setFileName(file.name);
+      clearDetectionState();
+    },
+    [videoRef, videoLoop, clearDetectionState],
+  );
+
+  const onPickFile = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const f = e.target.files?.[0];
+      if (f) loadVideoFile(f);
+      e.target.value = ""; // allow re-selecting the same file
+    },
+    [loadVideoFile],
+  );
+
+  const replayVideoFile = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    clearDetectionState();
+    video.currentTime = 0;
+    void video.play().catch(() => {});
+  }, [videoRef, clearDetectionState]);
+
+  const toggleLoop = useCallback(
+    (v: boolean) => {
+      setVideoLoop(v);
+      if (videoRef.current) videoRef.current.loop = v;
+    },
+    [videoRef],
+  );
+
+  const backToCamera = useCallback(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    }
+    if (fileUrlRef.current) {
+      URL.revokeObjectURL(fileUrlRef.current);
+      fileUrlRef.current = null;
+    }
+    setVideoMode("camera");
+    setFileName(null);
+    clearDetectionState();
+    requestCamera();
+  }, [videoRef, requestCamera, clearDetectionState]);
+
+  // Revoke the object URL on unmount.
+  useEffect(
+    () => () => {
+      if (fileUrlRef.current) URL.revokeObjectURL(fileUrlRef.current);
+    },
+    [],
+  );
 
   // Manual test: emit a synthetic candidate to verify the receiver/app path
   // end-to-end without a real fall (also a reliable fallback for the live demo).
@@ -430,8 +633,20 @@ export default function HomeCamPage() {
       {/* Status pills */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <StatusPill
-          label={`카메라: ${cameraStatusLabel(status)}`}
-          tone={status === "streaming" ? "ok" : status === "error" ? "bad" : "warn"}
+          label={
+            videoMode === "file"
+              ? "입력: 영상 파일"
+              : `카메라: ${cameraStatusLabel(status)}`
+          }
+          tone={
+            videoMode === "file"
+              ? "ok"
+              : status === "streaming"
+                ? "ok"
+                : status === "error"
+                  ? "bad"
+                  : "warn"
+          }
         />
         <StatusPill
           label={`AI 모델: ${detectorStatusLabel(detectorStatus)}`}
@@ -469,6 +684,49 @@ export default function HomeCamPage() {
         >
           🔔 테스트 알림 보내기
         </button>
+      </div>
+
+      {/* 테스트 영상으로 판별 (실제 낙상 클립을 라이브 카메라 대신 입력) */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/40 p-2.5 text-sm">
+        <span className="text-neutral-400">🎞️ 테스트 영상</span>
+        <label className="cursor-pointer rounded-md border border-sky-700 bg-sky-950/40 px-3 py-1.5 text-sky-200 hover:bg-sky-900/40">
+          영상 파일 선택
+          <input
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={onPickFile}
+          />
+        </label>
+        {videoMode === "file" && (
+          <>
+            <span className="max-w-[220px] truncate text-neutral-400">
+              {fileName}
+            </span>
+            <button
+              type="button"
+              onClick={replayVideoFile}
+              className="rounded-md border border-neutral-700 px-3 py-1.5 hover:bg-neutral-800"
+            >
+              ▶ 다시 재생
+            </button>
+            <label className="flex items-center gap-1.5 text-neutral-400">
+              <input
+                type="checkbox"
+                checked={videoLoop}
+                onChange={(e) => toggleLoop(e.target.checked)}
+              />
+              반복
+            </label>
+            <button
+              type="button"
+              onClick={backToCamera}
+              className="rounded-md border border-neutral-700 px-3 py-1.5 hover:bg-neutral-800"
+            >
+              📷 카메라로
+            </button>
+          </>
+        )}
       </div>
 
       {(error || detectorError) && (
@@ -543,7 +801,7 @@ export default function HomeCamPage() {
           </div>
         )}
 
-        {status !== "streaming" && (
+        {videoMode === "camera" && status !== "streaming" && (
           <div className="absolute inset-0 flex items-center justify-center text-center text-sm text-neutral-400">
             {status === "error"
               ? "카메라를 시작할 수 없습니다."
@@ -555,54 +813,111 @@ export default function HomeCamPage() {
       {/* 실시간 감지 진단 + 민감도 조절 (테스트/시연용) */}
       <section className="grid gap-5 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4 md:grid-cols-2">
         {/* 왼쪽: 라이브 신호 */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold text-neutral-300">
             실시간 감지 진단
           </h2>
           {!debug ? (
             <p className="text-xs text-neutral-500">감지 대기 중…</p>
           ) : (
-            <div className="flex flex-col gap-1.5 text-xs">
+            <>
               <Gate
                 label="포즈 인식"
                 ok={debug.hasPose}
                 detail={
                   debug.hasPose
                     ? "사람 골격 감지됨"
-                    : "사람/골격 안 잡힘 — 프레임 안에 전신이 보이게"
+                    : "사람/골격 안 잡힘 — 전신이 프레임에 보이게"
                 }
               />
-              <Gate
-                label="낙하 감지"
-                ok={debug.dropSignal}
-                detail={`낙하량 ${debug.netDrop.toFixed(2)} / 기준 ${tuning.dropDescent.toFixed(2)}`}
-              />
-              <Gate
-                label="쓰러진 자세"
-                ok={debug.endedDown}
-                detail={endedDownReason(debug, tuning)}
-              />
-              <div className="pl-6 text-neutral-500">
-                자세: {postureKo(debug.posture)} · 몸통각{" "}
-                {debug.torsoAngle < 0 ? "?" : `${Math.round(debug.torsoAngle)}°`}{" "}
-                · 박스비율{" "}
-                {debug.aspect === Infinity ? "∞" : debug.aspect.toFixed(2)}
+
+              {/* ① 휴리스틱 체크포인트 3개 */}
+              <div className="rounded-lg border border-neutral-800 bg-neutral-950/50 p-2.5">
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                  휴리스틱 체크포인트 (3)
+                </div>
+                <div className="flex flex-col gap-1.5 text-xs">
+                  <Gate
+                    label="① 하강"
+                    ok={isDownState(debug.state) || debug.dropSignal}
+                    detail={
+                      isDownState(debug.state)
+                        ? "충족 · 쓰러짐 구간 유지"
+                        : `하강량 ${debug.netDrop.toFixed(2)} / 기준 ${tuning.dropDescent.toFixed(2)}`
+                    }
+                  />
+                  <Gate
+                    label="② 쓰러진 자세"
+                    ok={isDownState(debug.state) || debug.endedDown}
+                    detail={
+                      isDownState(debug.state)
+                        ? "쓰러진 상태 유지 중"
+                        : endedDownReason(debug, tuning)
+                    }
+                  />
+                  <Gate
+                    label="③ 무동작"
+                    ok={
+                      isDownState(debug.state) &&
+                      debug.immobileSec >= tuning.immobileSeconds
+                    }
+                    detail={
+                      isDownState(debug.state)
+                        ? `${debug.immobileSec.toFixed(1)}초 / ${tuning.immobileSeconds}초`
+                        : "①·② 충족 후 측정"
+                    }
+                  />
+                </div>
+                <div className="mt-1.5 pl-6 text-[11px] text-neutral-600">
+                  참고 · 자세 {postureKo(debug.posture)} · 몸통각{" "}
+                  {debug.torsoAngle < 0
+                    ? "?"
+                    : `${Math.round(debug.torsoAngle)}°`}{" "}
+                  · 박스비율{" "}
+                  {debug.aspect === Infinity ? "∞" : debug.aspect.toFixed(2)}{" "}
+                  <span className="text-neutral-700">(박스는 판정에 미사용)</span>
+                </div>
               </div>
-              {(debug.state === "DOWN" ||
-                debug.state === "IMMOBILE_CONFIRM") && (
-                <Gate
-                  label="무동작 확인"
-                  ok={debug.immobileSec >= tuning.immobileSeconds}
-                  detail={`${debug.immobileSec.toFixed(1)}초 / ${tuning.immobileSeconds}초`}
-                />
-              )}
-            </div>
+
+              {/* ② 휴리스틱 최종값 (3개 AND) */}
+              <Gate
+                label="휴리스틱 최종"
+                ok={heuristicConfirmed(debug.state)}
+                detail={
+                  heuristicConfirmed(debug.state)
+                    ? "①·②·③ 모두 충족 → 쓰러진 상태 확정 → ST-GCN 전달"
+                    : `미확정 · ${STATE_LABEL[debug.state]}`
+                }
+              />
+
+              {/* ③ ST-GCN 판정 값 */}
+              <div className="rounded-lg border border-purple-900/60 bg-purple-950/20 p-2.5">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-purple-300/80">
+                  낙상 행위 판정 (ST-GCN OR Claude · 최종)
+                </div>
+                {debug.state === "VERIFYING" || confirming ? (
+                  <p className="text-xs text-purple-200">
+                    판정 중… (모델 계산)
+                  </p>
+                ) : lastVerdict ? (
+                  <Gate
+                    label={lastVerdict.isFall ? "낙상 O" : "낙상 X"}
+                    ok={lastVerdict.isFall}
+                    detail={verdictDetail(lastVerdict)}
+                  />
+                ) : (
+                  <p className="text-xs text-neutral-500">
+                    대기 — 쓰러진 상태 감지 시 실행
+                  </p>
+                )}
+              </div>
+            </>
           )}
           <p className="mt-1 text-[11px] leading-relaxed text-neutral-600">
-            쓰러짐 트리거 = <b className="text-neutral-400">낙하 감지</b> +{" "}
-            <b className="text-neutral-400">쓰러진 자세</b> (둘 다 초록).
-            이후 <b className="text-neutral-400">무동작</b>이 기준 시간 이상이면
-            응급 신호 전송.
+            흐름:{" "}
+            <b className="text-neutral-400">①하강 + ②자세 + ③무동작</b> → 휴리스틱
+            쓰러진 상태 확정 → <b className="text-purple-300">ST-GCN</b>이 실제 낙상
+            행위면 <b className="text-red-300">쓰러짐! 발행</b>, 아니면 억제·복귀.
           </p>
         </div>
 
@@ -621,29 +936,27 @@ export default function HomeCamPage() {
             </button>
           </div>
           <Slider
-            label="낙하 민감도"
+            label="하강 민감도 (휴리스틱)"
             value={tuning.dropDescent}
             min={0.1}
             max={0.8}
             step={0.05}
             fmt={(v) => v.toFixed(2)}
-            hint="클수록 더 많이 떨어져야 인정"
+            hint="클수록 더 많이 내려가야 하강 인정"
             onChange={(v) => setTuning((t) => ({ ...t, dropDescent: v }))}
           />
           <Slider
-            label="쓰러짐 폭(박스)"
-            value={tuning.aspectHorizontalMin}
-            min={0.6}
-            max={2.0}
-            step={0.1}
-            fmt={(v) => v.toFixed(1)}
-            hint="클수록 더 옆으로 퍼져야 인정"
-            onChange={(v) =>
-              setTuning((t) => ({ ...t, aspectHorizontalMin: v }))
-            }
+            label="ST-GCN 판정기준"
+            value={tuning.fallActionProb}
+            min={0.1}
+            max={0.9}
+            step={0.05}
+            fmt={(v) => `${Math.round(v * 100)}%`}
+            hint="클수록 더 확실한 낙상 동작만 인정"
+            onChange={(v) => setTuning((t) => ({ ...t, fallActionProb: v }))}
           />
           <Slider
-            label="수평 각도"
+            label="수평 각도 (휴리스틱)"
             value={tuning.torsoHorizontalDeg}
             min={30}
             max={85}
@@ -655,13 +968,13 @@ export default function HomeCamPage() {
             }
           />
           <Slider
-            label="무동작 시간"
+            label="무동작 시간 (휴리스틱)"
             value={tuning.immobileSeconds}
             min={0}
             max={6}
             step={0.5}
             fmt={(v) => `${v}초`}
-            hint="클수록 더 오래 안 움직여야 신고"
+            hint="클수록 더 오래 안 움직여야 ST-GCN 판정 진행"
             onChange={(v) => setTuning((t) => ({ ...t, immobileSeconds: v }))}
           />
         </div>
@@ -746,8 +1059,14 @@ export default function HomeCamPage() {
             {lastEvent.signals.immobileSeconds}초 · 전이{" "}
             {lastEvent.signals.transition === "abrupt" ? "급격" : "점진"}
           </p>
-          {lastEvent.confirmation && (
+          {lastEvent.fallModel?.source === "local-stgcn" && (
             <p className="mt-2 text-sm text-purple-200">
+              🤖 ST-GCN 낙상확률 {Math.round(lastEvent.fallModel.probability * 100)}%
+              {lastEvent.fallModel.sustained ? " · 지속" : ""}
+            </p>
+          )}
+          {lastEvent.confirmation && (
+            <p className="mt-1 text-sm text-purple-200">
               {lastEvent.confirmation.source === "claude"
                 ? `🧠 AI 확인: 쓰러짐 ${lastEvent.confirmation.fallen ? "O" : "X"} · 무반응 ${lastEvent.confirmation.motionless ? "O" : "X"} · 신뢰도 ${confidencePct(lastEvent.confirmation.confidence)}%`
                 : "AI 확인 생략(키 미설정)"}
@@ -867,13 +1186,44 @@ function postureKo(p: Posture): string {
   }
 }
 
-/** Human-readable reason for the "쓰러진 자세" gate's current state. */
+/** Reason for the "쓰러진 자세" gate — torso angle OR vertical-collapse. */
 function endedDownReason(d: CollapseDebug, t: Tuning): string {
-  if (d.posture === "horizontal") return "몸통이 수평";
-  if (d.aspectWide) return "박스가 옆으로 퍼짐";
   const ang = d.torsoAngle < 0 ? "?" : `${Math.round(d.torsoAngle)}°`;
-  const asp = d.aspect === Infinity ? "∞" : d.aspect.toFixed(2);
-  return `미충족 (몸통각 ${ang}<${Math.round(t.torsoHorizontalDeg)}° · 폭 ${asp}<${t.aspectHorizontalMin.toFixed(1)})`;
+  const need = Math.round(t.torsoHorizontalDeg);
+  const keep = `키 ${Math.round(d.heightRatio * 100)}%`;
+  if (d.posture === "horizontal") return `몸통 수평 (${ang} ≥ ${need}°)`;
+  if (d.verticalCollapse) return `수직 붕괴 (${keep} ↓)`;
+  return `미충족 (각 ${ang}<${need}° · ${keep})`;
+}
+
+/** States where the person is considered down (immobility being measured). */
+function isDownState(s: CollapseState): boolean {
+  return (
+    s === "DOWN" ||
+    s === "IMMOBILE_CONFIRM" ||
+    s === "VERIFYING" ||
+    s === "CANDIDATE_EMITTED"
+  );
+}
+
+/** Heuristic has confirmed the down-state (all 3 checkpoints) and handed off. */
+function heuristicConfirmed(s: CollapseState): boolean {
+  return s === "VERIFYING" || s === "CANDIDATE_EMITTED";
+}
+
+/** One-line detail for the combined verdict row (ST-GCN OR Claude). */
+function verdictDetail(v: FallVerdict): string {
+  if (v.undecided) return "모델 미연결 → 기하 기반 발행(안전측)";
+  const parts: string[] = [];
+  if (v.stgcnRan) {
+    parts.push(
+      `ST-GCN ${Math.round(v.stgcnProb * 100)}%/${Math.round(v.threshold * 100)}% ${v.stgcnFall ? "O" : "X"}`,
+    );
+  } else {
+    parts.push("ST-GCN 미연결");
+  }
+  parts.push(v.claudeRan ? `Claude ${v.claudeFall ? "O" : "X"}` : "Claude 미연결");
+  return parts.join(" · ");
 }
 
 function StatusPill({
