@@ -9,7 +9,7 @@
 // Open this window on the "home" side and /receiver in a second tab/device to
 // see the full alert flow. Camera only works over a secure context (localhost).
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCamera } from "@/hooks/useCamera";
 import { loadDetectors, type Detectors } from "@/lib/detectors";
 import {
@@ -17,7 +17,6 @@ import {
   type CollapseStateMachine,
   type CollapseDebug,
 } from "@/lib/collapse-state-machine";
-import { zonesFromDetections, type ZoneRect } from "@/lib/zone-map";
 import { emitEmergencyEvent } from "@/lib/event-bus";
 import { confirmCollapse } from "@/lib/confirm-client";
 import { scoreFall, checkFallBackend } from "@/lib/fall-client";
@@ -76,15 +75,6 @@ const CAMERA_ID = "homecam-1";
 
 type DetectorStatus = "idle" | "loading" | "ready" | "error";
 
-/** Zone types the user can draw (unknown is not drawable). */
-type DrawableZone = Exclude<Zone, "unknown">;
-
-const ZONE_META: Record<DrawableZone, { label: string; color: string }> = {
-  floor: { label: "바닥", color: "#f59e0b" },
-  bed: { label: "침대", color: "#60a5fa" },
-  couch: { label: "소파", color: "#a78bfa" },
-};
-
 const STATE_LABEL: Record<CollapseState, string> = {
   NORMAL: "정상 감시 중",
   SUSPECTED: "쓰러짐 의심",
@@ -94,21 +84,12 @@ const STATE_LABEL: Record<CollapseState, string> = {
   CANDIDATE_EMITTED: "응급 신호 전송됨",
 };
 
-/** A drag rectangle in container-CSS pixels (before conversion to source px). */
-interface DragRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
 export default function HomeCamPage() {
   const { videoRef, devices, activeDeviceId, selectDevice, requestCamera, status, error } =
     useCamera();
 
   const [frame, setFrame] = useState<DetectionFrame | null>(null);
   const [displayState, setDisplayState] = useState<CollapseState>("NORMAL");
-  const [zones, setZones] = useState<ZoneRect[]>([]);
   const [videoDims, setVideoDims] = useState<{ w: number; h: number }>({
     w: 0,
     h: 0,
@@ -137,10 +118,6 @@ export default function HomeCamPage() {
   tuningRef.current = tuning;
   const getThresholds = useCallback(() => tuningRef.current, []);
 
-  // Zone drawing UI.
-  const [drawTool, setDrawTool] = useState<DrawableZone | null>(null);
-  const [drag, setDrag] = useState<DragRect | null>(null);
-
   // Refs read by the rAF loop / machine so we avoid stale closures.
   const detectorsRef = useRef<Detectors | null>(null);
   const machineRef = useRef<CollapseStateMachine | null>(null);
@@ -148,7 +125,6 @@ export default function HomeCamPage() {
   const activeRef = useRef(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const keyframeCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   // Rolling buffer of recent frames' keypoints (normalized 0..1 x,y,visibility)
   // for the local ST-GCN fall model. Filled in the rAF loop; read on trigger.
   const poseBufferRef = useRef<number[][][]>([]);
@@ -238,7 +214,7 @@ export default function HomeCamPage() {
   useEffect(() => {
     machineRef.current = createCollapseStateMachine({
       cameraId: CAMERA_ID,
-      zones,
+      zones: [],
       captureKeyframe,
       getThresholds,
       // Fall just completed → snapshot the recent keypoint window NOW so the
@@ -352,7 +328,7 @@ export default function HomeCamPage() {
       },
     });
     setDisplayState("NORMAL");
-  }, [zones, captureKeyframe, collectKeyframes, getThresholds]);
+  }, [captureKeyframe, collectKeyframes, getThresholds]);
 
   // -- rAF detection loop (async body reschedules only after detect resolves). --
   useEffect(() => {
@@ -411,74 +387,6 @@ export default function HomeCamPage() {
     }
   }, [videoRef]);
 
-  // -- Zone drawing: pointer handlers convert CSS px → source px on commit. --
-  const toSourcePx = useCallback(
-    (rect: DragRect): ZoneRect["bbox"] => {
-      const el = containerRef.current;
-      if (!el || videoDims.w === 0 || videoDims.h === 0) {
-        return [rect.x, rect.y, rect.w, rect.h];
-      }
-      const box = el.getBoundingClientRect();
-      const sx = videoDims.w / box.width;
-      const sy = videoDims.h / box.height;
-      return [rect.x * sx, rect.y * sy, rect.w * sx, rect.h * sy];
-    },
-    [videoDims],
-  );
-
-  const onPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!drawTool) return;
-      const box = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - box.left;
-      const y = e.clientY - box.top;
-      dragStartRef.current = { x, y };
-      setDrag({ x, y, w: 0, h: 0 });
-      e.currentTarget.setPointerCapture(e.pointerId);
-    },
-    [drawTool],
-  );
-
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const start = dragStartRef.current;
-      if (!start) return;
-      const box = e.currentTarget.getBoundingClientRect();
-      const cx = e.clientX - box.left;
-      const cy = e.clientY - box.top;
-      setDrag({
-        x: Math.min(start.x, cx),
-        y: Math.min(start.y, cy),
-        w: Math.abs(cx - start.x),
-        h: Math.abs(cy - start.y),
-      });
-    },
-    [],
-  );
-
-  const onPointerUp = useCallback(() => {
-    const d = drag;
-    const tool = drawTool;
-    dragStartRef.current = null;
-    setDrag(null);
-    if (!tool || !d || d.w < 8 || d.h < 8) return; // ignore stray taps
-    const bbox = toSourcePx(d);
-    setZones((prev) => [...prev, { zone: tool, bbox }]);
-    setDrawTool(null);
-  }, [drag, drawTool, toSourcePx]);
-
-  const autoDetectZones = useCallback(() => {
-    if (!frame) return;
-    const detected = zonesFromDetections(frame.objects);
-    if (detected.length > 0) setZones((prev) => [...prev, ...detected]);
-  }, [frame]);
-
-  const clearZones = useCallback(() => setZones([]), []);
-  const undoZone = useCallback(
-    () => setZones((prev) => prev.slice(0, -1)),
-    [],
-  );
-
   const resetDetection = useCallback(() => {
     machineRef.current?.reset();
     setDisplayState("NORMAL");
@@ -512,10 +420,7 @@ export default function HomeCamPage() {
       video.loop = videoLoop;
       video.muted = true;
       video.playsInline = true;
-      // Slow playback so the (heavy) per-frame detection samples the fall's brief
-      // horizontal moment reliably — at 1x + ~15fps analysis it's flaky and can
-      // miss the collapse frames entirely (detect vs "정상" varies run to run).
-      video.playbackRate = 0.5;
+      video.playbackRate = 1;
       video.currentTime = 0;
       void video.play().catch(() => {});
       setVideoMode("file");
@@ -597,10 +502,6 @@ export default function HomeCamPage() {
     emitEmergencyEvent(event);
     setLastEvent(event);
   }, [captureKeyframe]);
-
-  // Stable ref for the overlay (avoids redundant redraws when unrelated state
-  // changes; zones array identity only changes on actual edits).
-  const overlayZones = useMemo(() => zones, [zones]);
 
   const isAlarm =
     displayState === "DOWN" ||
@@ -772,34 +673,9 @@ export default function HomeCamPage() {
         <DetectionOverlay
           frame={frame}
           state={displayState}
-          zones={overlayZones}
           sourceWidth={videoDims.w}
           sourceHeight={videoDims.h}
         />
-
-        {/* Drawing interaction layer (only active while a zone tool is armed). */}
-        {drawTool && (
-          <div
-            className="absolute inset-0 z-10 cursor-crosshair touch-none"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-          >
-            {drag && (
-              <div
-                className="absolute border-2 border-dashed"
-                style={{
-                  left: drag.x,
-                  top: drag.y,
-                  width: drag.w,
-                  height: drag.h,
-                  borderColor: ZONE_META[drawTool].color,
-                  backgroundColor: ZONE_META[drawTool].color + "22",
-                }}
-              />
-            )}
-          </div>
-        )}
 
         {videoMode === "camera" && status !== "streaming" && (
           <div className="absolute inset-0 flex items-center justify-center text-center text-sm text-neutral-400">
@@ -978,63 +854,6 @@ export default function HomeCamPage() {
             onChange={(v) => setTuning((t) => ({ ...t, immobileSeconds: v }))}
           />
         </div>
-      </section>
-
-      {/* Zone tools */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-neutral-300">
-          구역 지정{" "}
-          <span className="font-normal text-neutral-500">
-            — 침대·소파는 오탐 억제, 바닥은 의심 구역
-          </span>
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(ZONE_META) as DrawableZone[]).map((z) => (
-            <button
-              key={z}
-              type="button"
-              onClick={() => setDrawTool((cur) => (cur === z ? null : z))}
-              className={
-                "rounded-md border px-3 py-2 text-sm transition " +
-                (drawTool === z
-                  ? "border-white bg-white/10 font-semibold"
-                  : "border-neutral-700 hover:bg-neutral-800")
-              }
-              style={drawTool === z ? { borderColor: ZONE_META[z].color } : undefined}
-            >
-              {drawTool === z ? `${ZONE_META[z].label} 그리는 중…` : `${ZONE_META[z].label} 지정`}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={autoDetectZones}
-            disabled={!frame}
-            className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:bg-neutral-800 disabled:opacity-40"
-          >
-            자동 감지(침대/소파)
-          </button>
-          <button
-            type="button"
-            onClick={undoZone}
-            disabled={zones.length === 0}
-            className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:bg-neutral-800 disabled:opacity-40"
-          >
-            마지막 취소
-          </button>
-          <button
-            type="button"
-            onClick={clearZones}
-            disabled={zones.length === 0}
-            className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:bg-neutral-800 disabled:opacity-40"
-          >
-            모두 지우기
-          </button>
-        </div>
-        {zones.length > 0 && (
-          <p className="text-xs text-neutral-500">
-            지정된 구역: {zones.map((z) => ZONE_META[z.zone].label).join(", ")}
-          </p>
-        )}
       </section>
 
       {/* AI 2차 확인 진행 표시 (CANDIDATE → Claude 확인 → emit 사이) */}
