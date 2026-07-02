@@ -1,0 +1,24 @@
+# secrets & env
+.env
+.env.*
+!.env.example
+
+# personal Claude Code config (개인용, 공유 안 함)
+.claude/settings.local.json
+
+# medical data — 절대 커밋 금지
+**/patient-data/
+*.real.csv
+*.phi.*
+
+# node / next
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# misc
+.DS_Store
+*.log
+.vercel
