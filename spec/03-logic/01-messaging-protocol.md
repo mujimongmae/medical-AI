@@ -45,7 +45,7 @@
 | type | 받는 쪽 | payload | 의미 |
 |------|---------|---------|------|
 | `ALERT_SELF` | 환자 | `{eventId, timeoutSec:15}` | 15초 큰 알림음 재생 시작 |
-| `NEIGHBOR_ALERT` | 이웃(대상만) | `{eventId, patient:{name,addressText,accessNote}, protocolId}` | 응급 호출 (소리 알림) |
+| `NEIGHBOR_ALERT` | 이웃(대상만) | `{eventId, patient:{name,addressText,accessNote}, protocolId?, priorityHint?}` | 응급 호출 (소리 알림). `priorityHint`=병력 기반 우선 프로토콜 id 순서(힌트, 분기는 클라 triage.ts) |
 | `PROTOCOL_STEP` | 이웃 | `{eventId, step, prompt, inputType, options?}` | 다음 프로토콜 단계 제시 |
 | `EVENT_RESOLVED` | 환자·이웃 | `{eventId, reason}` | 종료(해제/구급대 인계 등) |
 
@@ -96,18 +96,23 @@
 - ws 끊김 → 앱 자동 재연결 후 `HELLO` 재전송. 진행중 `eventId` 상태는 서버가 보유.
 
 ## 4. 데이터
-- 서버 로컬 저장(SQLite/JSON): `users(id,role,name,village,home,병력)`, `events(eventId,patientId,state,ts)`, 알림 로그.
+- 서버 저장(현재: in-memory Map. 추후 SQLite): `users(id,role,name,village,home,병력)`, `events(eventId,patientId,state,ts)`, 알림 로그.
+- **데모 시드**: 서버 시작 시 `server/seed.ts`가 등록부에 데모 페르소나(환자1 + 이웃4, 마을 "방림리", 합성 좌표/병력)를 자동 주입. 시드 id는 `seed-*` 접두사 → `/api/register`의 `dev-NNN` 시퀀스와 충돌 없음. mock fall-event 대상 = `SEED_PATIENT_ID`(`seed-patient-1`).
 - **합성 데이터만.** 이름·주소·병력·좌표 전부 가짜. 실제 PHI/PII 금지.
 - 상세 스키마 → [`../04-data-model/`](../04-data-model/README.md) (예정).
 
 ## 5. 의료 안전성 체크
 - [x] **응급(호흡 없음/심정지) → 119를 최우선.** (`fall-event` 무반응 시 119 모의신고가 이웃 호출보다 먼저)
-- [ ] 디스클레이머 노출: "본 정보는 참고용이며 의학적 진단이 아닙니다." (프로토콜 화면)
+- [x] 디스클레이머 노출: 앱 상단 `GLOBAL_DISCLAIMER` 상시 + 이웃앱 프로토콜 화면에 프로토콜별 `disclaimer` 재노출.
 - [x] 확정 진단/처방 없음 — 프로토콜은 사전 정의된 응급 조치 안내만, "전문의/구급대 지시 우선".
+- [x] **시크릿·PHI 감사 통과(2026-07-02):** `ANTHROPIC_API_KEY`는 `server/claude.ts`의 `process.env`에서만 사용(VITE_ 프리픽스 아님 → 클라 번들 미노출, `app/dist` 스캔 clean, `.gitignore`가 `.env*` 제외). 등록·시드·환자카드·주소 전부 합성("(합성)"/"(합성 주소)") — 실제 PHI/PII/좌표 하드코딩 없음. 상세 → [`../02-design/01-demo-scenario.md`](../02-design/01-demo-scenario.md) §7.
 - [ ] 프로토콜 조치 리스트의 의료적 타당성 검토 (medical-domain 에이전트).
 
 ## 6. 미해결 / TODO
 - [x] `POST /fall-event`를 **교체 가능한 이벤트 소스**로 설계 — 지금은 mock 생성기, 나중에 실제 영상인식 스왑. (payload 실제 필드는 프로그램 확정 시 합의·갱신)
+- [x] `POST /voice` 구현 — 온디바이스 STT 텍스트 → Claude(`server/claude.ts`, model `claude-opus-4-8`) 짧은 요약. `ANTHROPIC_API_KEY` 게이트, 키 없으면 에코 폴백(빌드·실행 유지). 진단·처방 금지(요약만).
+- [x] 데모 시드(`server/seed.ts`) — §4.
+- [x] 병력 기반 우선순위 힌트 — `NEIGHBOR_ALERT.priorityHint`(서버가 병력→프로토콜 id 순서 생성). 분기 자체는 클라 `triage.ts` 유지.
 - [ ] 이웃 선별 파라미터(거리 임계·명수) 확정 → 3.3.
 - [ ] 프로토콜 전체 분기(호흡 이후 단계) 별도 문서로 정의 + Claude 우선순위 프롬프트 설계.
 - [ ] ws 재연결·상태 복구 정책 세부.
