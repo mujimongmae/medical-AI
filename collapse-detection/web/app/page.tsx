@@ -15,17 +15,36 @@ import { loadDetectors, type Detectors } from "@/lib/detectors";
 import {
   createCollapseStateMachine,
   type CollapseStateMachine,
+  type CollapseDebug,
 } from "@/lib/collapse-state-machine";
 import { zonesFromDetections, type ZoneRect } from "@/lib/zone-map";
 import { emitEmergencyEvent } from "@/lib/event-bus";
 import { confirmCollapse } from "@/lib/confirm-client";
+import { scoreFall, checkFallBackend } from "@/lib/fall-client";
 import DetectionOverlay from "@/components/DetectionOverlay";
-import type {
-  CollapseState,
-  DetectionFrame,
-  EmergencyEvent,
-  Zone,
+import {
+  THRESHOLDS,
+  type CollapseState,
+  type DetectionFrame,
+  type EmergencyEvent,
+  type Posture,
+  type Zone,
 } from "@/lib/types";
+
+/** Live-tunable detection thresholds (mirrors state-machine TunableThresholds). */
+interface Tuning {
+  dropDescent: number;
+  aspectHorizontalMin: number;
+  torsoHorizontalDeg: number;
+  immobileSeconds: number;
+}
+
+const DEFAULT_TUNING: Tuning = {
+  dropDescent: THRESHOLDS.DROP_DESCENT_NORMALIZED,
+  aspectHorizontalMin: THRESHOLDS.ASPECT_RATIO_HORIZONTAL_MIN,
+  torsoHorizontalDeg: THRESHOLDS.TORSO_HORIZONTAL_DEG,
+  immobileSeconds: THRESHOLDS.IMMOBILE_SECONDS,
+};
 
 const CAMERA_ID = "homecam-1";
 
@@ -73,6 +92,16 @@ export default function HomeCamPage() {
   // True while the Claude 2nd-stage confirmation is in flight (between CANDIDATE
   // and the actual emit). Drives the "AI 확인 중…" indicator.
   const [confirming, setConfirming] = useState(false);
+  // Whether the local ST-GCN fall backend (localhost:8000) is reachable.
+  const [fallBackendUp, setFallBackendUp] = useState(false);
+  // Live diagnostic snapshot from the state machine (drives the debug HUD).
+  const [debug, setDebug] = useState<CollapseDebug | null>(null);
+  // Live-tunable detection thresholds (sliders). Read every frame via a ref so
+  // a change takes effect instantly without recreating the state machine.
+  const [tuning, setTuning] = useState<Tuning>(DEFAULT_TUNING);
+  const tuningRef = useRef<Tuning>(tuning);
+  tuningRef.current = tuning;
+  const getThresholds = useCallback(() => tuningRef.current, []);
 
   // Zone drawing UI.
   const [drawTool, setDrawTool] = useState<DrawableZone | null>(null);
@@ -86,6 +115,22 @@ export default function HomeCamPage() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const keyframeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  // Rolling buffer of recent frames' keypoints (normalized 0..1 x,y,visibility)
+  // for the local ST-GCN fall model. Filled in the rAF loop; read on trigger.
+  const poseBufferRef = useRef<number[][][]>([]);
+
+  // -- Poll the local ST-GCN fall backend so the UI shows its status. --
+  useEffect(() => {
+    let alive = true;
+    const ping = () =>
+      void checkFallBackend().then((up) => alive && setFallBackendUp(up));
+    ping();
+    const id = setInterval(ping, 5000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
 
   // -- Load detectors once (singleton is safe under StrictMode double-mount). --
   useEffect(() => {
@@ -157,22 +202,34 @@ export default function HomeCamPage() {
       cameraId: CAMERA_ID,
       zones,
       captureKeyframe,
+      getThresholds,
       // CANDIDATE → collect keyframes → Claude 2nd-stage confirm → emit enriched.
       // The emit is deferred until confirmation resolves (1~3s). Confirmation
       // never throws (skipped fallback), so the event is always emitted.
       onCandidate: (event) => {
         setConfirming(true);
+        // Snapshot the keypoint window at trigger time for the ST-GCN model.
+        const window = poseBufferRef.current.slice(-160);
         void (async () => {
           try {
-            const burst = await collectKeyframes(4, 200);
-            const keyframes = event.keyframeDataUrl
-              ? [event.keyframeDataUrl, ...burst]
-              : burst;
-            const confirmation = await confirmCollapse(
-              keyframes,
-              event.signals,
-            );
-            const enriched: EmergencyEvent = { ...event, confirmation };
+            // Layer 2 (local ST-GCN model) + Layer 3 (Claude Vision) run in
+            // parallel; both are graceful (skipped result if backend is down).
+            const [confirmation, fallModel] = await Promise.all([
+              collectKeyframes(4, 200).then((burst) =>
+                confirmCollapse(
+                  event.keyframeDataUrl
+                    ? [event.keyframeDataUrl, ...burst]
+                    : burst,
+                  event.signals,
+                ),
+              ),
+              scoreFall(window),
+            ]);
+            const enriched: EmergencyEvent = {
+              ...event,
+              confirmation,
+              fallModel,
+            };
             emitEmergencyEvent(enriched);
             setLastEvent(enriched);
           } finally {
@@ -182,7 +239,7 @@ export default function HomeCamPage() {
       },
     });
     setDisplayState("NORMAL");
-  }, [zones, captureKeyframe, collectKeyframes]);
+  }, [zones, captureKeyframe, collectKeyframes, getThresholds]);
 
   // -- rAF detection loop (async body reschedules only after detect resolves). --
   useEffect(() => {
@@ -198,10 +255,23 @@ export default function HomeCamPage() {
           const f = await det.detect(video, performance.now());
           if (!activeRef.current) return;
           setFrame(f);
+          // Buffer normalized keypoints (0..1 x,y,visibility) for the ST-GCN
+          // model. keypoints[i] is landmark i (BlazePose index order).
+          if (f.pose && f.width > 0 && f.height > 0) {
+            const norm = f.pose.keypoints.map((k) => [
+              k.x / f.width,
+              k.y / f.height,
+              k.score,
+            ]);
+            const buf = poseBufferRef.current;
+            buf.push(norm);
+            if (buf.length > 300) buf.splice(0, buf.length - 300);
+          }
           const m = machineRef.current;
           if (m) {
             m.update(f);
             setDisplayState(m.getState());
+            setDebug(m.getDebug());
           }
         } catch {
           // Skip this frame on a transient inference error; keep looping.
@@ -374,6 +444,10 @@ export default function HomeCamPage() {
           }
         />
         <StatusPill
+          label={`낙상모델: ${fallBackendUp ? "연결됨" : "미연결"}`}
+          tone={fallBackendUp ? "ok" : "warn"}
+        />
+        <StatusPill
           label={`상태: ${STATE_LABEL[displayState]}`}
           tone={isAlarm ? "bad" : displayState === "SUSPECTED" ? "warn" : "ok"}
         />
@@ -477,6 +551,121 @@ export default function HomeCamPage() {
           </div>
         )}
       </div>
+
+      {/* 실시간 감지 진단 + 민감도 조절 (테스트/시연용) */}
+      <section className="grid gap-5 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4 md:grid-cols-2">
+        {/* 왼쪽: 라이브 신호 */}
+        <div className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold text-neutral-300">
+            실시간 감지 진단
+          </h2>
+          {!debug ? (
+            <p className="text-xs text-neutral-500">감지 대기 중…</p>
+          ) : (
+            <div className="flex flex-col gap-1.5 text-xs">
+              <Gate
+                label="포즈 인식"
+                ok={debug.hasPose}
+                detail={
+                  debug.hasPose
+                    ? "사람 골격 감지됨"
+                    : "사람/골격 안 잡힘 — 프레임 안에 전신이 보이게"
+                }
+              />
+              <Gate
+                label="낙하 감지"
+                ok={debug.dropSignal}
+                detail={`낙하량 ${debug.netDrop.toFixed(2)} / 기준 ${tuning.dropDescent.toFixed(2)}`}
+              />
+              <Gate
+                label="쓰러진 자세"
+                ok={debug.endedDown}
+                detail={endedDownReason(debug, tuning)}
+              />
+              <div className="pl-6 text-neutral-500">
+                자세: {postureKo(debug.posture)} · 몸통각{" "}
+                {debug.torsoAngle < 0 ? "?" : `${Math.round(debug.torsoAngle)}°`}{" "}
+                · 박스비율{" "}
+                {debug.aspect === Infinity ? "∞" : debug.aspect.toFixed(2)}
+              </div>
+              {(debug.state === "DOWN" ||
+                debug.state === "IMMOBILE_CONFIRM") && (
+                <Gate
+                  label="무동작 확인"
+                  ok={debug.immobileSec >= tuning.immobileSeconds}
+                  detail={`${debug.immobileSec.toFixed(1)}초 / ${tuning.immobileSeconds}초`}
+                />
+              )}
+            </div>
+          )}
+          <p className="mt-1 text-[11px] leading-relaxed text-neutral-600">
+            쓰러짐 트리거 = <b className="text-neutral-400">낙하 감지</b> +{" "}
+            <b className="text-neutral-400">쓰러진 자세</b> (둘 다 초록).
+            이후 <b className="text-neutral-400">무동작</b>이 기준 시간 이상이면
+            응급 신호 전송.
+          </p>
+        </div>
+
+        {/* 오른쪽: 민감도 슬라이더 */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-300">
+              민감도 조절
+            </h2>
+            <button
+              type="button"
+              onClick={() => setTuning(DEFAULT_TUNING)}
+              className="rounded-md border border-neutral-700 px-2.5 py-1 text-xs hover:bg-neutral-800"
+            >
+              기본값 복원
+            </button>
+          </div>
+          <Slider
+            label="낙하 민감도"
+            value={tuning.dropDescent}
+            min={0.1}
+            max={0.8}
+            step={0.05}
+            fmt={(v) => v.toFixed(2)}
+            hint="클수록 더 많이 떨어져야 인정"
+            onChange={(v) => setTuning((t) => ({ ...t, dropDescent: v }))}
+          />
+          <Slider
+            label="쓰러짐 폭(박스)"
+            value={tuning.aspectHorizontalMin}
+            min={0.6}
+            max={2.0}
+            step={0.1}
+            fmt={(v) => v.toFixed(1)}
+            hint="클수록 더 옆으로 퍼져야 인정"
+            onChange={(v) =>
+              setTuning((t) => ({ ...t, aspectHorizontalMin: v }))
+            }
+          />
+          <Slider
+            label="수평 각도"
+            value={tuning.torsoHorizontalDeg}
+            min={30}
+            max={85}
+            step={5}
+            fmt={(v) => `${Math.round(v)}°`}
+            hint="클수록 더 눕혀져야 '수평'으로 인정"
+            onChange={(v) =>
+              setTuning((t) => ({ ...t, torsoHorizontalDeg: v }))
+            }
+          />
+          <Slider
+            label="무동작 시간"
+            value={tuning.immobileSeconds}
+            min={0}
+            max={6}
+            step={0.5}
+            fmt={(v) => `${v}초`}
+            hint="클수록 더 오래 안 움직여야 신고"
+            onChange={(v) => setTuning((t) => ({ ...t, immobileSeconds: v }))}
+          />
+        </div>
+      </section>
 
       {/* Zone tools */}
       <section className="flex flex-col gap-2">
@@ -595,6 +784,97 @@ export default function HomeCamPage() {
 // ---------------------------------------------------------------------------
 // Small presentational helpers.
 // ---------------------------------------------------------------------------
+
+/** One live-signal row in the debug HUD: a check dot + label + detail. */
+function Gate({
+  label,
+  ok,
+  detail,
+}: {
+  label: string;
+  ok: boolean;
+  detail: string;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <span
+        className={
+          "mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold " +
+          (ok ? "bg-green-600 text-white" : "bg-neutral-700 text-neutral-400")
+        }
+      >
+        {ok ? "✓" : "·"}
+      </span>
+      <span className="w-[4.5rem] shrink-0 text-neutral-300">{label}</span>
+      <span className={ok ? "text-green-300" : "text-neutral-500"}>{detail}</span>
+    </div>
+  );
+}
+
+/** A labeled range slider with a live value and a strict/loose hint. */
+function Slider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  fmt,
+  hint,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  fmt: (v: number) => string;
+  hint: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-xs">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-neutral-300">{label}</span>
+        <span className="font-mono text-neutral-100">
+          {fmt(value)}{" "}
+          <span className="text-[10px] font-sans text-amber-400/80">
+            🔼 클수록 둔감
+          </span>
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-amber-500"
+      />
+      <span className="text-[10px] text-neutral-600">{hint}</span>
+    </label>
+  );
+}
+
+function postureKo(p: Posture): string {
+  switch (p) {
+    case "horizontal":
+      return "수평";
+    case "upright":
+      return "직립";
+    default:
+      return "미상";
+  }
+}
+
+/** Human-readable reason for the "쓰러진 자세" gate's current state. */
+function endedDownReason(d: CollapseDebug, t: Tuning): string {
+  if (d.posture === "horizontal") return "몸통이 수평";
+  if (d.aspectWide) return "박스가 옆으로 퍼짐";
+  const ang = d.torsoAngle < 0 ? "?" : `${Math.round(d.torsoAngle)}°`;
+  const asp = d.aspect === Infinity ? "∞" : d.aspect.toFixed(2);
+  return `미충족 (몸통각 ${ang}<${Math.round(t.torsoHorizontalDeg)}° · 폭 ${asp}<${t.aspectHorizontalMin.toFixed(1)})`;
+}
 
 function StatusPill({
   label,

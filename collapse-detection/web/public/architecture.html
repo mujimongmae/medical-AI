@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>홈캠 쓰러짐 감지 — 전체 구조 & 모델 설명</title>
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#141a24; --panel2:#1b2330; --bd:#28303d;
+    --fg:#e8edf4; --mut:#9aa7b8; --acc:#5eb1ff; --ok:#3fb950; --warn:#e3b341;
+    --bad:#f0665a; --purple:#b083f0; --cyan:#3fd0d6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:32px 20px 80px;}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+  h2{font-size:20px;margin:40px 0 14px;padding-top:18px;border-top:1px solid var(--bd)}
+  h3{font-size:16px;margin:20px 0 8px}
+  .lead{color:var(--mut);font-size:16px;margin:0 0 8px}
+  .tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;
+    background:#12304a;color:var(--acc);margin-right:6px}
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:12px;padding:18px 20px;margin:14px 0}
+  .mut{color:var(--mut)}
+  code{background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .flow{background:var(--panel2);border:1px solid var(--bd);border-radius:12px;padding:20px;
+    font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.9;white-space:pre;overflow-x:auto;color:#cdd8e6}
+  .layers{display:flex;flex-direction:column;gap:12px}
+  .layer{background:var(--panel);border:1px solid var(--bd);border-left:4px solid var(--acc);
+    border-radius:10px;padding:14px 18px}
+  .layer .n{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.05em}
+  .layer h3{margin:2px 0 6px}
+  .l1{border-left-color:var(--cyan)} .l2{border-left-color:var(--purple)}
+  .l3{border-left-color:var(--warn)} .l0{border-left-color:var(--mut)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+  th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .pick{color:var(--ok);font-weight:700}
+  .no{color:var(--bad)}
+  .maybe{color:var(--warn)}
+  .why{background:#0f1d16;border:1px solid #1c3b28;border-radius:8px;padding:10px 14px;margin:8px 0;color:#b7e6c6;font-size:14px}
+  .warnbox{background:#241d0c;border:1px solid #4a3a12;border-radius:8px;padding:10px 14px;margin:8px 0;color:#e6d29a;font-size:14px}
+  ul{margin:8px 0;padding-left:22px} li{margin:4px 0}
+  .kpi{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
+  .kpi div{background:var(--panel2);border:1px solid var(--bd);border-radius:10px;padding:10px 16px;flex:1;min-width:150px}
+  .kpi b{font-size:22px;display:block}
+  .foot{color:var(--mut);font-size:12px;margin-top:40px;border-top:1px solid var(--bd);padding-top:16px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🏠 홈캠 쓰러짐 감지 — 전체 구조 & 모델 설명</h1>
+  <p class="lead">카메라에 잡힌 사람이 쓰러지면, 여러 AI 레이어가 단계적으로 판단해 신고 지연을 분 단위로 줄입니다.</p>
+  <div>
+    <span class="tag">SDOH 기반</span><span class="tag">3층 캐스케이드</span>
+    <span class="tag">온디바이스 + 로컬 모델 + VLM</span>
+  </div>
+
+  <h2>0. 왜 이걸 만드나 (근거)</h2>
+  <div class="card">
+    <div class="kpi">
+      <div><b>47%</b><span class="mut">병원 밖 심정지가 <b>가정</b>에서 발생 (질병청 2023)</span></div>
+      <div><b>7–10%p</b><span class="mut">심정지 1분 지연당 생존율 <b>감소</b> (Larsen 1993)</span></div>
+      <div><b>2.61×</b><span class="mut">목격된 심정지의 생존 가능성 (무목격 대비)</span></div>
+    </div>
+    심뇌혈관 응급은 <b>“분(分) 단위” 질환</b>입니다. 그런데 절반이 목격자가 가장 적은 공간(집)에서 발생합니다.
+    <b>“쓰러졌는데 아무도 즉시 모르는”</b> 신고 지연을 자동 감지로 없애는 것이 이 서비스의 핵심 가치입니다.
+    <span class="mut">(강원 등 의료취약지·독거 맥락 — screening/06·07 근거)</span>
+  </div>
+
+  <h2>1. 전체 파이프라인</h2>
+  <div class="flow">[아이폰 홈캠]  카메라 영상
+      │
+      ▼
+[Layer 1] MediaPipe Pose Landmarker ── 사람 골격 33개 3D 마커 추출 (브라우저, 실시간)
+      │  + COCO-SSD 객체 탐지 (사람·침대·소파 박스)
+      ▼
+[Layer 1.5] 휴리스틱 상태머신 ── "급격한 하강 + 몸통 수직→수평" 동작 감지 (트리거)
+      │        NORMAL → SUSPECTED → DOWN → 무동작 3초 → 후보!
+      ▼  ┌─────────────── 트리거 시에만 (병렬) ───────────────┐
+      ├─▶[Layer 2] 로컬 ST-GCN 낙상 모델 ── keypoint 시퀀스로 "낙하 동작" 확률 (로컬 파이썬)
+      └─▶[Layer 3] Claude Vision ── 키프레임 보고 "정말 쓰러져 무반응인가" 판정 (VLM)
+      │
+      ▼
+[EmergencyEvent 발행] → (팀원 서버) → 환자 앱 / 주변인 앱 / 119   ← 큰 알람 + 취소 게이트</div>
+  <p class="mut">감지 파트(이 저장소)의 책임은 <b>EmergencyEvent 발행까지</b>. 이후 환자·주변인 폰으로의 라우팅과 119는 앱 서버(팀원 담당)가 처리합니다.</p>
+
+  <h2>2. 3층 캐스케이드 — 각 레이어와 모델</h2>
+  <div class="layers">
+    <div class="layer l0">
+      <div class="n">LAYER 0 · 입력</div>
+      <h3>카메라 (아이폰 연속성 카메라 / 웹캠)</h3>
+      <span class="mut">아이폰을 Mac의 웹캠으로 연결. 브라우저 <code>getUserMedia</code>가 인식. localhost는 보안 컨텍스트라 권한 정상.</span>
+    </div>
+    <div class="layer l1">
+      <div class="n">LAYER 1 · 포즈 + 트리거</div>
+      <h3>MediaPipe Pose Landmarker (33 landmark) + 휴리스틱 상태머신</h3>
+      골격 33개(3D)를 실시간 추출하고, <b>동작</b>으로 쓰러짐을 1차 감지합니다.
+      <div class="why">판정 규칙(동작 기반): <b>① 실제 누적 하강(net descent, 지터에 강건)</b> <b>AND</b> <b>② 몸통이 수직→수평으로 전환</b> — 둘 다 만족해야 트리거. 가만히 있거나 얼굴만 카메라에 가까워도(박스가 넓어져도) <b>하강+전환이 없으면 발동 안 함</b>. 침대·소파 존은 억제, 바닥은 의심.</div>
+    </div>
+    <div class="layer l2">
+      <div class="n">LAYER 2 · 학습된 동작 인식</div>
+      <h3>로컬 ST-GCN 낙상 모델 (MultiScaleTCNAttn)</h3>
+      트리거 순간, 최근 keypoint <b>시퀀스</b>를 학습된 모델에 보내 "낙하 동작" 확률을 받습니다. 휴리스틱이 놓치거나 헷갈리는 경우를 학습 모델이 보강.
+      <div class="why">이 노트북의 <b>로컬 파이썬(FastAPI) 백엔드</b>에서 PyTorch로 직접 추론 — 클라우드 없음. 입력이 우리 MediaPipe 33 keypoint와 <b>정확히 일치</b>(x, y, visibility)해 좌표 변환이 필요 없음.</div>
+    </div>
+    <div class="layer l3">
+      <div class="n">LAYER 3 · 의미 확인 (VLM)</div>
+      <h3>Claude Vision (multi-image + tool_use)</h3>
+      트리거 순간의 키프레임 몇 장을 Claude에 보내 <b>“실제로 쓰러져 움직이지 않는 응급인가”</b>를 구조화 JSON으로 판정. 요가·낮잠 등 오탐을 의미적으로 제거.
+      <div class="why">우리 스택이 이미 Claude API라 통합이 쉽고, "챗봇 이상의 에이전트 워크플로우"를 정면으로 충족. <span class="mut">(키 없으면 자동 생략되고 앱은 정상 동작)</span></div>
+    </div>
+  </div>
+
+  <h2>3. 왜 이 모델들인가 — 대안 비교 & 선정 이유</h2>
+
+  <h3>3-1. 포즈 추정: MoveNet(17) → MediaPipe(33 3D)</h3>
+  <table>
+    <tr><th>후보</th><th>마커</th><th>특징</th><th>판정</th></tr>
+    <tr><td>MoveNet Lightning/Thunder</td><td>17 (2D)</td><td>가장 빠름, 하지만 마커 수·깊이 부족</td><td class="maybe">초기안</td></tr>
+    <tr><td><b>MediaPipe Pose Landmarker</b></td><td><b>33 (3D)</b></td><td>손·발·얼굴까지 조밀, z-depth로 수직 낙하·상체 각도 정밀, 브라우저 실시간</td><td class="pick">✅ 채택</td></tr>
+    <tr><td>ViTPose / RTMPose</td><td>17</td><td>정확하나 top-down·무거움 → 브라우저 실시간 부적합</td><td class="no">서버용</td></tr>
+  </table>
+  <div class="why">채택 이유: 리서치 1순위. 마커가 거의 2배 + 3D 깊이로 낙하 기하를 더 정밀하게, 그리고 <b>브라우저에서 실시간</b>으로 돕니다.</div>
+
+  <h3>3-2. 시계열(동작) 낙상 모델 — 이게 핵심 선택</h3>
+  <p class="mut">"넘어짐"은 한 장의 자세가 아니라 <b>시간에 걸친 동작</b>이라, 프레임 하나가 아닌 시퀀스를 보는 학습 모델이 필요합니다. 실물 가중치가 있는 후보를 전수 검증했습니다:</p>
+  <table>
+    <tr><th>후보</th><th>입력</th><th>배포</th><th>판정 / 이유</th></tr>
+    <tr>
+      <td><b>arisu04<br>MultiScaleTCNAttn</b></td>
+      <td><b>33관절 × (x,y,vis)</b></td>
+      <td>로컬(파이썬)<br>+ ONNX 가능</td>
+      <td class="pick">✅ 채택 — 입력이 우리 MediaPipe 33과 <b>완전 일치(변환 0)</b>, 순수 Conv2d(einsum 없음)라 ONNX·로컬 친화, 가중치 실재</td>
+    </tr>
+    <tr>
+      <td>punpayut (Transformer)</td>
+      <td>MediaPipe 17kp</td>
+      <td>tflite → 브라우저</td>
+      <td class="maybe">대안 — <b>MIT 라이선스 + F1 94.9%</b>(방어 근거 강함). 17kp라 서브셋 매핑 필요</td>
+    </tr>
+    <tr>
+      <td>GajuuzZ / OliviaNocentini<br>(TSSTG · ST-GCN)</td>
+      <td>14노드 skeleton</td>
+      <td>서버 (PyTorch)</td>
+      <td class="maybe">가능하나 einsum·5D → 브라우저 ONNX 리스크, 관절 포맷 변환 필요 → 서버 경로</td>
+    </tr>
+    <tr>
+      <td>mmaction2 ST-GCN (NTU)</td>
+      <td>NTU 25관절 3D</td>
+      <td>서버</td>
+      <td class="maybe">공식·최상 신뢰, 하지만 낙상 전용 아님(“falling” 클래스만) + NTU 포맷 변환 → 로드맵</td>
+    </tr>
+    <tr>
+      <td>VideoMAE / TimeSformer</td>
+      <td class="no">RGB 비디오 클립</td>
+      <td>서버 GPU</td>
+      <td class="no">제외 — 입력이 원본 영상이라 우리 keypoint 스트림에 매핑 불가, 무겁고 일부 비상업 라이선스</td>
+    </tr>
+    <tr>
+      <td>Kinetics ST-GCN (ailia ONNX)</td>
+      <td>skeleton</td>
+      <td>ONNX</td>
+      <td class="no">제외 — ONNX는 있으나 <b>낙상 클래스가 없음</b>(Kinetics-400)</td>
+    </tr>
+  </table>
+  <div class="why"><b>최종 선택: arisu04 MultiScaleTCNAttn.</b> 8개 실물 후보 중 유일하게 입력이 우리 포즈(33×3)와 100% 같아 오늘 밤 붙이는 마찰이 최소이고, 순수 Conv2d라 나중에 ONNX로 브라우저 이관도 깨끗합니다.</div>
+  <div class="warnbox"><b>정직한 한계:</b> arisu04는 공개 성능 지표·라이선스가 없어 <b>데모/실증용</b>으로 씁니다. 발표에서 “검증된 정확도”라 주장하지 않습니다. 근거가 필요하면 MIT·지표 있는 <b>punpayut</b>로 교체하거나 병렬 앙상블합니다.</div>
+
+  <h3>3-3. 의미 확인 VLM: Claude Vision</h3>
+  <table>
+    <tr><th>후보</th><th>판정 / 이유</th></tr>
+    <tr><td><b>Claude Vision</b></td><td class="pick">✅ 채택 — 스택이 이미 Claude API, multi-image + tool_use로 구조화 판정, 통합 최소</td></tr>
+    <tr><td>SmolVLM / Moondream (온디바이스)</td><td class="maybe">브라우저 게이트 대안(더 저렴, 정확도 낮음)</td></tr>
+    <tr><td>Qwen2-VL 등 (서버)</td><td class="maybe">오픈 VLM 대안 (서버 필요)</td></tr>
+  </table>
+
+  <h2>4. 왜 “캐스케이드”인가</h2>
+  <div class="card">
+    경량·상시 트리거(포즈+휴리스틱)로 후보를 잡고, <b>무거운 확인(학습 모델 + VLM)은 트리거 순간에만</b> 돌립니다.
+    <ul>
+      <li><b>오탐↓</b>: 단일 판정보다 확인 단계를 얹으면 앉기·눕기 오판이 크게 줄어듦 (SmartHome-Bench: VLM 체이닝 +11.62%p).</li>
+      <li><b>골든타임</b>: 상시 무거운 모델을 안 돌려 지연·비용·프라이버시를 아낌.</li>
+      <li><b>안전판</b>: 위양성 편향으로 “웬만하면 알림” → 앱의 <b>취소 게이트</b>가 오탐을 회수 (119 앞엔 항상 사람/무응답 확인).</li>
+    </ul>
+  </div>
+
+  <h2>5. 정직한 한계 (발표 방어)</h2>
+  <div class="card mut">
+    <ul>
+      <li>영상만으로 <b>실신 vs 낮잠 구별·의학적 원인 진단은 불가</b> — 임상 gold-standard(의사)조차 주관적. 그래서 “진단”이 아니라 <b>“위험한 붕괴 패턴 감지 → 신고 지원”</b>으로 포지셔닝.</li>
+      <li>낙상 감지 ≠ 심정지 감지. 심정지 특화(호흡/agonal breathing)는 로드맵.</li>
+      <li>어두운 방·가림에서 포즈 정확도 저하 — 조명/배치 전제.</li>
+      <li>모든 AI 응답에 디스클레이머: “본 정보는 참고용이며 의학적 진단이 아닙니다.” 응급 시 119 안내 최우선.</li>
+    </ul>
+  </div>
+
+  <h2>6. 기술 스택 & 실행</h2>
+  <div class="card">
+    <b>프론트</b> Next.js 15 · MediaPipe tasks-vision · TF.js(COCO-SSD) · Canvas 오버레이 (<code>localhost:3000</code>)<br>
+    <b>로컬 모델 백엔드</b> Python 3.12 · FastAPI · PyTorch (<code>localhost:8000/fall</code>)<br>
+    <b>확인 레이어</b> Claude API (<code>/api/confirm</code>)<br>
+    <b>이벤트/앱 서버</b> 팀원 담당 (환자·주변인 앱 라우팅, 119)<br>
+    <span class="mut">전부 이 노트북(데모 서버)에서 구동. 환자·주변인 앱은 심사위원 폰에서 접속.</span>
+  </div>
+
+  <div class="foot">
+    홈캠 쓰러짐 감지 파트 · 근거 리서치: screening/06(효용성)·07(낙상vs눕기)·08(의료CV 가능성)·09(아키텍처)·10(모델 실물 탐색).
+    본 정보는 참고용이며 의학적 진단이 아닙니다.
+  </div>
+
+</div>
+</body>
+</html>

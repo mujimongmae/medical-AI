@@ -60,6 +60,16 @@ export interface EmergencyEvent {
     confidence: number;
     reason: string;
   };
+  /**
+   * Optional learned-model signal. The local ST-GCN (MultiScaleTCNAttn) service
+   * scores the recent keypoint window for a fall action. `source` is
+   * "local-stgcn" when scored, "skipped" when the backend is unreachable.
+   */
+  fallModel?: {
+    source: "local-stgcn" | "skipped";
+    probability: number;
+    sustained: boolean;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -127,10 +137,13 @@ export const THRESHOLDS = {
   /**
    * Fall GATE: net downward travel of the hip-center over the window, as a
    * fraction of body height. Robust to single-frame jitter (a spike that
-   * returns nets ~0). e.g. 0.5 => the hip fell half a body-height. A fall needs
-   * this AND a torso flip to horizontal — static posture never triggers.
+   * returns nets ~0). e.g. 0.20 => the hip fell ~a fifth of a body-height.
+   * Webcam falls rarely show half a body-height of hip travel before the
+   * person exits frame, so this is tuned low; a fall needs this descent AND
+   * an "ended down" signal (torso horizontal OR wide bbox) — static posture,
+   * a close-up face, or hip jitter alone never trigger.
    */
-  DROP_DESCENT_NORMALIZED: 0.5,
+  DROP_DESCENT_NORMALIZED: 0.2,
 
   /** Torso angle (deg from vertical) above which the body counts as horizontal. */
   TORSO_HORIZONTAL_DEG: 60,
@@ -142,11 +155,13 @@ export const THRESHOLDS = {
   TRANSITION_WINDOW_FRAMES: 25,
 
   /**
-   * Aspect-ratio flip: person bbox (w/h). Standing ~<0.6; lying ~>1.2.
-   * A cross from below LOW to above HIGH within the window is a "flip".
+   * Aspect-ratio flip: person bbox (w/h). Standing ~<0.6; lying/collapsed
+   * ~≥1.0 (as wide as tall or wider). Used ONLY to corroborate an "ended down"
+   * state together with a real descent — a wide box alone (close-up face) never
+   * triggers, because the descent gate must also fire.
    */
   ASPECT_RATIO_UPRIGHT_MAX: 0.6,
-  ASPECT_RATIO_HORIZONTAL_MIN: 1.2,
+  ASPECT_RATIO_HORIZONTAL_MIN: 1.0,
 
   /** Seconds the person must stay immobile after DOWN to confirm a candidate. */
   IMMOBILE_SECONDS: 3,

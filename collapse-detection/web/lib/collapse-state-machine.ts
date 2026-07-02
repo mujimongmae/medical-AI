@@ -24,6 +24,23 @@ import type {
 import { THRESHOLDS } from "@/lib/types";
 import type { ZoneRect } from "@/lib/zone-map";
 
+/**
+ * The subset of thresholds a user can tune live from the UI. Every field is
+ * optional; unset fields fall back to the THRESHOLDS defaults. Read every frame
+ * (via config.getThresholds) so a slider change takes effect immediately with
+ * no machine re-creation / state reset.
+ */
+export interface TunableThresholds {
+  /** Net hip descent (× body height) required — ↑ stricter (must fall more). */
+  dropDescent?: number;
+  /** Bbox aspect (w/h) counted as "down" — ↑ stricter (must spread wider). */
+  aspectHorizontalMin?: number;
+  /** Torso angle (deg) counted as horizontal — ↑ stricter (must lie flatter). */
+  torsoHorizontalDeg?: number;
+  /** Seconds immobile before emitting — ↑ stricter (must stay still longer). */
+  immobileSeconds?: number;
+}
+
 export interface StateMachineConfig {
   cameraId: string;
   /** User-drawn zones for bed/couch suppression + floor suspicion. */
@@ -32,6 +49,36 @@ export interface StateMachineConfig {
   onCandidate: (event: EmergencyEvent) => void;
   /** Optional: capture a keyframe data URL at emission time. */
   captureKeyframe?: () => string | undefined;
+  /** Optional live-tunable thresholds; read every frame for instant feedback. */
+  getThresholds?: () => TunableThresholds;
+}
+
+/**
+ * Live diagnostic snapshot of the last processed frame — drives the on-screen
+ * debug HUD so we can SEE which gate is (not) firing during a fall instead of
+ * guessing at thresholds.
+ */
+export interface CollapseDebug {
+  state: CollapseState;
+  /** A confident pose+hip was found this frame (false ⇒ machine is holding). */
+  hasPose: boolean;
+  posture: Posture;
+  /** Torso angle from vertical (deg); -1 when no shoulder keypoint. */
+  torsoAngle: number;
+  /** Person bbox aspect (w/h). */
+  aspect: number;
+  /** Net downward hip travel over the window, normalized by body height. */
+  netDrop: number;
+  /** netDrop ≥ DROP_DESCENT_NORMALIZED. */
+  dropSignal: boolean;
+  /** Bbox is as wide as tall or wider (aspect ≥ ASPECT_RATIO_HORIZONTAL_MIN). */
+  aspectWide: boolean;
+  /** Torso rotated upright→horizontal within the window. */
+  torsoFlip: boolean;
+  /** Body ended in a down-ish configuration (horizontal torso OR wide bbox). */
+  endedDown: boolean;
+  /** Seconds immobile while DOWN (0 otherwise). */
+  immobileSec: number;
 }
 
 export interface CollapseStateMachine {
@@ -39,6 +86,8 @@ export interface CollapseStateMachine {
   update: (frame: DetectionFrame) => void;
   /** Current state (for UI banner). */
   getState: () => CollapseState;
+  /** Live diagnostic snapshot for the debug HUD. */
+  getDebug: () => CollapseDebug;
   /** Reset to NORMAL (e.g. after app-side cancel). */
   reset: () => void;
 }
@@ -54,6 +103,8 @@ interface FrameFeatures {
   /** Hip-center (midpoint of left/right hip). */
   hip: { x: number; y: number };
   posture: Posture;
+  /** Torso angle from vertical in degrees (0 = upright, 90 = flat). -1 if no shoulder. */
+  torsoAngle: number;
   /** Person bbox aspect ratio (w / h). */
   aspect: number;
   /** Person bbox in source pixels. */
@@ -78,6 +129,7 @@ const {
   TORSO_UPRIGHT_DEG,
   TRANSITION_WINDOW_FRAMES,
   ASPECT_RATIO_UPRIGHT_MAX,
+  ASPECT_RATIO_HORIZONTAL_MIN,
   IMMOBILE_SECONDS,
   IMMOBILE_MOVEMENT_NORMALIZED,
   MIN_POSE_SCORE,
@@ -158,7 +210,10 @@ function keypointBBox(m: Map<string, Keypoint>): BBox | null {
   return [minX, minY, maxX - minX, maxY - minY];
 }
 
-function extractFeatures(frame: DetectionFrame): FrameFeatures | null {
+function extractFeatures(
+  frame: DetectionFrame,
+  horizontalDeg: number,
+): FrameFeatures | null {
   const pose = frame.pose;
   if (!pose || pose.score < MIN_POSE_SCORE) return null;
 
@@ -186,22 +241,24 @@ function extractFeatures(frame: DetectionFrame): FrameFeatures | null {
 
   // Torso angle from vertical: 0° = perfectly upright, 90° = flat.
   let posture: Posture = "unknown";
+  let torsoAngle = -1;
   if (shoulder) {
     const dx = Math.abs(hip.x - shoulder.x);
     const dy = Math.abs(hip.y - shoulder.y);
-    const angle = (Math.atan2(dx, dy) * 180) / Math.PI;
-    if (angle <= TORSO_UPRIGHT_DEG) posture = "upright";
-    else if (angle >= TORSO_HORIZONTAL_DEG) posture = "horizontal";
+    torsoAngle = (Math.atan2(dx, dy) * 180) / Math.PI;
+    if (torsoAngle <= TORSO_UPRIGHT_DEG) posture = "upright";
+    else if (torsoAngle >= horizontalDeg) posture = "horizontal";
   }
   // Aspect only rescues the UPRIGHT case (a narrow box is unambiguously
-  // standing). A WIDE box is NOT trusted as horizontal — a face close to the
-  // camera widens the box while the person is upright. "horizontal" must come
-  // from the torso angle (shoulder→hip), which is distance-invariant.
+  // standing). A WIDE box is NOT trusted as horizontal here — that corroboration
+  // happens in evaluateTransition, gated by a real descent (a close-up face
+  // widens the box but has no descent). "horizontal" comes from the torso angle
+  // (shoulder→hip), which is distance-invariant.
   if (posture === "unknown" && aspect <= ASPECT_RATIO_UPRIGHT_MAX) {
     posture = "upright";
   }
 
-  return { t: frame.timestamp / 1000, hip, posture, aspect, bbox, bodyHeight };
+  return { t: frame.timestamp / 1000, hip, posture, torsoAngle, aspect, bbox, bodyHeight };
 }
 
 // ---------------------------------------------------------------------------
@@ -216,13 +273,46 @@ export function createCollapseStateMachine(
   let down: DownContext | null = null;
   let suspectedFrames = 0;
 
+  // Live diagnostic of the last processed frame (drives the debug HUD).
+  let lastDebug: CollapseDebug = {
+    state: "NORMAL",
+    hasPose: false,
+    posture: "unknown",
+    torsoAngle: -1,
+    aspect: 0,
+    netDrop: 0,
+    dropSignal: false,
+    aspectWide: false,
+    torsoFlip: false,
+    endedDown: false,
+    immobileSec: 0,
+  };
+
+  /** Merge live-tunable thresholds over the compiled defaults (read per frame). */
+  function resolveTH() {
+    const o = config.getThresholds?.() ?? {};
+    return {
+      dropDescent: o.dropDescent ?? DROP_DESCENT_NORMALIZED,
+      aspectHorizontalMin: o.aspectHorizontalMin ?? ASPECT_RATIO_HORIZONTAL_MIN,
+      torsoHorizontalDeg: o.torsoHorizontalDeg ?? TORSO_HORIZONTAL_DEG,
+      immobileSeconds: o.immobileSeconds ?? IMMOBILE_SECONDS,
+    };
+  }
+  type TH = ReturnType<typeof resolveTH>;
+
   interface TransitionEval {
-    /** Real, jitter-robust downward hip travel occurred (net descent). */
+    /** Net downward hip travel over the window, normalized by body height. */
+    netDrop: number;
+    /** netDrop ≥ drop threshold (a real descent occurred). */
     dropSignal: boolean;
     /** The descent was fast (single-frame velocity) ⇒ classify as abrupt. */
     velocityAbrupt: boolean;
     /** Torso went vertical→horizontal within the window (a genuine flip). */
     torsoFlip: boolean;
+    /** Current bbox is as wide as tall or wider (aspect ≥ threshold). */
+    aspectWide: boolean;
+    /** Body ended down: torso reads horizontal OR the bbox went wide. */
+    endedDown: boolean;
   }
 
   /**
@@ -230,12 +320,14 @@ export function createCollapseStateMachine(
    *  - dropSignal: NET downward hip travel (max later-minus-earlier), normalized
    *    by body height. A single jittery spike that returns nets ~0, so this is
    *    robust to keypoint noise (unlike per-frame velocity).
-   *  - torsoFlip: an actual upright→horizontal torso transition (angle-based,
-   *    distance-invariant — a close-up upright person never reads horizontal).
-   *  A fall requires BOTH — far stronger than the old 2-of-3, which could fire
-   *  on aspect ratio (close-up) or a single jitter frame alone.
+   *  - endedDown: the body is no longer standing — EITHER the torso angle reads
+   *    horizontal (a sideways fall) OR the bbox went as-wide-as-tall (a fall
+   *    toward/away from the camera keeps the torso vertical in 2D but spreads
+   *    the box). Direction-robust, unlike torso angle alone.
+   *  A fall requires dropSignal AND endedDown. Neither fires on a static pose or
+   *  a close-up face (no descent), so those never trigger.
    */
-  function evaluateTransition(): TransitionEval {
+  function evaluateTransition(th: TH): TransitionEval {
     const win = history.slice(-TRANSITION_WINDOW_FRAMES);
     const cur = win[win.length - 1];
 
@@ -266,10 +358,16 @@ export function createCollapseStateMachine(
       }
     }
 
+    const aspectWide = cur.aspect >= th.aspectHorizontalMin;
+    const endedDown = cur.posture === "horizontal" || aspectWide;
+
     return {
-      dropSignal: netDrop >= DROP_DESCENT_NORMALIZED,
+      netDrop,
+      dropSignal: netDrop >= th.dropDescent,
       velocityAbrupt,
       torsoFlip,
+      aspectWide,
+      endedDown,
     };
   }
 
@@ -326,13 +424,13 @@ export function createCollapseStateMachine(
     config.onCandidate(event);
   }
 
-  /** Immobility bookkeeping while the person is DOWN. */
-  function immobileStep(f: FrameFeatures): void {
-    if (!down) return;
+  /** Immobility bookkeeping while the person is DOWN. Returns seconds immobile. */
+  function immobileStep(f: FrameFeatures, th: TH): number {
+    if (!down) return 0;
     // Standing back up = recovery, regardless of the timer.
     if (f.posture === "upright") {
       toNormal();
-      return;
+      return 0;
     }
     const disp = dist(f.hip, down.prevHip) / f.bodyHeight;
     down.prevHip = f.hip;
@@ -340,38 +438,46 @@ export function createCollapseStateMachine(
       down.immobileSince = f.t; // moved ⇒ restart the immobile timer
     }
     const duration = f.t - down.immobileSince;
-    if (duration >= IMMOBILE_SECONDS) emit(f, duration);
+    if (duration >= th.immobileSeconds) emit(f, duration);
+    return duration;
   }
 
   function update(frame: DetectionFrame): void {
     if (state === "CANDIDATE_EMITTED") return; // terminal until reset()
 
-    const f = extractFeatures(frame);
-    if (!f) return; // no reliable pose this frame; hold state
+    const th = resolveTH();
+    const f = extractFeatures(frame, th.torsoHorizontalDeg);
+    if (!f) {
+      // No reliable pose this frame; hold state, but flag it in the HUD so the
+      // user can see the pose was lost (a common cause of "nothing triggers").
+      lastDebug = { ...lastDebug, state, hasPose: false };
+      return;
+    }
 
     history.push(f);
     if (history.length > HISTORY_MAX) history = history.slice(-HISTORY_MAX);
 
-    const ev = evaluateTransition();
+    const ev = evaluateTransition(th);
+    let immobileSec = 0;
 
     switch (state) {
       case "NORMAL": {
-        // A fall needs BOTH a real descent (dropSignal) AND a torso flip to
-        // horizontal. Static posture, bbox aspect, or hip jitter alone never
-        // trigger — a person who just stays still (even close to the camera)
-        // has no descent and no vertical→horizontal flip.
-        if (ev.dropSignal && ev.torsoFlip && f.posture === "horizontal") {
+        // A fall needs a real descent (dropSignal) AND an "ended down" signal
+        // (torso horizontal OR bbox went wide). Static posture, bbox aspect, or
+        // hip jitter alone never trigger — a still person (even close to the
+        // camera) has no descent, so endedDown can't rescue it.
+        if (ev.dropSignal && ev.endedDown) {
           enterDown(f, ev);
         } else if (ev.dropSignal) {
-          state = "SUSPECTED"; // descending — wait for the horizontal flip
+          state = "SUSPECTED"; // descending — wait for the "ended down" signal
           suspectedFrames = 0;
         }
         break;
       }
       case "SUSPECTED": {
-        // Descent already seen; confirm it ends in a horizontal torso flip.
+        // Descent already seen; confirm it ends down (horizontal OR wide box).
         suspectedFrames++;
-        if (ev.torsoFlip && f.posture === "horizontal") {
+        if (ev.endedDown) {
           enterDown(f, ev);
         } else if (f.posture === "upright") {
           toNormal();
@@ -382,19 +488,34 @@ export function createCollapseStateMachine(
       }
       case "DOWN": {
         state = "IMMOBILE_CONFIRM";
-        immobileStep(f);
+        immobileSec = immobileStep(f, th);
         break;
       }
       case "IMMOBILE_CONFIRM": {
-        immobileStep(f);
+        immobileSec = immobileStep(f, th);
         break;
       }
     }
+
+    lastDebug = {
+      state,
+      hasPose: true,
+      posture: f.posture,
+      torsoAngle: f.torsoAngle,
+      aspect: f.aspect,
+      netDrop: ev.netDrop,
+      dropSignal: ev.dropSignal,
+      aspectWide: ev.aspectWide,
+      torsoFlip: ev.torsoFlip,
+      endedDown: ev.endedDown,
+      immobileSec,
+    };
   }
 
   return {
     update,
     getState: () => state,
+    getDebug: () => lastDebug,
     reset: () => {
       state = "NORMAL";
       history = [];
