@@ -63,6 +63,39 @@ function startSiren(): () => void {
   };
 }
 
+/** 가벼운 두 음 알림음. "start"=듣기 시작(오름), "heard"=인식 완료(밝게). */
+function chime(kind: "start" | "heard") {
+  let ctx = getPrimedCtx();
+  let owns = false;
+  try {
+    if (!ctx) {
+      ctx = new AudioContext();
+      owns = true;
+    }
+    void ctx.resume?.();
+    const now = ctx.currentTime;
+    const notes = kind === "start" ? [660, 880] : [880, 1175];
+    notes.forEach((f, i) => {
+      const o = ctx!.createOscillator();
+      const g = ctx!.createGain();
+      o.type = "sine";
+      o.frequency.value = f;
+      o.connect(g);
+      g.connect(ctx!.destination);
+      const t = now + i * 0.14;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+      o.start(t);
+      o.stop(t + 0.15);
+    });
+    navigator.vibrate?.(kind === "start" ? 40 : [40, 60, 40]);
+    if (owns) window.setTimeout(() => ctx?.close().catch(() => {}), 500);
+  } catch {
+    /* noop */
+  }
+}
+
 interface ActiveAlert {
   eventId: string;
   patient: PatientCard;
@@ -414,15 +447,38 @@ function AiRecommendScreen({
   const [text, setText] = useState("");
   const [result, setResult] = useState<VoiceRes | null>(null);
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<"starting" | "listening" | "typed" | "denied" | "unsupported">("starting");
+  const [status, setStatus] = useState<
+    "starting" | "listening" | "heard" | "typed" | "denied" | "unsupported"
+  >("starting");
   const [error, setError] = useState("");
   const handleRef = useRef<SttHandle | null>(null);
+  const silenceTimer = useRef<number | null>(null);
+  const lastText = useRef("");
+  const heard = useRef(false);
 
   // 진입 즉시 자동 녹음 시작 (마이크 권한 요청 포함)
   useEffect(() => {
     let mounted = true;
+
+    // 말이 멈추고 2.5초 지나면 "충분히 들었다"고 판단 → 완료음 + '잘 들었어요'.
+    const armSilence = () => {
+      if (silenceTimer.current) clearTimeout(silenceTimer.current);
+      silenceTimer.current = window.setTimeout(() => {
+        if (!mounted || heard.current || !lastText.current.trim()) return;
+        heard.current = true;
+        handleRef.current?.stop();
+        chime("heard");
+        setStatus("heard");
+      }, 2500);
+    };
+
     startStt(
-      (t) => mounted && setText(t),
+      (t) => {
+        if (!mounted) return;
+        setText(t);
+        lastText.current = t;
+        if (!heard.current) armSilence(); // 새 말 들릴 때마다 침묵 타이머 리셋
+      },
       (e) => {
         if (!mounted) return;
         setStatus(e === "unsupported" ? "unsupported" : e === "denied" ? "denied" : "typed");
@@ -433,10 +489,15 @@ function AiRecommendScreen({
         return;
       }
       handleRef.current = h;
-      if (h) setStatus("listening");
+      if (h) {
+        setStatus("listening");
+        chime("start"); // 듣기 시작 신호음
+        armSilence();
+      }
     });
     return () => {
       mounted = false;
+      if (silenceTimer.current) clearTimeout(silenceTimer.current);
       handleRef.current?.stop();
     };
   }, []);
@@ -500,12 +561,14 @@ function AiRecommendScreen({
     status === "starting"
       ? "마이크를 준비하고 있어요…"
       : status === "listening"
-        ? "● 듣는 중 — 환자 상태를 말해 주세요"
-        : status === "denied"
-          ? "마이크 권한이 없어요. 아래에 직접 입력해 주세요."
-          : status === "unsupported"
-            ? "이 기기는 음성인식을 지원하지 않아요. 아래에 직접 입력해 주세요."
-            : "직접 입력해 주세요.";
+        ? "🎤 듣고 있어요. 말씀하세요"
+        : status === "heard"
+          ? "✅ 잘 들었어요 — ‘완료’를 누르세요"
+          : status === "denied"
+            ? "마이크 권한이 없어요. 아래에 직접 입력해 주세요."
+            : status === "unsupported"
+              ? "이 기기는 음성인식을 지원하지 않아요. 아래에 직접 입력해 주세요."
+              : "직접 입력해 주세요.";
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
@@ -513,10 +576,17 @@ function AiRecommendScreen({
       <p className="text-lg text-gray-500">예: “피가 많이 나요”, “얼굴이 파래졌어요”, “팔을 못 움직여요”</p>
 
       <div
-        className={`rounded-2xl p-5 text-center text-xl font-bold ${
-          status === "listening" ? "bg-safe text-white" : "bg-gray-100 text-gray-600"
+        className={`flex items-center justify-center gap-3 rounded-2xl p-5 text-center text-xl font-bold ${
+          status === "listening"
+            ? "bg-safe text-white"
+            : status === "heard"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600"
         }`}
       >
+        {status === "listening" && (
+          <span className="inline-block h-3 w-3 animate-ping rounded-full bg-white" />
+        )}
         {statusText}
       </div>
 
