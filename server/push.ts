@@ -58,8 +58,8 @@ export async function sendPush(
       android: {
         priority: "high",
         notification: {
-          channelId: "emergency",
-          sound: "default",
+          channelId: "emergency_siren", // 앱이 생성한 경보음 채널(약 25초 사이렌)
+          sound: "siren", // pre-O 폴백용 (O+는 채널 사운드가 우선)
           priority: "max",
           visibility: "public",
         },

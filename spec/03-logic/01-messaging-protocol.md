@@ -28,7 +28,7 @@
 | `POST /fall-event` | **영상인식(미확정) 또는 mock 생성기** | `{patientId, confidence?, snapshotRef?}` ⚠️ **잠정** | `{eventId}` |
 | `POST /voice` | 이웃앱 | `{eventId, transcript}` (온디바이스 STT 텍스트) | `{summary, likelyCondition, recommendation, protocolId?}` — Claude가 **병력+증상 종합 → 가장 가능성 높은 상태 1개 + 추천 응급처치**. ⚠️ 확정진단 금지("가능성" 표현)·119 우선. Claude 오디오 직접입력 불가 → 기기 STT 후 텍스트 전송 |
 | `GET /patient/:id` | 이웃앱 | — | `{name, addressText, accessNote, 병력요약}` |
-| `POST /api/push-token` | 앱 | `{id, token, platform?}` | `{ok}` — FCM 토큰 등록(화면 꺼짐 알림) |
+| `POST /api/push-token` | 앱 | `{id, token, platform?}` | `{ok}` — FCM 토큰 등록(화면 꺼짐 알림). ⚠️ **토큰 중복 회수**: 같은 토큰을 다른 사용자가 물고 있으면 그 기록에서 제거(**1기기=1수신자**) |
 | `POST /api/demo/trigger` | 테스트 | — | 시드 환자로 응급 즉시 발생(이웃 즉시 호출) |
 | `GET /api/users` | **테스트/관제** | — | 등록 사용자 목록 `[{id,name,role,village,online,hasToken}]` |
 | `GET /admin` | **테스트/관제** | — | 브로커가 서빙하는 간이 관제 HTML — 사용자별 **"응급 발생" 버튼**으로 특정 폰(환자/이웃) 푸시 테스트 |
@@ -86,9 +86,10 @@
 ```
 
 ### 3.3 "가까운 이웃" 선별 규칙
-- 1차: `village` 동일 + `role:"neighbor"` + **(ws 접속중 OR `pushToken` 보유)**.
+- 대상: `village` 동일 + `role:"neighbor"` + `id≠환자` + **(ws 접속중 OR `pushToken` 보유)**.
   - ⚠️ **접속중만 고르면 안 됨** — 화면 꺼진(=ws 끊긴) 이웃은 푸시로 깨워야 하므로 **토큰 보유자도 대상**.
-- 2차: 환자 `home` 기준 거리 오름차순 상위 **3~4명**.
+- **정렬:** 환자 `home` 기준 거리 오름차순.
+- **데모 정책: 상위 N 컷 제거 → 마을 이웃 전원 호출.** (심사장 확실성 우선. 발표 멘트 "가까운 4~5명"은 실제 방림리 이웃 규모와 일치.) 프로덕션에선 max 컷·반경 제한 재도입.
 - 전송: 각 대상에 ws `NEIGHBOR_ALERT`(접속중이면) + FCM 푸시(토큰 있으면). 둘 다 그래이스풀.
 
 ### 3.4 프로토콜 규칙 (요지 — 상세: [`02-first-aid-protocol.md`](./02-first-aid-protocol.md))

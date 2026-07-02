@@ -7,6 +7,61 @@ import type { FirstAidProtocol, ProtocolStep } from "@lib/first-aid/schema";
 import { connectWs, type WsHandle } from "../lib/wsClient";
 import { sendVoice, triggerDemoFall } from "../lib/api";
 import { startStt, type SttHandle } from "../lib/stt";
+import { getPrimedCtx } from "../lib/audio";
+
+/** 인앱 경보 사이렌(두 음 왕복) + 진동. 정지 함수 반환. 앱을 보고 있을 때 놓치지 않도록. */
+function startSiren(): () => void {
+  const primed = getPrimedCtx();
+  let ctx: AudioContext | null = primed;
+  let ownsCtx = false;
+  let osc: OscillatorNode | null = null;
+  try {
+    if (!ctx) {
+      ctx = new AudioContext();
+      ownsCtx = true;
+    }
+    void ctx.resume?.();
+    osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.value = 700;
+    g.gain.value = 0.5;
+    osc.connect(g);
+    g.connect(ctx.destination);
+    osc.start();
+  } catch {
+    ctx = null;
+    osc = null;
+  }
+  let high = false;
+  const sweep = () => {
+    if (!ctx || !osc) return;
+    const t = ctx.currentTime;
+    try {
+      osc.frequency.cancelScheduledValues(t);
+      osc.frequency.setValueAtTime(high ? 1100 : 650, t);
+      osc.frequency.linearRampToValueAtTime(high ? 650 : 1100, t + 0.6);
+    } catch {
+      /* noop */
+    }
+    high = !high;
+  };
+  sweep();
+  const sirenTimer = window.setInterval(sweep, 600);
+  const vib = window.setInterval(() => navigator.vibrate?.([500, 150]), 700);
+  navigator.vibrate?.([500, 150]);
+  return () => {
+    clearInterval(sirenTimer);
+    clearInterval(vib);
+    navigator.vibrate?.(0);
+    try {
+      osc?.stop();
+    } catch {
+      /* noop */
+    }
+    if (ownsCtx) ctx?.close().catch(() => {}); // 무장된 공유 ctx는 닫지 않음
+  };
+}
 
 interface ActiveAlert {
   eventId: string;
@@ -97,6 +152,12 @@ function TriageRunner({
   const [mode, setMode] = useState<Mode>({ kind: "triage" });
 
   useEffect(() => onAccept(), []);
+  // 호출 도착 화면 동안 인앱 사이렌 — "도착했습니다" 누르면(=started) 정지.
+  useEffect(() => {
+    if (started) return;
+    const stop = startSiren();
+    return stop;
+  }, [started]);
   const restart = () => setMode({ kind: "triage" });
 
   if (!started) {

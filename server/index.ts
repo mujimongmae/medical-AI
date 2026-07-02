@@ -54,19 +54,22 @@ function distKm(a: GeoPoint, b: GeoPoint): number {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** 같은 마을 이웃, 거리순 상위 N. ws 접속중이거나 푸시 토큰 보유(=화면 꺼도 푸시 가능)면 대상.
- *  (푸시의 목적이 '꺼진 폰 깨우기'이므로 접속중만 고르면 안 됨) — spec 03-logic §3.3 */
-function selectNeighbors(patient: RegisteredUser, max = 4): string[] {
+/** 호출 대상 이웃: 같은 마을 이웃 **전원**(거리순 정렬만, 상한 없음).
+ *  ws 접속중이거나 푸시 토큰 보유(=화면 꺼도 푸시 가능)면 대상.
+ *  (푸시의 목적이 '꺼진 폰 깨우기'이므로 접속중만 고르면 안 됨) — spec 03-logic §3.3
+ *  데모: 확실성 위해 상위 N 컷을 제거하고 마을 이웃 전원 호출. 발표 멘트('가까운 4~5명')는
+ *  실제 방림리 이웃 규모와 일치. 프로덕션에선 max 컷·반경 제한 재도입. */
+function selectNeighbors(patient: RegisteredUser): string[] {
   return [...users.values()]
     .filter(
       (u) =>
         u.role === "neighbor" &&
+        u.id !== patient.id &&
         u.village === patient.village &&
         (sockets.has(u.id) || !!u.pushToken),
     )
     .map((u) => ({ id: u.id, d: distKm(u.home, patient.home) }))
     .sort((a, b) => a.d - b.d)
-    .slice(0, max)
     .map((x) => x.id);
 }
 
@@ -207,9 +210,20 @@ app.post("/api/push-token", async (req, reply) => {
   const b = req.body as PushTokenReq;
   const u = users.get(b.id);
   if (!u) return reply.code(404).send({ error: "user not found" });
+  // 1기기=1수신자: 같은 토큰을 물고 있는 다른 사용자에서 회수(역할 전환/재등록 시 중복 푸시 방지).
+  // (FCM 토큰은 기기+앱 단위 → 여러 user에 남아 있으면 한 폰에 알림이 중복 도착) — spec 03-logic §push-token
+  let reclaimed = 0;
+  for (const other of users.values()) {
+    if (other.id !== b.id && other.pushToken === b.token) {
+      other.pushToken = undefined;
+      reclaimed++;
+    }
+  }
   u.pushToken = b.token;
   saveStore();
-  app.log.info(`push-token 등록 ${b.id} (${b.platform ?? "?"})`);
+  app.log.info(
+    `push-token 등록 ${b.id} (${b.platform ?? "?"})${reclaimed ? ` — 다른 ${reclaimed}명에서 토큰 회수` : ""}`,
+  );
   return { ok: true };
 });
 
