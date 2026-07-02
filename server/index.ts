@@ -106,16 +106,22 @@ function patientCard(p: RegisteredUser): PatientCard {
 
 /** 진행 중(notifying_neighbors) 이벤트를 재접속한 이웃에게 재전송.
  *  푸시 탭으로 앱을 열면(콜드스타트/재접속) WS로 이미 보낸 NEIGHBOR_ALERT를 놓쳤으므로,
- *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다. */
+ *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다.
+ *  ⚠️ 복원 대상은 **실제로 그 호출을 받았던 이웃(ev.notified)** 으로 한정 + **최근(TTL 내)** 이벤트만.
+ *  (그렇지 않으면 새로 등록한 다른 이웃에게 지난 테스트 호출이 되살아남) */
+const ALERT_RESTORE_TTL_MS = 3 * 60 * 1000; // 3분
 function resendActiveAlerts(userId: string) {
   const u = users.get(userId);
   if (!u || u.role !== "neighbor") return;
+  const now = Date.now();
   // 가장 최근 진행 중 호출 1건만 복원 (테스트 반복으로 이벤트가 쌓여도 최신만).
   let latest: EmergencyEvent | undefined;
   for (const ev of events.values()) {
     if (ev.state !== "notifying_neighbors") continue;
+    if (!ev.notified?.has(userId)) continue; // 원래 호출받은 이웃만
+    if (ev.ts && now - ev.ts > ALERT_RESTORE_TTL_MS) continue; // 만료된 지난 이벤트 제외
     const patient = users.get(ev.patientId);
-    if (!patient || patient.id === u.id || patient.village !== u.village) continue;
+    if (!patient) continue;
     latest = ev; // Map은 삽입순 → 마지막 매칭이 최신
   }
   if (!latest) return;
@@ -141,6 +147,7 @@ function escalate(eventId: string) {
 
   const card = patientCard(patient);
   const neighbors = selectNeighbors(patient);
+  ev.notified = new Set(neighbors); // 복원은 이들에게만 (지난 테스트 호출이 새 이웃에게 되살아나지 않게)
   const priorityHint = priorityHintFromHistory(patient.history);
   app.log.info(
     `이웃 호출 ${neighbors.length}명: ${neighbors.join(", ")}${priorityHint ? ` (우선힌트 ${priorityHint.join(">")})` : ""}`,
@@ -215,7 +222,7 @@ app.post("/api/fall-event", async (req, reply) => {
   const patient = users.get(b.patientId);
   if (!patient) return reply.code(404).send({ error: "patient not found" });
   const eventId = nextEventId();
-  const ev: EmergencyEvent = { eventId, patientId: b.patientId, state: "alerting_self" };
+  const ev: EmergencyEvent = { eventId, patientId: b.patientId, state: "alerting_self", ts: Date.now() };
   events.set(eventId, ev);
   send(patient.id, { type: "ALERT_SELF", eventId, timeoutSec: ALERT_TIMEOUT_SEC });
   // 화면 꺼짐 대비 푸시 (환자 본인 깨우기)
@@ -257,7 +264,7 @@ app.post("/api/demo/trigger", async (req, reply) => {
   const patient = users.get(SEED_PATIENT_ID);
   if (!patient) return reply.code(404).send({ error: "seed patient missing" });
   const eventId = nextEventId();
-  events.set(eventId, { eventId, patientId: SEED_PATIENT_ID, state: "alerting_self" });
+  events.set(eventId, { eventId, patientId: SEED_PATIENT_ID, state: "alerting_self", ts: Date.now() });
   escalate(eventId); // 즉시 이웃 호출 (테스트 편의)
   app.log.info(`demo trigger ${eventId} (patient=${SEED_PATIENT_ID}) → 이웃 즉시 호출`);
   return { eventId };
