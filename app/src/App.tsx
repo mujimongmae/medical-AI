@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Role } from "@lib/protocol/messages";
 import { GLOBAL_DISCLAIMER } from "@lib/first-aid/schema";
-import { register } from "./lib/api";
+import { register, lookupHistory } from "./lib/api";
 import { initPush } from "./lib/push";
 import { primeAudio } from "./lib/audio";
 import PatientView from "./roles/PatientView";
@@ -58,7 +58,7 @@ export default function App() {
 
 function Disclaimer() {
   return (
-    <p className="bg-gray-100 px-4 py-2 text-sm leading-snug text-gray-600">
+    <p className="disclaimer px-4 py-2 text-sm leading-snug">
       {GLOBAL_DISCLAIMER}
     </p>
   );
@@ -68,11 +68,37 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
   const [name, setName] = useState("");
   const [history, setHistory] = useState(""); // 병력(콤마 구분) — 보호자 입력
   const [busy, setBusy] = useState(false);
+  const [loadingHx, setLoadingHx] = useState(false); // 병력 불러오기 조회 중
   const [error, setError] = useState("");
 
   function save(me: Me) {
     localStorage.setItem(ME_KEY, JSON.stringify(me));
     onDone(me);
+  }
+
+  // 심평원 병력 조회: 입력한 이름으로 조회 · 최소 1초 로딩(스피너) 유지 후 채우기.
+  // 등록된 이름이면 그 병력을, 없는 이름이면 "당뇨, 고혈압"으로 채운다.
+  async function loadHx() {
+    if (loadingHx) return;
+    const q = name.trim();
+    if (!q) {
+      setError("이름을 먼저 입력해 주세요.");
+      return;
+    }
+    setLoadingHx(true);
+    setHistory("");
+    setError("");
+    try {
+      const [res] = await Promise.all([
+        lookupHistory(q),
+        new Promise((r) => setTimeout(r, 1000)), // 최소 1초 로딩 유지
+      ]);
+      setHistory(res.found && res.history.length ? res.history.join(", ") : "당뇨, 고혈압");
+    } catch {
+      setError("병력 조회에 실패했어요. 서버 연결을 확인해 주세요.");
+    } finally {
+      setLoadingHx(false);
+    }
   }
 
   async function pick(role: Role) {
@@ -99,7 +125,7 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
     }
   }
 
-  // 데모: 타이핑 없이 시드 환자(병력 有)로 바로 시작 → 등록부에 이미 있는 seed-patient-1에 바인딩
+  // 환자 폰을 홈캠이 감시하는 대상(seed-patient-1, 병력 有)에 바인딩 → 실제 감지 시 ALERT_SELF 수신
   function startAsSeed() {
     primeAudio(); // 사용자 탭 시점에 오디오 무장
     save({ id: "seed-patient-1", role: "patient", name: "김복순(합성)" });
@@ -125,46 +151,66 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
       </p>
 
       <label className="flex flex-col gap-2 text-lg font-semibold">
-        병력 <span className="font-normal text-gray-400">(환자만, 콤마로 구분 — 선택)</span>
-        <input
-          className="rounded-lg border-2 border-gray-300 px-4 py-4 text-lg font-normal"
-          value={history}
-          onChange={(e) => setHistory(e.target.value)}
-          placeholder="예: 고혈압, 당뇨"
-          autoComplete="off"
-        />
+        <span className="flex items-center justify-between gap-2">
+          병력
+          <button
+            type="button"
+            disabled={loadingHx}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-ai-100 px-3 py-2 text-sm font-bold text-ai-900 active:opacity-80 disabled:opacity-60"
+            onClick={loadHx}
+          >
+            {loadingHx && (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ai-900/30 border-t-ai-900" />
+            )}
+            {loadingHx ? "불러오는 중…" : "병력 불러오기"}
+          </button>
+        </span>
+        <span className="font-normal text-gray-500">(환자만, 콤마로 구분 — 선택)</span>
+        <div className="relative">
+          <input
+            className="w-full rounded-lg border-2 border-gray-300 px-4 py-4 text-lg font-normal disabled:bg-gray-50"
+            value={history}
+            onChange={(e) => setHistory(e.target.value)}
+            placeholder={loadingHx ? "심평원에서 병력을 조회합니다…" : "예: 고혈압, 당뇨"}
+            autoComplete="off"
+            disabled={loadingHx}
+          />
+          {loadingHx && (
+            <span className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin rounded-full border-2 border-gray-300 border-t-ai" />
+          )}
+        </div>
       </label>
 
       <p className="mt-2 text-lg font-bold">역할을 선택하세요</p>
       <div className="flex flex-col gap-4">
         <button
-          className="rounded-xl bg-blue-600 px-6 py-6 text-left text-xl font-bold text-white disabled:opacity-40"
+          className="cta-emph rounded-2xl bg-ai-100 px-6 py-6 text-left text-xl font-bold text-ai-900 disabled:opacity-40"
           disabled={disabled}
           onClick={() => pick("patient")}
         >
           어르신 (환자)
-          <span className="mt-1 block text-base font-normal text-blue-100">
+          <span className="mt-1 block text-base font-normal text-ai-700">
             평소 폰을 켜두면 이상 시 자동으로 도움을 요청해요.
           </span>
         </button>
         <button
-          className="rounded-xl bg-safe px-6 py-6 text-left text-xl font-bold text-white disabled:opacity-40"
+          className="cta-emph rounded-2xl bg-safe-100 px-6 py-6 text-left text-xl font-bold text-safe-700 disabled:opacity-40"
           disabled={disabled}
           onClick={() => pick("neighbor")}
         >
           이웃 (도움 주는 사람)
-          <span className="mt-1 block text-base font-normal text-green-100">
+          <span className="mt-1 block text-base font-normal text-safe-700">
             마을에 응급상황이 생기면 이 폰으로 호출을 받아요.
           </span>
         </button>
       </div>
 
       <button
-        className="mt-2 rounded-xl border-2 border-dashed border-gray-400 px-6 py-4 text-base font-bold text-gray-600 disabled:opacity-40"
+        className="cta-emph mt-2 rounded-2xl bg-white px-6 py-4 text-base font-bold text-gray-700 disabled:opacity-40"
         disabled={busy}
         onClick={startAsSeed}
       >
-        [데모] 시드 환자(김복순·병력 有)로 바로 시작
+        김복순 어르신(병력 有)으로 바로 시작
       </button>
 
       {busy && <p className="text-base text-gray-500">등록 중…</p>}

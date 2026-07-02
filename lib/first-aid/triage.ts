@@ -14,10 +14,9 @@ export const TRIAGE: Record<string, TriageNode> = {
   Q1: {
     id: "Q1",
     prompt: "환자가 반응이 있고, 숨도 정상적으로 쉬나요?",
-    hint: "어깨를 두드려 불러보고, 가슴·배가 오르내리는지 보세요. 119는 자동 신고됩니다.",
     options: [
-      { label: "아니요 — 반응이 없거나 숨을 안 쉬어요", protocolId: "P-CPR" },
-      { label: "네 — 반응도 있고 숨도 쉬어요", next: AI_VOICE },
+      { label: "아니요. 반응이 없거나 숨을 안 쉬어요", protocolId: "P-CPR" },
+      { label: "네. 반응도 있고 숨도 쉬어요", next: AI_VOICE },
     ],
   },
 };

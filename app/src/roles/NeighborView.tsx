@@ -5,7 +5,7 @@ import { PROTOCOL_BY_ID } from "@lib/first-aid/protocols";
 import { GLOBAL_DISCLAIMER } from "@lib/first-aid/schema";
 import type { FirstAidProtocol, ProtocolStep } from "@lib/first-aid/schema";
 import { connectWs, type WsHandle } from "../lib/wsClient";
-import { sendVoice, triggerDemoFall } from "../lib/api";
+import { sendVoice } from "../lib/api";
 import { startStt, type SttHandle } from "../lib/stt";
 import { getPrimedCtx } from "../lib/audio";
 
@@ -129,35 +129,13 @@ export default function NeighborView({ id, name }: { id: string; name: string })
 }
 
 function NeighborIdle({ name }: { name: string }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const fire = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      await triggerDemoFall();
-    } catch {
-      setError("서버에 연결하지 못했어요. 브로커 서버가 켜져 있는지 확인해 주세요.");
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 p-6">
       <h2 className="text-xl font-bold">{name} 님 (이웃)</h2>
       <p className="text-lg text-gray-600">
         대기 중입니다. 마을에 응급상황이 생기면 이 폰으로 호출이 옵니다.
       </p>
-      <div className="mt-4 rounded-lg bg-safe/10 p-4 text-safe">● 대기 중</div>
-      <button
-        className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
-        onClick={fire}
-        disabled={busy}
-      >
-        {busy ? "발생시키는 중…" : "[테스트] 응급 상황 발생시키기"}
-      </button>
-      {error && <p className="text-base font-semibold text-danger">{error}</p>}
+      <div className="pill-ok mt-4 rounded-xl p-4">● 대기 중</div>
     </div>
   );
 }
@@ -196,21 +174,23 @@ function TriageRunner({
   if (!started) {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-4 p-6">
-        <div className="rounded-lg bg-danger px-4 py-3 text-xl font-bold text-white">
-          🚨 응급 호출 — 지금 가주세요
+        <div className="banner-danger rounded-2xl px-4 py-3 text-center text-xl font-bold">
+          응급 호출! 지금 가주세요
         </div>
-        <Card label="환자" value={patient.name} />
-        <Card label="위치" value={patient.addressText} />
-        <Card label="진입" value={patient.accessNote} />
-        <Card label="병력" value={patient.historySummary} />
+        <div className="flex flex-col gap-3">
+          <Card label="환자" value={patient.name} />
+          <Card label="위치" value={patient.addressText} />
+          <Card label="진입" value={patient.accessNote} />
+          <Card label="병력" value={patient.historySummary} />
+        </div>
         <button
-          className="mt-4 rounded-xl bg-danger px-6 py-6 text-2xl font-bold text-white"
+          className="cta-emph mt-4 rounded-2xl bg-danger px-6 py-6 text-2xl font-bold text-white"
           onClick={() => {
             onArrived();
             setStarted(true);
           }}
         >
-          도착했습니다 — 시작
+          도착했습니다. 시작
         </button>
       </div>
     );
@@ -399,13 +379,13 @@ function CprScreen({ onBack }: { onBack: () => void }) {
   }, [gen, stopped]);
 
   const banner =
-    phase === "breath" ? "인공호흡 — 숨을 불어넣으세요" : "가슴을 세게, 빠르게 누르세요";
+    phase === "breath" ? "인공호흡, 숨을 불어넣으세요" : "가슴을 세게, 빠르게 누르세요";
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
       <div
-        className={`rounded-xl px-4 py-3 text-center text-2xl font-extrabold text-white ${
-          phase === "breath" ? "bg-blue-600" : "bg-danger"
+        className={`whitespace-nowrap rounded-2xl px-4 py-3 text-center text-lg font-extrabold ${
+          phase === "breath" ? "banner-ai" : "banner-danger"
         }`}
       >
         {banner}
@@ -425,9 +405,9 @@ function CprScreen({ onBack }: { onBack: () => void }) {
       />
 
       <p className="text-center text-base text-gray-500">
-        분당 100~120회 · 약 5cm · 구급대 도착까지 멈추지 마세요
+        구급대 도착까지 멈추지 마세요
       </p>
-      <p className="rounded-lg bg-gray-100 p-3 text-center text-sm text-gray-500">{GLOBAL_DISCLAIMER}</p>
+      <p className="disclaimer rounded-lg p-3 text-center text-sm">{GLOBAL_DISCLAIMER}</p>
       <NavBar onBack={onBack} onRestart={onBack} />
     </div>
   );
@@ -452,7 +432,7 @@ function CompressSplit() {
             <SiteIllustration />
           )}
         </div>
-        <figcaption className="mt-1 text-center text-sm font-bold leading-tight text-danger">
+        <figcaption className="mt-1 text-center text-sm font-bold leading-tight text-danger-700">
           여기를 누르세요
           <br />
           가슴 정중앙(젖꼭지 사이)
@@ -562,17 +542,17 @@ function CompressAnim() {
 // 인공호흡 그림 — 머리 젖히고 숨 불어넣기
 function BreathVisual() {
   return (
-    <div className="rounded-2xl bg-blue-50 p-4">
-      <svg viewBox="0 0 220 120" className="mx-auto w-full max-w-xs" role="img" aria-label="인공호흡 — 머리를 젖히고 숨 불어넣기">
-        <circle cx="70" cy="65" r="34" fill="#f0d0b8" stroke="#333" strokeWidth="2" />
-        <circle cx="60" cy="58" r="3" fill="#333" />
-        <path d="M58 80 q12 9 24 0" fill="none" stroke="#333" strokeWidth="2" />
-        <g className="breath-puff">
-          <path d="M120 62 h48" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" />
-          <path d="M158 52 l14 10 l-14 10" fill="none" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-        </g>
-      </svg>
-      <p className="mt-1 text-center text-lg font-bold text-blue-700">
+    <div className="surface-ai rounded-2xl p-4">
+      <video
+        src="/breath.mov"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="mx-auto w-full max-w-xs rounded-xl object-contain"
+        aria-label="인공호흡 시범 (반복)"
+      />
+      <p className="mt-1 text-center text-lg font-bold text-ai-700">
         코를 막고 · 머리를 젖힌 뒤 · 숨을 천천히 불어넣으세요
       </p>
     </div>
@@ -667,15 +647,15 @@ function AiRecommendScreen({
   if (result) {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
-        <div className="rounded-xl bg-blue-600 px-4 py-3 text-center text-xl font-bold text-white">
+        <div className="banner-ai rounded-2xl px-4 py-3 text-center text-xl font-bold">
           AI 응급처치 추천
         </div>
-        <div className="rounded-2xl bg-blue-50 p-5">
-          <p className="text-base text-blue-700">가능성이 높은 상태</p>
-          <p className="mt-1 text-2xl font-extrabold text-blue-900">{result.likelyCondition}</p>
+        <div className="surface-ai rounded-2xl p-5">
+          <p className="text-base text-ai-700">가능성이 높은 상태</p>
+          <p className="mt-1 text-2xl font-extrabold text-ai-900">{result.likelyCondition}</p>
         </div>
         <div className="rounded-2xl border-2 border-danger p-5">
-          <p className="text-base text-danger">지금 이렇게 하세요</p>
+          <p className="text-base text-danger-700">지금 이렇게 하세요</p>
           <p className="mt-1 text-2xl font-extrabold leading-snug">{result.recommendation}</p>
         </div>
         {result.protocolId && PROTOCOL_BY_ID[result.protocolId] && (
@@ -696,7 +676,7 @@ function AiRecommendScreen({
         >
           다시 설명하기
         </button>
-        <p className="rounded-lg bg-gray-100 p-3 text-sm text-gray-500">
+        <p className="disclaimer rounded-lg p-3 text-sm">
           참고용 안내입니다. 119(구급상황실) 지시를 우선하세요. {GLOBAL_DISCLAIMER}
         </p>
         <NavBar onRestart={onBack} />
@@ -727,7 +707,7 @@ function AiRecommendScreen({
           status === "listening"
             ? "bg-safe text-white"
             : status === "heard"
-              ? "bg-blue-600 text-white"
+              ? "bg-ai text-white"
               : "bg-gray-100 text-gray-600"
         }`}
       >
@@ -746,7 +726,7 @@ function AiRecommendScreen({
       />
 
       <button
-        className="rounded-xl bg-blue-600 px-6 py-6 text-2xl font-bold text-white disabled:opacity-40"
+        className="cta-emph rounded-2xl bg-ai px-6 py-6 text-2xl font-bold text-white disabled:opacity-40"
         disabled={!text.trim() || busy}
         onClick={submit}
       >
@@ -778,7 +758,7 @@ function ProtocolScreen({
         ))}
       </ol>
       {p.doNot.length > 0 && (
-        <section className="rounded-lg bg-red-50 p-4 text-danger">
+        <section className="rounded-lg bg-danger-50 p-4 text-danger-700">
           <p className="text-lg font-bold">⛔ 하지 마세요</p>
           <ul className="mt-1 list-disc pl-5 text-base">
             {p.doNot.map((d, i) => (
@@ -787,11 +767,11 @@ function ProtocolScreen({
           </ul>
         </section>
       )}
-      <section className="rounded-lg bg-blue-50 p-4">
-        <p className="text-lg font-bold text-blue-900">🚑 구급대 도착 시 전달</p>
-        <p className="mt-1 text-base text-blue-900">{p.handoff}</p>
+      <section className="surface-ai rounded-lg p-4">
+        <p className="text-lg font-bold text-ai-900">🚑 구급대 도착 시 전달</p>
+        <p className="mt-1 text-base text-ai-900">{p.handoff}</p>
       </section>
-      <p className="rounded-lg bg-gray-100 p-3 text-sm text-gray-500">{p.disclaimer}</p>
+      <p className="disclaimer rounded-lg p-3 text-sm">{p.disclaimer}</p>
       <NavBar onBack={onBack} onRestart={onRestart} />
     </div>
   );
@@ -812,7 +792,7 @@ function StepCard({ step: s }: { step: ProtocolStep }) {
         </ul>
       )}
       {s.caution && (
-        <p className="mt-2 rounded bg-yellow-50 px-3 py-2 text-base text-yellow-900">⚠️ {s.caution}</p>
+        <p className="mt-2 rounded bg-caution-50 px-3 py-2 text-base text-caution-900">⚠️ {s.caution}</p>
       )}
     </li>
   );
@@ -841,9 +821,9 @@ function NavBar({ onBack, onRestart }: { onBack?: () => void; onRestart: () => v
 
 function Card({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-gray-50 p-3">
-      <span className="text-sm text-gray-500">{label}</span>
-      <p className="text-lg font-semibold">{value}</p>
+    <div className="flex items-baseline gap-3 rounded-2xl bg-white p-4 shadow-soft">
+      <span className="w-14 shrink-0 text-base text-gray-500">{label}</span>
+      <p className="flex-1 text-lg font-semibold [word-break:keep-all]">{value}</p>
     </div>
   );
 }

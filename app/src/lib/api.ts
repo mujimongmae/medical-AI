@@ -43,3 +43,12 @@ export const sendVoice = (eventId: string, transcript: string) =>
 /** FCM 토큰 등록 (화면 꺼짐 알림). */
 export const sendPushToken = (id: string, token: string, platform?: string) =>
   post<{ ok: boolean }>("/push-token", { id, token, platform });
+
+/** 가상 심평원(HIRA) 병력 조회 — 이름으로 조회. 없으면 found:false. */
+export async function lookupHistory(
+  name: string,
+): Promise<{ found: boolean; name: string; history: string[] }> {
+  const r = await fetch(`${API}/hira?name=${encodeURIComponent(name)}`);
+  if (!r.ok) throw new Error(`hira ${r.status}`);
+  return r.json();
+}

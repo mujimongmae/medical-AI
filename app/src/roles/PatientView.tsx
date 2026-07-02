@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { DownMessage } from "@lib/protocol/messages";
 import { connectWs, type WsHandle } from "../lib/wsClient";
-import { triggerFall } from "../lib/api";
 import { getPrimedCtx } from "../lib/audio";
 
 type State =
@@ -38,50 +37,29 @@ export default function PatientView({ id, name }: { id: string; name: string }) 
     );
   }
 
-  return <IdleScreen id={id} name={name} connected={connected} />;
+  return <IdleScreen name={name} connected={connected} />;
 }
 
 // ─────────────────────────────────────────────────────────────
-// 평상시 화면 — 감시 상태 표시 + 데모 트리거 (로딩/에러 포함)
+// 평상시 화면 — 감시 상태 표시. 쓰러짐은 홈캠(영상인식)이 자동 감지 → ALERT_SELF.
 // ─────────────────────────────────────────────────────────────
 function IdleScreen({
-  id,
   name,
   connected,
 }: {
-  id: string;
   name: string;
   connected: boolean;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  const trigger = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      await triggerFall(id);
-    } catch {
-      setError("서버에 연결하지 못했어요. 브로커 서버(npm run server)가 켜져 있는지 확인해 주세요.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 p-6">
       <h2 className="text-2xl font-bold">{name} 님, 안녕하세요</h2>
-      <p className="text-lg text-gray-600">
-        평소에는 이 화면만 켜두시면 됩니다. 이상이 감지되면 큰 소리로 알려드려요.
-      </p>
 
       {connected ? (
-        <div className="flex items-center gap-3 rounded-xl bg-safe/10 p-5 text-xl font-bold text-safe">
-          <span className="text-2xl leading-none">●</span> 정상 감시 중
+        <div className="pill-ok flex items-center gap-3 rounded-2xl p-5 text-xl font-bold">
+          <span className="text-2xl leading-none">●</span> 정상 상태입니다
         </div>
       ) : (
-        <div className="flex items-center gap-3 rounded-xl bg-yellow-100 p-5 text-xl font-bold text-yellow-900">
+        <div className="pill-wait flex items-center gap-3 rounded-2xl p-5 text-xl font-bold">
           <span className="text-2xl leading-none">●</span> 연결 대기 중…
         </div>
       )}
@@ -90,16 +68,6 @@ function IdleScreen({
           서버에 연결되면 자동으로 감시가 시작됩니다. 잠시만 기다려 주세요.
         </p>
       )}
-
-      {/* 데모용 mock 트리거 (추후 실제 영상인식으로 대체) */}
-      <button
-        className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
-        onClick={trigger}
-        disabled={busy}
-      >
-        {busy ? "발생시키는 중…" : "[데모] 쓰러짐 발생 시뮬레이션"}
-      </button>
-      {error && <p className="text-base font-semibold text-danger">{error}</p>}
     </div>
   );
 }
