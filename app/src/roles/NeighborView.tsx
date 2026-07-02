@@ -263,49 +263,19 @@ function TriageRunner({
 }
 
 // ─────────────────────────────────────────────────────────────
-// (A) CPR — 5초 카운트다운 후 자동 시작, 30압박→인공호흡→반복 (자동)
+// (A) CPR — 5초 카운트다운 → 30압박(딸깍)/인공호흡(1·2번) 자동 반복
+//  좌: 압박부위 사진(/cpr/site.jpg) / 우: 전문가 시범 영상(/cpr/compressions.mp4).
+//  파일 없으면 그림/애니메이션으로 폴백. app/public/cpr/ 에 넣고 재빌드하면 실제 미디어 사용.
 // ─────────────────────────────────────────────────────────────
+const CPR_VIDEO = "/cpr/compressions.mp4"; // 전문가 흉부압박 반복 영상 (직접 넣기)
+const CPR_SITE = "/cpr/site.jpg"; // 압박부위(가슴 정중앙 O표시) 사진 (직접 넣기)
+
+type CprPhase = "countdown" | "compress" | "breath";
+
 function CprScreen({ onBack }: { onBack: () => void }) {
-  return (
-    <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
-      <div className="rounded-xl bg-danger px-4 py-3 text-center text-2xl font-extrabold text-white">
-        가슴을 세게, 빠르게 누르세요
-      </div>
-      <CprVisual />
-      <CprGuide />
-      <p className="text-center text-base text-gray-500">
-        분당 100~120회 · 약 5cm · 구급대 도착까지 멈추지 마세요
-      </p>
-      <p className="rounded-lg bg-gray-100 p-3 text-center text-sm text-gray-500">{GLOBAL_DISCLAIMER}</p>
-      <NavBar onBack={onBack} onRestart={onBack} />
-    </div>
-  );
-}
-
-function CprVisual() {
-  return (
-    <div className="rounded-2xl bg-gray-50 p-4">
-      <svg viewBox="0 0 200 150" className="mx-auto w-full max-w-xs" role="img" aria-label="가슴 정중앙을 누르는 그림">
-        <circle cx="40" cy="60" r="18" fill="#e5c9b0" stroke="#333" strokeWidth="2" />
-        <rect x="58" y="42" width="110" height="60" rx="20" fill="#cfe3f5" stroke="#333" strokeWidth="2" />
-        <circle cx="110" cy="72" r="16" fill="none" stroke="#d81e06" strokeWidth="3" strokeDasharray="4 3" />
-        <g className="cpr-press">
-          <ellipse cx="110" cy="50" rx="15" ry="9" fill="#f0d0b8" stroke="#333" strokeWidth="2" />
-          <ellipse cx="110" cy="44" rx="13" ry="8" fill="#f7ddc8" stroke="#333" strokeWidth="2" />
-          <path d="M110 20 L110 34 M104 29 L110 35 L116 29" stroke="#d81e06" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </g>
-      </svg>
-      <p className="mt-1 text-center text-lg font-bold text-danger">
-        가슴 한가운데 (양 젖꼭지 사이)를 누르세요
-      </p>
-    </div>
-  );
-}
-
-function CprGuide() {
   const [gen, setGen] = useState(0);
   const [stopped, setStopped] = useState(false);
-  const [phase, setPhase] = useState<"countdown" | "compress" | "breath">("countdown");
+  const [phase, setPhase] = useState<CprPhase>("countdown");
   const [num, setNum] = useState(5);
   const ctxRef = useRef<AudioContext | null>(null);
   const idRef = useRef<number | null>(null);
@@ -325,7 +295,30 @@ function CprGuide() {
         idRef.current = null;
       }
     };
-    const beat = (freq: number, vib = 25) => {
+    // 압박 1회 = 짧은 '딸깍'(square, ~30ms)
+    const tick = () => {
+      navigator.vibrate?.(20);
+      const ctx = ctxRef.current;
+      if (!ctx) return;
+      try {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "square";
+        o.frequency.value = 1800;
+        o.connect(g);
+        g.connect(ctx.destination);
+        const t = ctx.currentTime;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.55, t + 0.001);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+        o.start(t);
+        o.stop(t + 0.04);
+      } catch {
+        /* noop */
+      }
+    };
+    // 카운트다운/인공호흡 신호음(부드러운 톤)
+    const cue = (freq: number, vib: number | number[] = 100) => {
       navigator.vibrate?.(vib);
       const ctx = ctxRef.current;
       if (!ctx) return;
@@ -337,54 +330,64 @@ function CprGuide() {
         g.connect(ctx.destination);
         const t = ctx.currentTime;
         g.gain.setValueAtTime(0.5, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
         o.start(t);
-        o.stop(t + 0.07);
+        o.stop(t + 0.24);
       } catch {
         /* noop */
       }
     };
     const BPM = 110;
     const PER = 30;
-    const BREATH_MS = 5000;
+    const BREATH_EACH_MS = 2500; // 인공호흡 1회당
     const interval = 60000 / BPM;
 
     const compress = () => {
       setPhase("compress");
-      let c = 0;
+      let c = 1;
+      setNum(1); // 즉시 1 표시 → 인공호흡 잔상('2')이 남아 2-1-2로 튀던 버그 방지
+      tick();
       idRef.current = window.setInterval(() => {
         c += 1;
-        setNum(c);
-        beat(1000, 25);
-        if (c >= PER) {
+        if (c > PER) {
           clear();
           breath();
+          return;
         }
+        setNum(c);
+        tick();
       }, interval);
     };
     const breath = () => {
       setPhase("breath");
-      setNum(2);
-      beat(500, 200);
-      idRef.current = window.setTimeout(() => {
-        clear();
-        compress();
-      }, BREATH_MS) as unknown as number;
+      let b = 1;
+      setNum(1); // "1번 부세요"
+      cue(520, [80, 80, 80]);
+      idRef.current = window.setInterval(() => {
+        b += 1;
+        if (b > 2) {
+          clear();
+          compress();
+          return;
+        }
+        setNum(b); // "2번 부세요"
+        cue(520, [80, 80, 80]);
+      }, BREATH_EACH_MS) as unknown as number;
     };
     const countdown = () => {
       setPhase("countdown");
       let c = 5;
-      setNum(c);
-      beat(700, 100);
+      setNum(5);
+      cue(700, 100);
       idRef.current = window.setInterval(() => {
         c -= 1;
         if (c <= 0) {
           clear();
           compress();
-        } else {
-          setNum(c);
-          beat(700, 100);
+          return;
         }
+        setNum(c);
+        cue(700, 100);
       }, 1000);
     };
     countdown();
@@ -395,16 +398,111 @@ function CprGuide() {
     };
   }, [gen, stopped]);
 
-  const label =
-    phase === "countdown" ? "곧 시작합니다" : phase === "compress" ? "누르세요" : "인공호흡 2회 하세요";
-  const big = phase === "breath" ? "🫁 2회" : String(num);
+  const banner =
+    phase === "breath" ? "인공호흡 — 숨을 불어넣으세요" : "가슴을 세게, 빠르게 누르세요";
 
   return (
-    <div className="rounded-xl bg-gray-900 p-5 text-center text-white">
+    <div className="mx-auto flex max-w-md flex-col gap-4 p-5">
+      <div
+        className={`rounded-xl px-4 py-3 text-center text-2xl font-extrabold text-white ${
+          phase === "breath" ? "bg-blue-600" : "bg-danger"
+        }`}
+      >
+        {banner}
+      </div>
+
+      {phase === "breath" ? <BreathVisual /> : <CompressSplit />}
+
+      <CprCounter
+        phase={phase}
+        num={num}
+        stopped={stopped}
+        onStop={() => setStopped(true)}
+        onResume={() => {
+          setStopped(false);
+          setGen((g) => g + 1);
+        }}
+      />
+
+      <p className="text-center text-base text-gray-500">
+        분당 100~120회 · 약 5cm · 구급대 도착까지 멈추지 마세요
+      </p>
+      <p className="rounded-lg bg-gray-100 p-3 text-center text-sm text-gray-500">{GLOBAL_DISCLAIMER}</p>
+      <NavBar onBack={onBack} onRestart={onBack} />
+    </div>
+  );
+}
+
+// 압박 화면 좌우 2분할: [압박부위 사진/그림] | [전문가 시범 영상/애니메이션]
+function CompressSplit() {
+  const [imgOk, setImgOk] = useState(true);
+  const [vidOk, setVidOk] = useState(true);
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <figure className="flex flex-col rounded-xl bg-gray-50 p-2">
+        <div className="aspect-square overflow-hidden rounded-lg">
+          {imgOk ? (
+            <img
+              src={CPR_SITE}
+              alt="압박 부위 — 가슴 정중앙"
+              className="h-full w-full object-cover"
+              onError={() => setImgOk(false)}
+            />
+          ) : (
+            <SiteIllustration />
+          )}
+        </div>
+        <figcaption className="mt-1 text-center text-sm font-bold leading-tight text-danger">
+          여기를 누르세요
+          <br />
+          가슴 정중앙(젖꼭지 사이)
+        </figcaption>
+      </figure>
+      <figure className="flex flex-col rounded-xl bg-black p-1">
+        <div className="aspect-square overflow-hidden rounded-lg">
+          {vidOk ? (
+            <video
+              src={CPR_VIDEO}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+              onError={() => setVidOk(false)}
+            />
+          ) : (
+            <CompressAnim />
+          )}
+        </div>
+        <figcaption className="mt-1 text-center text-sm font-bold text-white">전문가 시범 (반복)</figcaption>
+      </figure>
+    </div>
+  );
+}
+
+// 숫자/상태 표시 + 중지/재시작
+function CprCounter({
+  phase,
+  num,
+  stopped,
+  onStop,
+  onResume,
+}: {
+  phase: CprPhase;
+  num: number;
+  stopped: boolean;
+  onStop: () => void;
+  onResume: () => void;
+}) {
+  const label =
+    phase === "countdown" ? "곧 시작합니다" : phase === "compress" ? "누르세요" : `${num}번 부세요`;
+  const big = phase === "breath" ? `🫁 ${num}번` : String(num);
+  return (
+    <div className="rounded-xl bg-gray-900 p-4 text-center text-white">
       <p className="text-lg text-gray-300">{label}</p>
       <p
-        className={`my-1 text-7xl font-extrabold tabular-nums ${
-          phase === "breath" ? "text-yellow-300" : phase === "compress" ? "text-danger" : "text-gray-200"
+        className={`my-1 text-6xl font-extrabold tabular-nums ${
+          phase === "breath" ? "text-blue-300" : phase === "compress" ? "text-danger" : "text-gray-200"
         }`}
       >
         {big}
@@ -412,22 +510,71 @@ function CprGuide() {
       </p>
       {!stopped ? (
         <button
-          className="mt-2 w-full rounded-xl bg-white px-6 py-4 text-xl font-bold text-gray-900"
-          onClick={() => setStopped(true)}
+          className="mt-1 w-full rounded-xl bg-white px-6 py-3 text-xl font-bold text-gray-900"
+          onClick={onStop}
         >
           ■ 중지
         </button>
       ) : (
         <button
-          className="mt-2 w-full rounded-xl bg-danger px-6 py-4 text-xl font-bold text-white"
-          onClick={() => {
-            setStopped(false);
-            setGen((g) => g + 1);
-          }}
+          className="mt-1 w-full rounded-xl bg-danger px-6 py-3 text-xl font-bold text-white"
+          onClick={onResume}
         >
           ▶ 다시 시작
         </button>
       )}
+    </div>
+  );
+}
+
+// 압박부위 그림(사진 없을 때) — 가슴 정중앙에 O (⚠️ 명치 아님)
+function SiteIllustration() {
+  return (
+    <svg viewBox="0 0 150 150" className="h-full w-full" role="img" aria-label="압박 부위 — 가슴 정중앙">
+      <circle cx="30" cy="45" r="16" fill="#e5c9b0" stroke="#333" strokeWidth="2" />
+      <rect x="46" y="30" width="88" height="95" rx="18" fill="#cfe3f5" stroke="#333" strokeWidth="2" />
+      <circle cx="70" cy="60" r="2.5" fill="#8aa" />
+      <circle cx="106" cy="60" r="2.5" fill="#8aa" />
+      <circle cx="88" cy="72" r="18" fill="none" stroke="#d81e06" strokeWidth="4" />
+      <text x="88" y="108" textAnchor="middle" fill="#d81e06" fontSize="13" fontWeight="bold">
+        여기!
+      </text>
+    </svg>
+  );
+}
+
+// 압박 동작 애니메이션(영상 없을 때)
+function CompressAnim() {
+  return (
+    <svg viewBox="0 0 200 200" className="h-full w-full bg-gray-800" role="img" aria-label="흉부압박 동작">
+      <circle cx="45" cy="95" r="20" fill="#e5c9b0" stroke="#eee" strokeWidth="2" />
+      <rect x="66" y="72" width="118" height="72" rx="22" fill="#cfe3f5" stroke="#eee" strokeWidth="2" />
+      <circle cx="122" cy="108" r="17" fill="none" stroke="#ff5a3c" strokeWidth="3" strokeDasharray="4 3" />
+      <g className="cpr-press">
+        <ellipse cx="122" cy="80" rx="17" ry="10" fill="#f0d0b8" stroke="#eee" strokeWidth="2" />
+        <ellipse cx="122" cy="72" rx="14" ry="9" fill="#f7ddc8" stroke="#eee" strokeWidth="2" />
+        <path d="M122 42 L122 60 M114 53 L122 61 L130 53" stroke="#ff5a3c" strokeWidth="3" fill="none" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+}
+
+// 인공호흡 그림 — 머리 젖히고 숨 불어넣기
+function BreathVisual() {
+  return (
+    <div className="rounded-2xl bg-blue-50 p-4">
+      <svg viewBox="0 0 220 120" className="mx-auto w-full max-w-xs" role="img" aria-label="인공호흡 — 머리를 젖히고 숨 불어넣기">
+        <circle cx="70" cy="65" r="34" fill="#f0d0b8" stroke="#333" strokeWidth="2" />
+        <circle cx="60" cy="58" r="3" fill="#333" />
+        <path d="M58 80 q12 9 24 0" fill="none" stroke="#333" strokeWidth="2" />
+        <g className="breath-puff">
+          <path d="M120 62 h48" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" />
+          <path d="M158 52 l14 10 l-14 10" fill="none" stroke="#2563eb" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      </svg>
+      <p className="mt-1 text-center text-lg font-bold text-blue-700">
+        코를 막고 · 머리를 젖힌 뒤 · 숨을 천천히 불어넣으세요
+      </p>
     </div>
   );
 }

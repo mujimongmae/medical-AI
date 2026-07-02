@@ -48,3 +48,21 @@ textarea:focus-visible {
     animation-duration: 1.2s;
   }
 }
+
+/* 인공호흡 — 공기 불어넣기 화살표 */
+@keyframes breath-puff {
+  0% {
+    opacity: 0.15;
+    transform: translateX(-8px);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+    transform: translateX(10px);
+  }
+}
+.breath-puff {
+  animation: breath-puff 1.7s ease-in-out infinite;
+}
