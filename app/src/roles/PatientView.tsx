@@ -116,49 +116,54 @@ function AlertScreen({
   const [left, setLeft] = useState(seconds);
 
   useEffect(() => {
-    // 큰 알림음(반복 비프) + 진동. 오디오 미지원/차단이어도 앱은 계속 동작.
+    // 사이렌 소리(두 음 왕복) + 진동. 오디오 미지원/차단이어도 앱은 계속 동작.
     let ctx: AudioContext | null = null;
+    let osc: OscillatorNode | null = null;
     try {
       ctx = new AudioContext();
+      void ctx.resume?.();
+      osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.value = 700;
+      g.gain.value = 0.5;
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start();
     } catch {
       ctx = null;
+      osc = null;
     }
 
-    const beep = () => {
-      if (!ctx) return;
-      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    let high = false;
+    const sweep = () => {
+      if (!ctx || !osc) return;
+      const t = ctx.currentTime;
       try {
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.frequency.value = 880;
-        o.connect(g);
-        g.connect(ctx.destination);
-        const t = ctx.currentTime;
-        g.gain.setValueAtTime(0.6, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-        o.start(t);
-        o.stop(t + 0.26);
+        osc.frequency.cancelScheduledValues(t);
+        osc.frequency.setValueAtTime(high ? 1100 : 650, t);
+        osc.frequency.linearRampToValueAtTime(high ? 650 : 1100, t + 0.6);
       } catch {
         /* noop */
       }
+      high = !high;
     };
-    const vibrate = () => navigator.vibrate?.([400, 200, 400]);
-
-    beep();
-    vibrate();
-    const beepTimer = window.setInterval(() => {
-      beep();
-      vibrate();
-    }, 900);
-    const tick = window.setInterval(
-      () => setLeft((n) => Math.max(0, n - 1)),
-      1000,
-    );
+    sweep();
+    const sirenTimer = window.setInterval(sweep, 600);
+    const vib = window.setInterval(() => navigator.vibrate?.([500, 150]), 700);
+    navigator.vibrate?.([500, 150]);
+    const tick = window.setInterval(() => setLeft((n) => Math.max(0, n - 1)), 1000);
 
     return () => {
-      clearInterval(beepTimer);
+      clearInterval(sirenTimer);
+      clearInterval(vib);
       clearInterval(tick);
-      navigator.vibrate?.(0); // 진동 정지
+      navigator.vibrate?.(0);
+      try {
+        osc?.stop();
+      } catch {
+        /* noop */
+      }
       ctx?.close().catch(() => {});
     };
   }, []);

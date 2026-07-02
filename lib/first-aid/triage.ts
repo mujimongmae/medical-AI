@@ -9,23 +9,15 @@ export const TRIAGE_ROOT = "Q1";
 /** AI 음성 추천 경로 진입 마커 (트리아지 종착). NeighborView가 인식. */
 export const AI_VOICE = "AI_VOICE";
 
+// 단일 질문: 무의식 OR 무호흡 → CPR / 둘 다 정상 → AI 음성 추천 (두 단계로 나누지 않음)
 export const TRIAGE: Record<string, TriageNode> = {
   Q1: {
     id: "Q1",
-    prompt: "의식(반응)이 있나요?",
-    hint: "어깨를 두드리며 크게 불러보세요. 119는 자동 신고됩니다.",
+    prompt: "환자가 반응이 있고, 숨도 정상적으로 쉬나요?",
+    hint: "어깨를 두드려 불러보고, 가슴·배가 오르내리는지 보세요. 119는 자동 신고됩니다.",
     options: [
-      { label: "네, 반응이 있어요", next: AI_VOICE },
-      { label: "아니요, 무반응이에요", next: "Q2" },
-    ],
-  },
-  Q2: {
-    id: "Q2",
-    prompt: "숨을 정상적으로 쉬나요?",
-    hint: "10초 안에 가슴·배가 오르내리는지 보세요. 헐떡이거나 확실치 않으면 '아니요'.",
-    options: [
-      { label: "아니요 (숨을 안 쉼/헐떡임)", protocolId: "P-CPR" },
-      { label: "네, 숨을 쉬어요", next: AI_VOICE },
+      { label: "아니요 — 반응이 없거나 숨을 안 쉬어요", protocolId: "P-CPR" },
+      { label: "네 — 반응도 있고 숨도 쉬어요", next: AI_VOICE },
     ],
   },
 };

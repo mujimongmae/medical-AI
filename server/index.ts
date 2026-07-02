@@ -125,6 +125,40 @@ function escalate(eventId: string) {
 // ───────── HTTP (/api 프리픽스 — 웹은 Vite 프록시, 네이티브는 절대 URL로 호출) ─────────
 app.get("/api/health", async () => ({ ok: true, users: users.size, online: sockets.size }));
 
+// 관제/테스트: 등록 사용자 목록
+app.get("/api/users", async () =>
+  [...users.values()].map((u) => ({
+    id: u.id,
+    name: u.name,
+    role: u.role,
+    village: u.village,
+    online: sockets.has(u.id),
+    hasToken: !!u.pushToken,
+  })),
+);
+
+// 관제/테스트: 브라우저에서 특정 폰(환자/이웃) 푸시 테스트용 간이 페이지
+app.get("/admin", async (_req, reply) => {
+  reply.type("text/html").send(`<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>관제(테스트)</title>
+<style>body{font-family:sans-serif;max-width:640px;margin:20px auto;padding:0 12px}
+h1{font-size:20px}.u{border:1px solid #ddd;border-radius:10px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tag{font-size:12px;color:#666}button{padding:10px 14px;border-radius:8px;border:0;color:#fff;font-weight:700}
+.p{background:#d81e06}.n{background:#0a7d2c}.seed{background:#333;width:100%;padding:14px;margin:8px 0}small{color:#888}</style></head>
+<body><h1>🧪 응급 발생 (푸시 테스트)</h1>
+<button class="seed" onclick="trig()">시드 환자로 즉시 이웃 호출 (demo/trigger)</button>
+<div id="list">불러오는 중…</div>
+<small>환자=본인 15초 알림(ALERT_SELF) 푸시 · 이웃=같은 마을 호출(NEIGHBOR_ALERT) 푸시. 폰 화면 끄고 눌러보세요.</small>
+<script>
+async function load(){const r=await fetch('/api/users');const us=await r.json();
+document.getElementById('list').innerHTML=us.map(u=>'<div class="u"><div>'+u.name+' <span class="tag">('+u.role+(u.online?' · 온라인':'')+(u.hasToken?' · 📱토큰':'')+')</span></div>'+
+(u.role==='patient'?'<button class="p" onclick="fall(\\''+u.id+'\\')">이 환자 응급</button>':'<span class="tag">이웃</span>')+'</div>').join('')||'등록된 사용자 없음';}
+async function fall(id){await fetch('/api/fall-event',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({patientId:id})});alert('발생! 환자 폰에 15초 알림, 15초 뒤 이웃 호출');}
+async function trig(){await fetch('/api/demo/trigger',{method:'POST'});alert('시드 환자 응급 발생 → 이웃 즉시 호출');}
+load();setInterval(load,3000);
+</script></body></html>`);
+});
+
 app.post("/api/register", async (req) => {
   const b = req.body as RegisterReq;
   const id = nextUserId();
