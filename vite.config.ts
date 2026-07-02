@@ -16,12 +16,8 @@ export default defineConfig({
     host: true, // 실기기(폰)에서 접속 가능하게 LAN 노출
     fs: { allow: [".."] }, // app 밖의 lib import 허용
     proxy: {
-      // 앱 → 브로커(:8787)로 same-origin 프록시 (CORS 회피, 터널/네이티브도 단일 오리진)
-      "/api": {
-        target: "http://localhost:8787",
-        changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ""),
-      },
+      // 웹 dev: 앱 → 브로커(:8787) same-origin 프록시 (CORS 회피). 브로커 라우트가 이미 /api.
+      "/api": { target: "http://localhost:8787", changeOrigin: true },
       "/ws": { target: "ws://localhost:8787", ws: true },
     },
   },

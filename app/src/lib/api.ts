@@ -4,8 +4,9 @@ import type {
   FallEventRes,
   PatientCard,
 } from "@lib/protocol/messages";
+import { HTTP_BASE } from "../config";
 
-const API = "/api"; // Vite 프록시 → 브로커(:8787). 네이티브/터널은 빌드시 교체.
+const API = HTTP_BASE; // 웹=/api(프록시), 네이티브=절대 브로커 URL
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const r = await fetch(`${API}${path}`, {

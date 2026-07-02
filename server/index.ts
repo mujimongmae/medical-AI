@@ -2,6 +2,7 @@
 // spec/03-logic/01-messaging-protocol.md  ·  spec/01-architecture/README.md (데모 아키텍처)
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
+import cors from "@fastify/cors";
 import {
   ALERT_TIMEOUT_SEC,
   WS_PATH,
@@ -24,6 +25,7 @@ import {
 } from "./registry";
 
 const app = Fastify({ logger: true });
+await app.register(cors, { origin: true }); // 데모: 네이티브(capacitor://)·터널 등 모든 오리진 허용
 await app.register(websocket);
 
 /** 특정 사용자의 살아있는 소켓으로만 push (타깃 전송) */
@@ -83,10 +85,10 @@ function escalate(eventId: string) {
   }
 }
 
-// ───────── HTTP ─────────
-app.get("/health", async () => ({ ok: true, users: users.size, online: sockets.size }));
+// ───────── HTTP (/api 프리픽스 — 웹은 Vite 프록시, 네이티브는 절대 URL로 호출) ─────────
+app.get("/api/health", async () => ({ ok: true, users: users.size, online: sockets.size }));
 
-app.post("/register", async (req) => {
+app.post("/api/register", async (req) => {
   const b = req.body as RegisterReq;
   const id = nextUserId();
   users.set(id, { id, ...b });
@@ -94,7 +96,7 @@ app.post("/register", async (req) => {
   return { id };
 });
 
-app.get<{ Params: { id: string } }>("/patient/:id", async (req, reply) => {
+app.get<{ Params: { id: string } }>("/api/patient/:id", async (req, reply) => {
   const p = users.get(req.params.id);
   if (!p) return reply.code(404).send({ error: "not found" });
   const card: PatientCard = {
@@ -107,7 +109,7 @@ app.get<{ Params: { id: string } }>("/patient/:id", async (req, reply) => {
 });
 
 // mock 이벤트 진입점 (지금은 이게 이벤트 소스. 추후 실제 영상인식으로 스왑)
-app.post("/fall-event", async (req, reply) => {
+app.post("/api/fall-event", async (req, reply) => {
   const b = req.body as FallEventReq;
   const patient = users.get(b.patientId);
   if (!patient) return reply.code(404).send({ error: "patient not found" });

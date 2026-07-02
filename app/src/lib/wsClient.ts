@@ -4,6 +4,7 @@ import {
   type UpMessage,
   type DownMessage,
 } from "@lib/protocol/messages";
+import { WS_BASE } from "../config";
 
 export interface WsHandle {
   send: (m: UpMessage) => void;
@@ -15,12 +16,11 @@ export function connectWs(
   id: string,
   onMessage: (m: DownMessage) => void,
 ): WsHandle {
-  const proto = location.protocol === "https:" ? "wss" : "ws";
   let ws: WebSocket | null = null;
   let closed = false;
 
   const open = () => {
-    ws = new WebSocket(`${proto}://${location.host}${WS_PATH}`);
+    ws = new WebSocket(`${WS_BASE}${WS_PATH}`);
     ws.onopen = () =>
       ws?.send(JSON.stringify(envelope<UpMessage>({ type: "HELLO", id })));
     ws.onmessage = (e) => {
