@@ -26,6 +26,9 @@ build/
 # 빌드 산출물 apk
 *.apk
 
+# 브로커 로컬 저장(런타임 산출물, 합성이지만 커밋 안 함)
+server/data.json
+
 # Firebase 시크릿 (커밋 금지)
 google-services.json
 **/google-services.json

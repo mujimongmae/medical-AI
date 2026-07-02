@@ -29,6 +29,7 @@ import { seedRegistry, SEED_PATIENT_ID } from "./seed";
 import { recommendVoice } from "./claude";
 import type { VoiceReq, VoiceRes, PushTokenReq } from "../lib/protocol/messages";
 import { initPush, sendPush } from "./push";
+import { loadStore, saveStore } from "./store";
 
 const app = Fastify({ logger: true });
 await app.register(cors, { origin: true }); // 데모: 네이티브(capacitor://)·터널 등 모든 오리진 허용
@@ -163,7 +164,8 @@ app.post("/api/register", async (req) => {
   const b = req.body as RegisterReq;
   const id = nextUserId();
   users.set(id, { id, ...b });
-  app.log.info(`register ${id} (${b.role}) ${b.name}@${b.village}`);
+  saveStore();
+  app.log.info(`register ${id} (${b.role}) ${b.name}@${b.village} 병력:${(b.history ?? []).join("/") || "-"}`);
   return { id };
 });
 
@@ -205,6 +207,7 @@ app.post("/api/push-token", async (req, reply) => {
   const u = users.get(b.id);
   if (!u) return reply.code(404).send({ error: "user not found" });
   u.pushToken = b.token;
+  saveStore();
   app.log.info(`push-token 등록 ${b.id} (${b.platform ?? "?"})`);
   return { ok: true };
 });
@@ -283,8 +286,9 @@ app.get(WS_PATH, { websocket: true }, (socket) => {
 
 // 데모 페르소나 시드 (환자1 + 이웃4, 마을 "방림리"). mock fall-event 대상: SEED_PATIENT_ID.
 seedRegistry();
+loadStore((m) => app.log.info(`[store] ${m}`)); // 저장본으로 시드 위에 덮어쓰기
 app.log.info(
-  `seeded registry: ${users.size} users (demo patient=${SEED_PATIENT_ID})`,
+  `registry ready: ${users.size} users (demo patient=${SEED_PATIENT_ID})`,
 );
 initPush((m) => app.log.info(`[push] ${m}`));
 

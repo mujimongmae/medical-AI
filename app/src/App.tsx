@@ -65,29 +65,41 @@ function Disclaimer() {
 
 function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
   const [name, setName] = useState("");
+  const [history, setHistory] = useState(""); // 병력(콤마 구분) — 보호자 입력
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  function save(me: Me) {
+    localStorage.setItem(ME_KEY, JSON.stringify(me));
+    onDone(me);
+  }
 
   async function pick(role: Role) {
     if (!name.trim() || busy) return;
     setBusy(true);
     setError("");
     try {
-      // 데모: 합성 좌표 (마을 기준 + 소량 지터)
       const home = {
         lat: 37.55 + (Math.random() - 0.5) * 0.02,
         lng: 128.4 + (Math.random() - 0.5) * 0.02,
       };
-      const { id } = await register({ role, name: name.trim(), village: VILLAGE, home });
-      const me: Me = { id, role, name: name.trim() };
-      localStorage.setItem(ME_KEY, JSON.stringify(me));
-      onDone(me);
+      const hx = history
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const { id } = await register({ role, name: name.trim(), village: VILLAGE, home, history: hx });
+      save({ id, role, name: name.trim() });
     } catch {
       setError(
         "등록에 실패했어요. 브로커 서버(npm run server)가 켜져 있는지 확인한 뒤 다시 시도해 주세요.",
       );
       setBusy(false);
     }
+  }
+
+  // 데모: 타이핑 없이 시드 환자(병력 有)로 바로 시작 → 등록부에 이미 있는 seed-patient-1에 바인딩
+  function startAsSeed() {
+    save({ id: "seed-patient-1", role: "patient", name: "김복순(합성)" });
   }
 
   const disabled = !name.trim() || busy;
@@ -108,6 +120,17 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
       <p className="text-base text-gray-500">
         직접 입력이 어려우시면 보호자나 마을 담당자가 대신 입력해 주세요.
       </p>
+
+      <label className="flex flex-col gap-2 text-lg font-semibold">
+        병력 <span className="font-normal text-gray-400">(환자만, 콤마로 구분 — 선택)</span>
+        <input
+          className="rounded-lg border-2 border-gray-300 px-4 py-4 text-lg font-normal"
+          value={history}
+          onChange={(e) => setHistory(e.target.value)}
+          placeholder="예: 고혈압, 당뇨"
+          autoComplete="off"
+        />
+      </label>
 
       <p className="mt-2 text-lg font-bold">역할을 선택하세요</p>
       <div className="flex flex-col gap-4">
@@ -132,6 +155,14 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
           </span>
         </button>
       </div>
+
+      <button
+        className="mt-2 rounded-xl border-2 border-dashed border-gray-400 px-6 py-4 text-base font-bold text-gray-600 disabled:opacity-40"
+        disabled={busy}
+        onClick={startAsSeed}
+      >
+        [데모] 시드 환자(김복순·병력 有)로 바로 시작
+      </button>
 
       {busy && <p className="text-base text-gray-500">등록 중…</p>}
       {error && <p className="text-base font-semibold text-danger">{error}</p>}

@@ -15,8 +15,7 @@
 - **시드 데이터:** 합성 데이터 규격 (`/seed-data`, `medical-app`/`seed-data` 스킬)
 
 ## 문서 목록
-<!-- 테이블/엔티티마다 _TEMPLATE.md 복사. 예: rls-policies.md — RLS 정책 모음 -->
-_아직 없음 — 첫 스키마 설계 시 `../_TEMPLATE.md` 복사해서 생성. 예상 엔티티: users(역할·마을·위치·병력) · events(응급 건·상태) · 알림 로그._
+- [`01-entities-and-persistence.md`](./01-entities-and-persistence.md) — user/event 엔티티, JSON 영속(데모)→Supabase, 병력 입력, 매칭 규칙
 
 ## 데이터 불변식 (반드시)
 - **실제 환자/개인 의료정보 금지.** 합성 데이터만.
