@@ -28,6 +28,12 @@
 | `POST /fall-event` | **영상인식(미확정) 또는 mock 생성기** | `{patientId, confidence?, snapshotRef?}` ⚠️ **잠정** | `{eventId}` |
 | `POST /voice` | 이웃앱 | `{eventId, transcript}` (온디바이스 STT 텍스트) | `{summary, likelyCondition, recommendation, protocolId?}` — Claude가 **병력+증상 종합 → 가장 가능성 높은 상태 1개 + 추천 응급처치**. ⚠️ 확정진단 금지("가능성" 표현)·119 우선. Claude 오디오 직접입력 불가 → 기기 STT 후 텍스트 전송 |
 | `GET /patient/:id` | 이웃앱 | — | `{name, addressText, accessNote, 병력요약}` |
+| `POST /api/push-token` | 앱 | `{id, token, platform?}` | `{ok}` — FCM 토큰 등록(화면 꺼짐 알림) |
+| `POST /api/demo/trigger` | 테스트 | — | 시드 환자로 응급 즉시 발생(이웃 즉시 호출) |
+| `GET /api/users` | **테스트/관제** | — | 등록 사용자 목록 `[{id,name,role,village,online,hasToken}]` |
+| `GET /admin` | **테스트/관제** | — | 브로커가 서빙하는 간이 관제 HTML — 사용자별 **"응급 발생" 버튼**으로 특정 폰(환자/이웃) 푸시 테스트 |
+
+> 🧪 **푸시 테스트**: 환자·이웃 폰을 각각 등록(토큰 발급)해 화면을 끈 뒤, PC 브라우저에서 `/admin`을 열어 해당 사용자의 "응급 발생"을 누르면 그 폰으로 푸시가 간다. (환자=본인 `ALERT_SELF`, 이웃=같은 마을 `NEIGHBOR_ALERT`)
 
 > 🔌 **영상인식 = 교체 가능한 이벤트 소스.** 영상인식 프로그램·이벤트 출력 형식은 **미확정**. 지금은 "영상인식이 있다고 가정"하고 **mock 이벤트 생성기**(예: 데모용 버튼 / 타이머 / CLI)가 `POST /fall-event`로 이벤트를 **가상 생성**한다. 서버는 이 엔드포인트 뒤로 로직이 동일하므로, 나중에 실제 영상인식으로 **갈아끼우기만** 하면 된다. → `/fall-event` payload는 잠정(위)이며 실제 프로그램 확정 시 합의·갱신.
 
