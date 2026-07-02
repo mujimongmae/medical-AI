@@ -264,6 +264,10 @@ export function createCollapseStateMachine(
     state = "NORMAL";
     down = null;
     suspectedFrames = 0;
+    // Clear the transition window on recovery: a resolved fall (e.g. a person
+    // who went down then stood back up) must not leave a stale drop/flip signal
+    // lingering in the window to re-trigger suspicion frame after frame.
+    history = [];
   }
 
   /** Enter the DOWN path unless a bed/couch zone suppresses it. */
