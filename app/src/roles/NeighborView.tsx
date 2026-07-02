@@ -5,7 +5,7 @@ import { PROTOCOL_BY_ID } from "@lib/first-aid/protocols";
 import { GLOBAL_DISCLAIMER } from "@lib/first-aid/schema";
 import type { FirstAidProtocol, ProtocolStep, Urgency } from "@lib/first-aid/schema";
 import { connectWs, type WsHandle } from "../lib/wsClient";
-import { sendVoice } from "../lib/api";
+import { sendVoice, triggerDemoFall } from "../lib/api";
 
 interface ActiveAlert {
   eventId: string;
@@ -26,15 +26,7 @@ export default function NeighborView({ id, name }: { id: string; name: string })
   }, [id]);
 
   if (!alert) {
-    return (
-      <div className="mx-auto flex max-w-md flex-col gap-4 p-6">
-        <h2 className="text-xl font-bold">{name} 님 (이웃)</h2>
-        <p className="text-lg text-gray-600">
-          대기 중입니다. 마을에 응급상황이 생기면 이 폰으로 호출이 옵니다.
-        </p>
-        <div className="mt-4 rounded-lg bg-safe/10 p-4 text-safe">● 대기 중</div>
-      </div>
-    );
+    return <NeighborIdle name={name} />;
   }
 
   return (
@@ -47,6 +39,48 @@ export default function NeighborView({ id, name }: { id: string; name: string })
         ws.current?.send({ type: "PROTOCOL_ANSWER", eventId: alert.eventId, step, value })
       }
     />
+  );
+}
+
+// 이웃 대기 화면 + 혼자 테스트용 데모 트리거
+function NeighborIdle({ name }: { name: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const fire = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await triggerDemoFall();
+    } catch {
+      setError("서버에 연결하지 못했어요. 브로커 서버가 켜져 있는지 확인해 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto flex max-w-md flex-col gap-4 p-6">
+      <h2 className="text-xl font-bold">{name} 님 (이웃)</h2>
+      <p className="text-lg text-gray-600">
+        대기 중입니다. 마을에 응급상황이 생기면 이 폰으로 호출이 옵니다.
+      </p>
+      <div className="mt-4 rounded-lg bg-safe/10 p-4 text-safe">● 대기 중</div>
+
+      {/* 혼자 테스트용: 시드 환자(김복순)로 응급을 즉시 발생 → 이 화면에 호출이 옴 */}
+      <button
+        className="mt-6 rounded-xl border-2 border-dashed border-danger px-6 py-5 text-lg font-bold text-danger disabled:opacity-40"
+        onClick={fire}
+        disabled={busy}
+      >
+        {busy ? "발생시키는 중…" : "[테스트] 응급 상황 발생시키기"}
+      </button>
+      <p className="text-sm text-gray-400">
+        누르면 시드 환자(김복순)의 응급이 즉시 발생해 이 화면으로 호출이 옵니다.
+      </p>
+      {error && <p className="text-base font-semibold text-danger">{error}</p>}
+    </div>
   );
 }
 

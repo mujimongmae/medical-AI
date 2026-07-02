@@ -26,6 +26,10 @@ export const register = (body: RegisterReq) =>
 export const triggerFall = (patientId: string) =>
   post<FallEventRes>("/fall-event", { patientId });
 
+/** 데모/테스트: 시드 환자로 응급을 즉시 발생 (이웃 화면에서 혼자 테스트용) */
+export const triggerDemoFall = () =>
+  post<FallEventRes>("/demo/trigger", {});
+
 export async function getPatient(id: string): Promise<PatientCard> {
   const r = await fetch(`${API}/patient/${id}`);
   if (!r.ok) throw new Error(`patient ${r.status}`);

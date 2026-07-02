@@ -149,6 +149,18 @@ app.post("/api/fall-event", async (req, reply) => {
   return { eventId };
 });
 
+// 데모/테스트용: 시드 환자로 응급을 즉시 발생(15초 대기 생략) → 이웃 화면 바로 호출.
+// 이웃만 켜고 혼자 테스트할 때 사용. 시드 환자는 병력(고혈압·협심증) → priorityHint도 함께 노출.
+app.post("/api/demo/trigger", async (req, reply) => {
+  const patient = users.get(SEED_PATIENT_ID);
+  if (!patient) return reply.code(404).send({ error: "seed patient missing" });
+  const eventId = nextEventId();
+  events.set(eventId, { eventId, patientId: SEED_PATIENT_ID, state: "alerting_self" });
+  escalate(eventId); // 즉시 이웃 호출 (테스트 편의)
+  app.log.info(`demo trigger ${eventId} (patient=${SEED_PATIENT_ID}) → 이웃 즉시 호출`);
+  return { eventId };
+});
+
 // 온디바이스 STT 텍스트 → Claude 짧은 상황 요약 (키 없으면 fallback 에코). spec/03-logic/01 §2.2
 app.post("/api/voice", async (req, reply) => {
   const b = req.body as VoiceReq;
