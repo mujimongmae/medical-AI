@@ -10,6 +10,7 @@
 | 04 | [04-ems-bottleneck-deepdive.md](./04-ems-bottleneck-deepdive.md) | 03 심화: 병원 선정·재이송·비응급 수요 병목 + 기존 해결 시도의 공백 | ✅ 완료 (경량 리서치, 핵심 수치 교차검증) |
 
 | 05 | [05-sources-digest.md](./05-sources-digest.md) | 소스 50개 원문 직독 — 자료별 문제·핵심 수치·한계 정리 | ✅ 완료 (전 자료 접근 성공) |
+| 06 | [06-auto-alert-efficacy.md](./06-auto-alert-efficacy.md) | 심뇌혈관 자동 감지·신고 서비스 효용성 (시간=생존율, 자동신고 시간단축) | ✅ 완료 (경량 리서치, 핵심 수치 교차검증) |
 
 전체 소스 목록(약 53개, 검증 여부 표시): [SOURCES.md](./SOURCES.md)
 
