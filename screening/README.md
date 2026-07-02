@@ -13,6 +13,7 @@
 | 06 | [06-auto-alert-efficacy.md](./06-auto-alert-efficacy.md) | 심뇌혈관 자동 감지·신고 서비스 효용성 (시간=생존율, 자동신고 시간단축) | ✅ 완료 (경량 리서치, 핵심 수치 교차검증) |
 | 07 | [07-fall-vs-lying-datasets.md](./07-fall-vs-lying-datasets.md) | 낙상 vs 눕기 구별 + 심정지 감지 데이터셋·논문 (기술 설계 근거) | ✅ 완료 (핵심 데이터셋·논문 URL 검증) |
 | 08 | [08-medical-collapse-cv.md](./08-medical-collapse-cv.md) | 쓰러짐 행태→의학적 응급 판별 가능성 (CV·Physical AI 문헌, 냉정 평가) | ✅ 완료 (핵심 논문 URL 검증) |
+| 09 | [09-detection-architecture.md](./09-detection-architecture.md) | 감지 아키텍처 강화 (논문+HF 모델/데이터+Claude Vision, 배포 티어) | ✅ 완료 (HF repo 실재 검증) |
 
 전체 소스 목록(약 53개, 검증 여부 표시): [SOURCES.md](./SOURCES.md)
 
