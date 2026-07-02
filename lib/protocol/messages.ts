@@ -53,8 +53,12 @@ export interface VoiceReq {
   eventId: string;
   transcript: string;
 }
+/** 병력+증상 종합 결과: 가장 가능성 높은 상태 + 추천 처치 (확정진단 아님) */
 export interface VoiceRes {
-  summary: string;
+  summary: string; // 상황 요약(구급대 전달용)
+  likelyCondition: string; // 가장 가능성 높은 상태 ("~가능성이 높아요")
+  recommendation: string; // 추천 응급처치 (짧게, 큰 글씨용)
+  protocolId?: string; // 매칭 지식베이스 프로토콜(있으면 상세 연결)
 }
 
 /** 이웃앱에 보여줄 환자 카드 */

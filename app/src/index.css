@@ -28,3 +28,23 @@ input:focus-visible,
 textarea:focus-visible {
   @apply outline-none ring-4 ring-blue-500/60;
 }
+
+/* CPR 압박 애니메이션 — 분당 약 110회(0.545s/회). 오프라인 자체 렌더(GIF 대체) */
+@keyframes cpr-press {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(14px);
+  }
+}
+.cpr-press {
+  animation: cpr-press 0.545s ease-in-out infinite;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cpr-press {
+    animation-duration: 1.2s;
+  }
+}

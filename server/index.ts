@@ -24,7 +24,7 @@ import {
   type EmergencyEvent,
 } from "./registry";
 import { seedRegistry, SEED_PATIENT_ID } from "./seed";
-import { summarizeVoice } from "./claude";
+import { recommendVoice } from "./claude";
 import type { VoiceReq, VoiceRes, PushTokenReq } from "../lib/protocol/messages";
 import { initPush, sendPush } from "./push";
 
@@ -196,9 +196,16 @@ app.post("/api/voice", async (req, reply) => {
   const patient = ev ? users.get(ev.patientId) : undefined;
   const context = patient?.history?.length ? patient.history.join(", ") : undefined;
 
-  const { summary, source } = await summarizeVoice(b.transcript, context);
-  app.log.info(`voice summary (${source}) event=${b.eventId ?? "-"}`);
-  const res: VoiceRes = { summary };
+  const rec = await recommendVoice(b.transcript, context);
+  app.log.info(
+    `voice recommend (${rec.source}) event=${b.eventId ?? "-"} → ${rec.likelyCondition}`,
+  );
+  const res: VoiceRes = {
+    summary: rec.summary,
+    likelyCondition: rec.likelyCondition,
+    recommendation: rec.recommendation,
+    protocolId: rec.protocolId,
+  };
   return res;
 });
 
