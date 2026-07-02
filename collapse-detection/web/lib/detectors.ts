@@ -103,7 +103,10 @@ async function loadDetectorsImpl(): Promise<Detectors> {
   const [cocoModel, poseDetector] = await Promise.all([
     cocoSsd.load({ base: "lite_mobilenet_v2" }) as Promise<CocoModel>,
     poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, {
-      modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+      // Thunder is markedly more accurate than Lightning (still 17 keypoints,
+      // ~3x heavier but real-time on WebGL) — better joint localization means
+      // steadier fall geometry and more markers clearing the confidence bar.
+      modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
     }) as Promise<PoseDetectorModel>,
   ]);
 

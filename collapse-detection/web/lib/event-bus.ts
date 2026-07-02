@@ -26,6 +26,23 @@ const SENDER_ID =
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
+/** Persistent outbound BroadcastChannel — created lazily and reused for every
+ *  send. We intentionally do NOT close it per-message: a synchronous close()
+ *  right after postMessage() can cancel the (async) delivery in some browsers,
+ *  which silently drops the event before the receiver tab ever sees it. */
+let emitChannel: BroadcastChannel | null = null;
+function getEmitChannel(): BroadcastChannel | null {
+  if (!isBrowser) return null;
+  if (!emitChannel) {
+    try {
+      emitChannel = new BroadcastChannel(EVENT_CHANNEL);
+    } catch {
+      emitChannel = null;
+    }
+  }
+  return emitChannel;
+}
+
 /** Supabase Realtime channel + table name (kept in sync with the SQL file). */
 const SUPABASE_CHANNEL = EVENT_CHANNEL;
 const SUPABASE_TABLE = "emergency_events";
@@ -91,13 +108,15 @@ export function emitEmergencyEvent(event: EmergencyEvent): void {
 
   const envelope: EventEnvelope = { senderId: SENDER_ID, event };
 
-  // 1) Local transport — synchronous, always on.
-  try {
-    const bc = new BroadcastChannel(EVENT_CHANNEL);
-    bc.postMessage(envelope);
-    bc.close();
-  } catch {
-    // BroadcastChannel unsupported — Supabase (if any) still carries the event.
+  // 1) Local transport — synchronous, always on. Reuse the persistent channel
+  //    (do NOT close it here) so delivery isn't cancelled by a same-tick close.
+  const bc = getEmitChannel();
+  if (bc) {
+    try {
+      bc.postMessage(envelope);
+    } catch {
+      // BroadcastChannel unsupported — Supabase (if any) still carries the event.
+    }
   }
 
   // 2) Optional Supabase transport — fire-and-forget.

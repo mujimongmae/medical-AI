@@ -56,7 +56,7 @@ interface DragRect {
 }
 
 export default function HomeCamPage() {
-  const { videoRef, devices, activeDeviceId, selectDevice, status, error } =
+  const { videoRef, devices, activeDeviceId, selectDevice, requestCamera, status, error } =
     useCamera();
 
   const [frame, setFrame] = useState<DetectionFrame | null>(null);
@@ -261,6 +261,29 @@ export default function HomeCamPage() {
     setLastEvent(null);
   }, []);
 
+  // Manual test: emit a synthetic candidate to verify the receiver/app path
+  // end-to-end without a real fall (also a reliable fallback for the live demo).
+  const sendTestAlert = useCallback(() => {
+    const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+    const event: EmergencyEvent = {
+      eventId: c?.randomUUID ? c.randomUUID() : `test_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      cameraId: CAMERA_ID,
+      status: "candidate",
+      severity: "critical",
+      personBbox: [0, 0, 0, 0],
+      signals: {
+        transition: "abrupt",
+        zone: "floor",
+        immobileSeconds: 3,
+        posture: "horizontal",
+      },
+      keyframeDataUrl: captureKeyframe(),
+    };
+    emitEmergencyEvent(event);
+    setLastEvent(event);
+  }, [captureKeyframe]);
+
   // Stable ref for the overlay (avoids redundant redraws when unrelated state
   // changes; zones array identity only changes on actual edits).
   const overlayZones = useMemo(() => zones, [zones]);
@@ -313,6 +336,24 @@ export default function HomeCamPage() {
           label={`상태: ${STATE_LABEL[displayState]}`}
           tone={isAlarm ? "bad" : displayState === "SUSPECTED" ? "warn" : "ok"}
         />
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={requestCamera}
+          className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:bg-neutral-800"
+        >
+          📷 카메라 다시 요청
+        </button>
+        <button
+          type="button"
+          onClick={sendTestAlert}
+          className="rounded-md border border-amber-700 bg-amber-950/40 px-3 py-2 text-sm text-amber-200 hover:bg-amber-900/40"
+        >
+          🔔 테스트 알림 보내기
+        </button>
       </div>
 
       {(error || detectorError) && (

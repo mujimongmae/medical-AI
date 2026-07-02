@@ -343,17 +343,25 @@ export function createCollapseStateMachine(
 
     switch (state) {
       case "NORMAL": {
-        if (f.posture === "horizontal" && ev.hasTransition) {
-          enterDown(f, ev);
-        } else if (ev.dropSignal) {
-          state = "SUSPECTED";
-          suspectedFrames = 0;
+        // MOTION-FIRST: a real downward drop (hip descent normalized by body
+        // height) is REQUIRED to leave NORMAL. Static posture/aspect alone must
+        // never trigger — e.g. a face close to the camera widens the person box
+        // (w>h) and reads "horizontal", but with no drop it is NOT a fall.
+        if (ev.dropSignal) {
+          if (f.posture === "horizontal") {
+            enterDown(f, ev); // drop that already ended horizontal
+          } else {
+            state = "SUSPECTED"; // dropping — wait to see if it ends horizontal
+            suspectedFrames = 0;
+          }
         }
         break;
       }
       case "SUSPECTED": {
+        // Reached only after a confirmed drop. Confirm it ended horizontal;
+        // recover if the person is upright or the window elapses.
         suspectedFrames++;
-        if (f.posture === "horizontal" && ev.hasTransition) {
+        if (f.posture === "horizontal") {
           enterDown(f, ev);
         } else if (f.posture === "upright") {
           toNormal();

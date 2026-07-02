@@ -265,37 +265,52 @@ export default function DetectionOverlay({
 // Low-level drawing helpers.
 // ---------------------------------------------------------------------------
 
+/** Visual-only keypoint threshold (lower than the detection threshold) so more
+ *  markers are drawn. Detection logic still uses THRESHOLDS.MIN_KEYPOINT_SCORE. */
+const RENDER_KP_MIN = 0.2;
+
 function drawSkeleton(
   ctx: CanvasRenderingContext2D,
   pose: Pose,
   unit: number,
 ): void {
   const kp = keypointMap(pose);
-  const minScore = THRESHOLDS.MIN_KEYPOINT_SCORE;
+  const solid = THRESHOLDS.MIN_KEYPOINT_SCORE;
 
   ctx.save();
-  // Edges.
-  ctx.lineWidth = unit * 1.2;
-  ctx.strokeStyle = "#22d3ee"; // cyan
   ctx.lineCap = "round";
+
+  // Edges — full strength when both ends are confident, faint when marginal.
   for (const [a, b] of SKELETON_EDGES) {
     const ka = kp.get(a);
     const kb = kp.get(b);
     if (!ka || !kb) continue;
-    if (ka.score < minScore || kb.score < minScore) continue;
+    const lo = Math.min(ka.score, kb.score);
+    if (lo < RENDER_KP_MIN) continue;
+    ctx.globalAlpha = lo >= solid ? 1 : 0.4;
+    ctx.lineWidth = unit * 1.4;
+    ctx.strokeStyle = "#22d3ee"; // cyan
     ctx.beginPath();
     ctx.moveTo(ka.x, ka.y);
     ctx.lineTo(kb.x, kb.y);
     ctx.stroke();
   }
-  // Joints.
-  ctx.fillStyle = "#fbbf24"; // amber dots
+
+  // Joints — every keypoint above the (lower) render threshold, with a white
+  // outline for contrast. Confident joints solid + larger; marginal ones dim.
+  ctx.lineWidth = Math.max(1, unit * 0.5);
   for (const k of pose.keypoints) {
-    if (k.score < minScore) continue;
+    if (k.score < RENDER_KP_MIN) continue;
+    const confident = k.score >= solid;
+    ctx.globalAlpha = confident ? 1 : 0.5;
     ctx.beginPath();
-    ctx.arc(k.x, k.y, unit * 1.6, 0, Math.PI * 2);
+    ctx.arc(k.x, k.y, unit * (confident ? 1.9 : 1.3), 0, Math.PI * 2);
+    ctx.fillStyle = confident ? "#fbbf24" : "#f59e0b"; // amber / dim amber
     ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.stroke();
   }
+  ctx.globalAlpha = 1;
   ctx.restore();
 }
 

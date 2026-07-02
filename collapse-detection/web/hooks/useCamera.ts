@@ -18,6 +18,8 @@ export interface UseCameraResult {
   devices: CameraDevice[];
   activeDeviceId: string | null;
   selectDevice: (deviceId: string) => void;
+  /** Re-request the camera (re-prompts permission / retries after an error). */
+  requestCamera: () => void;
   status: "idle" | "requesting" | "streaming" | "error";
   error: string | null;
 }
@@ -124,6 +126,12 @@ export function useCamera(): UseCameraResult {
     [activeDeviceId, status, open],
   );
 
+  /** Explicit re-request: re-prompt permission / retry the active (or default)
+   *  camera. Used by the "카메라 다시 요청" button after a denial or a drop. */
+  const requestCamera = useCallback(() => {
+    void open(activeDeviceIdRef.current ?? undefined);
+  }, [open]);
+
   // Mount: request default camera, then auto-prefer the iPhone Continuity Cam.
   useEffect(() => {
     mountedRef.current = true;
@@ -156,5 +164,5 @@ export function useCamera(): UseCameraResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { videoRef, devices, activeDeviceId, selectDevice, status, error };
+  return { videoRef, devices, activeDeviceId, selectDevice, requestCamera, status, error };
 }
