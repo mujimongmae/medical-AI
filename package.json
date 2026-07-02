@@ -9,6 +9,7 @@
     "server": "tsx watch server/index.ts",
     "dev:all": "concurrently -n app,server -c cyan,magenta \"npm:dev\" \"npm:server\"",
     "build": "vite build",
+    "sync:ios": "npm run build && npx cap copy ios",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
