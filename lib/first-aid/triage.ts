@@ -1,4 +1,4 @@
-// 트리아지 결정트리 — 진입 = 홈캠이 "쓰러짐" 감지 (spec/logic/first-aid-protocol.md §4)
+// 트리아지 결정트리 — 진입 = 홈캠이 "쓰러짐" 감지 (spec/03-logic/02-first-aid-protocol.md §4)
 // 전제: 119 신고는 자동. 트리아지는 신고 단계를 두지 않고 CPR 판단까지 최소 질문(반응→호흡)으로 도달.
 // 위험도 분기는 이 결정적 데이터로 수행. LLM은 안내 문구 자연화·보조 질의응답에만 사용.
 import type { TriageNode } from "./schema";

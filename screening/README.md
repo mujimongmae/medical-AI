@@ -13,4 +13,4 @@
 
 전체 소스 목록(약 53개, 검증 여부 표시): [SOURCES.md](./SOURCES.md)
 
-> 주제 확정 시 `spec/00-overview.md`에 기록 후 설계로 이동 (spec-first 원칙).
+> 주제 확정 시 `spec/00-overview/README.md`에 기록 후 설계로 이동 (spec-first 원칙).

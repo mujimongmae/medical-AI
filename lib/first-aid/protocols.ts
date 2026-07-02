@@ -1,5 +1,5 @@
 // 응급처치 프로토콜 데이터 (일반인용) — 대한심폐소생협회 2020 가이드라인 기반
-// spec/logic/first-aid-protocol.md · 개정 시 수치·source 갱신
+// spec/03-logic/02-first-aid-protocol.md · 개정 시 수치·source 갱신
 import type { FirstAidProtocol, GuidelineRef } from "./schema";
 
 const KACPR_2020: GuidelineRef = {

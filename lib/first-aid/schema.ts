@@ -1,4 +1,4 @@
-// 응급처치 프로토콜 스키마 (일반인용) — spec/logic/first-aid-protocol.md
+// 응급처치 프로토콜 스키마 (일반인용) — spec/03-logic/02-first-aid-protocol.md
 // 임상 내용의 진실 원천은 각 프로토콜의 source[] 가이드라인. 개정 시 데이터·연도 갱신.
 
 /** 응급도 — UI 색상·정렬·119 우선순위 결정 */
