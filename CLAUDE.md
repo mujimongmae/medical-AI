@@ -6,39 +6,42 @@
 
 > 📋 **과제 브리핑 전문 → [`challenge/README.md`](./challenge/README.md)**
 > (주최측 배포 슬라이드 4장 정리: 주제·SDOH 프레임·일정·평가·PPT 요건. 원본 이미지는 `challenge/images/`)
-> ⚠️ **해결할 구체 문제·대상은 팀이 정의 예정 (TBD).** 정해지면 먼저 [`spec/00-overview.md`](./spec/00-overview.md) 에 기록.
+> ⚠️ **해결할 구체 문제·대상은 팀이 정의 예정 (TBD).** 정해지면 먼저 [`spec/00-overview/`](./spec/00-overview/README.md) 에 기록.
 > (예선 주제/대상과 중복 금지 — 점수 반영. **14:30 코드 동결 하드 마감.**)
 
 ## ⭐ 스펙 우선 (Spec-first) — 반드시 준수
 구현보다 **스펙이 먼저**다. 모든 진실 원천은 [`spec/`](./spec/README.md) 폴더에 있다.
 1. **구현 전** — 관련 스펙 문서를 먼저 작성/갱신한다. (없으면 `spec/_TEMPLATE.md` 복사)
 2. **변경 시** — 코드·데이터·UI 무엇이든 바꾸기 전에 **스펙 문서를 먼저 수정**하고, 그다음 코드를 바꾼다.
-3. 카테고리: `spec/design/`(화면·토큰·접근성) · `spec/logic/`(로직·AI 프롬프트) · `spec/data-model/`(스키마·RLS).
+3. 카테고리: `spec/02-design/`(화면·토큰·접근성) · `spec/03-logic/`(로직·AI 프롬프트) · `spec/04-data-model/`(스키마·RLS).
 4. 가능하면 **스펙 변경 + 코드 변경을 같은 커밋**에 담아 추적성 유지.
 > 코드 파일(app/lib/components) 편집 시 spec/ 미수정이면 hook이 리마인더를 준다(비차단). 이미 반영했거나 순수 버그픽스면 무시하고 진행.
 
-## 기술 스택 (권장 기본값 — 컨셉 확정 후 조정 가능)
-- 프론트: **Next.js 15** (App Router, RSC + Server Actions) + **React 19** + TypeScript
-- 스타일: Tailwind CSS (모바일 우선, 접근성 고려해 큰 폰트/고대비)
+## 기술 스택 (모바일 웹앱 베이스 — 안드로이드/갤럭시 우선, iOS 옵션)
+- 웹앱: **Next.js (App Router)** + **React 19** + TypeScript — **모바일 우선 반응형 웹**
+- 스타일: **Tailwind CSS** (접근성 고려 큰 폰트/고대비)
 - 백엔드/DB: **Supabase** (Postgres + Auth + Storage + Realtime), RLS 기본 ON
-- AI: **Claude API** (분석·요약·RAG)
-- 배포: Vercel
+- AI: **Claude API** — ⚠️ **키를 클라이언트에 넣지 말 것.** 반드시 **Next.js Route Handler(`app/api/**`, 서버)** 로 프록시 호출
+- 웹 배포/데모: **Vercel** (Preview/Prod URL → QR·링크로 어떤 폰이든 브라우저 즉시 실행)
+- 네이티브 앱: **Capacitor** 로 같은 웹을 **래핑만** → .apk/.ipa 산출 ("실제 앱" 요건 충족, 안드로이드 우선)
+- 상세: [`spec/01-architecture/`](./spec/01-architecture/README.md)
 
 ## 명령어
-- 개발: `npm run dev`
-- 빌드: `npm run build`
+- 개발: `npm run dev` (로컬 웹) — Vercel Preview 배포는 push 시 자동
+- 안드로이드 빌드: `npx cap sync` → `npx cap open android` (Android Studio에서 .apk)
 - 린트: `npm run lint`
 - 테스트: `npm test`
+- Supabase 로컬: `supabase start` / 마이그레이션 `supabase db push`
 
 ## ⚠️ 의료 데이터 규칙 (컨셉과 무관하게 반드시 준수)
 - **실제 환자/개인 의료정보 절대 사용 금지.** 합성 데이터만 (`/seed-data`).
 - 개인정보(이름·주민번호·연락처·주소·생년월일 등 18개 HIPAA 식별자)를 코드/로그/커밋에 남기지 말 것.
-- API 키·시크릿은 `.env.local` 에만. 커밋 금지.
+- API 키·시크릿은 **Vercel 환경변수** 또는 `.env.local` 에만. 커밋 금지. (`NEXT_PUBLIC_` 접두사는 클라이언트로 노출되니 시크릿에 절대 금지 — 공개 가능 값만)
 - AI 진단성 응답에 디스클레이머 필수: "본 정보는 참고용이며 의학적 진단이 아닙니다."
 - 응급 증상(흉통·호흡곤란·의식저하 등)을 다루는 기능이라면 → 119/응급실 안내를 최우선 노출.
 
 ## 서브에이전트 (`.claude/agents/`)
-- `fullstack-developer` — Next.js/React/Supabase 화면·API·데이터
+- `fullstack-developer` — Next.js/Supabase 화면·API·데이터
 - `ui-designer` — UI/UX·디자인 토큰·접근성(WCAG AA)
 - `ai-engineer` — Claude API·RAG·프롬프트
 - `medical-domain` — 의료 도메인 로직·용어·응급도·안전성·한국 의료 맥락 (컨셉 확정 후 구체화)
@@ -55,7 +58,9 @@
 - 기본 흐름: 목적 브랜치에서 작업·커밋 → PR 생성 → 유저 승인·지시 시에만 main 반영.
 
 ## 코드 규칙
-- 컴포넌트 `app/components/`, API 라우트 `app/api/`, 공용 로직 `lib/`
+- 화면(라우트) `app/` (Next.js App Router), 서버 API `app/api/`, 재사용 컴포넌트 `components/`, 공용 로직 `lib/`, DB 마이그레이션 `supabase/migrations/`
+- Claude 등 서버 호출은 `app/api/`(Route Handler)에 두고 클라이언트는 이를 호출만 (키 노출 금지)
+- 네이티브 앱은 Capacitor 래퍼일 뿐 — 로직은 전부 웹에 두고, 웹 1벌이 브라우저·WebView 양쪽에서 동일 동작
 - 항상 loading/error 상태 포함 (데모는 예외처리 안 하면 깨짐)
 - 커밋: `feat:`/`fix:`/`chore:` 접두사 (한글 OK)
 
