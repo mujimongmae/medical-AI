@@ -157,7 +157,6 @@
       <div class="stat red"><div class="n">14.8<small>km</small></div><div class="l">종합병원까지 평균 거리(최대 70km) — 9개 군은 종합병원 자체가 없음</div></div>
       <div class="stat red"><div class="n">17<small>분</small></div><div class="l">도서산간 119 현장도착 — 도시(7분)의 2.4배</div></div>
       <div class="stat"><div class="n">4<small>분</small></div><div class="l">심정지 골든타임 — 이후 비가역적 뇌손상 시작</div></div>
-      <div class="stat"><div class="n">26.6<small>%</small></div><div class="l">입원 자체충족률 — 73%가 역외 유출, 양양·고성군은 0%</div></div>
     </div>
     <div class="footnote">출처: 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석(강원도)」 · 강원도 지역필수의료 주민조사 · 소방청·KJEMS</div>
   </section>
@@ -170,7 +169,6 @@
     <div class="stats">
       <div class="stat red"><div class="n">전국 2위</div><div class="l">급성심장정지 발생률 — 인구 10만명당 95.8명</div></div>
       <div class="stat red"><div class="n">7.2<small>%</small></div><div class="l">강원 심정지 생존율 — 전국 9.2%, 서울 12.4% 대비 최하위권</div></div>
-      <div class="stat"><div class="n">19.9<small>%</small></div><div class="l">도·군 일반인 CPR 시행률 — 특별시(48.2%)의 절반 이하</div></div>
       <div class="stat"><div class="n">1/3</div><div class="l">1인가구 중 독거노인 비율 — 고독사 발견까지 평균 26~40일</div></div>
     </div>
     <div class="footnote">출처: 질병관리청 『급성심장정지조사』 · 강원도 「제8기 지역보건의료계획」 · 보건복지부 고독사 실태조사(2024)</div>
@@ -192,7 +190,7 @@
       <div class="arrowc">→</div>
       <div class="step"><div class="idx">⑤ 통합치료</div><div class="t">병원의 몫</div><div class="d">병원 도착 이후</div></div>
     </div>
-    <div class="keybox">강원의 사회적 조건(독거·고립·산악 지형)은 병원을 멀게 만들 뿐 아니라, <b>생존사슬의 앞쪽 고리(목격·CPR) 자체를 끊는다.</b> 우리가 급성심장정지에 집중하는 이유는 ① 부담이 가장 크고 ② 세 SDOH가 한순간에 겹치며 ③ 초동 개입 효과가 2~3배로 가장 크기 때문이다.</div>
+    <div class="keybox">강원의 사회적 조건(독거·고립·산악 지형)은 병원을 멀게 만들 뿐 아니라, <b>생존사슬의 앞쪽 고리(목격·CPR) 자체를 끊는다.</b></div>
     <div class="footnote">출처: American Heart Association, Chain of Survival · Sasson et al., NEJM 2012 · 질병관리청·KIHASA</div>
   </section>
 
@@ -244,8 +242,8 @@
 
   <!-- DEV AI -->
   <section class="slide">
-    <span class="kicker ind">개발에 사용한 AI</span>
-    <h2>전부 <span class="em">온프레미스</span>로 구축했습니다</h2>
+    <span class="kicker ind">개발 스택</span>
+    <h2>개발에 사용한 <span class="em">AI 및 GPU</span></h2>
     <div class="cols">
       <div class="card ind">
         <h3>🧠 서비스 내 AI</h3>
@@ -262,27 +260,6 @@
     </div>
     <div class="keybox">저희는 모두 온프레미스로 구축하여, <b>외부 AI를 호출하는 외부 API를 사용하는 부분이 전혀 없습니다.</b></div>
     <div class="footnote">전 구성요소 온프레미스 · 외부 API 미사용 · 데이터 전부 합성(PHI 없음)</div>
-  </section>
-
-  <!-- 9. FAQ -->
-  <section class="slide">
-    <span class="kicker">예상 질문 · FAQ</span>
-    <h2>자주 나오는 세 가지 걱정</h2>
-    <div class="faq">
-      <div class="qa">
-        <div class="q">이웃이 도착해도 잠긴 문은 어떻게 열고 들어가나요?</div>
-        <div class="a"><b>가입 시 현관 비밀번호를 미리 등록</b>합니다. 응급이 확정된 순간, 출동하는 등록 이웃에게만 안전하게 안내됩니다.</div>
-      </div>
-      <div class="qa">
-        <div class="q">심각하게 쓰러진 건지, 그냥 털썩 앉은 건지 어떻게 구분하나요?</div>
-        <div class="a">쓰러질 때의 <b>급격한 하강 속도·몸통 수평 각도·무동작 지속시간</b>을 결합해 <b>민감도를 최대한 높였고</b>, 애매한 앉기·눕기는 2단계 딥러닝(ST-GCN) 판정에서 걸러냅니다.</div>
-      </div>
-      <div class="qa">
-        <div class="q">쓰러졌다고 바로 신고하면 오신고가 생기지 않나요?</div>
-        <div class="a">AI 감지 즉시 <b>쓰러진 사람에게 확인 알림</b>을 보냅니다. 정상이면 알림을 끄면 되고, <b>알림이 꺼지지 않을 때만</b> 신고가 들어가는 <b>2중 검증</b>으로 오신고를 막습니다.</div>
-      </div>
-    </div>
-    <div class="footnote">민감도는 높이되, 오신고는 본인 재확인(2중 검증)으로 거릅니다.</div>
   </section>
 
   <!-- 사용성 -->
@@ -330,23 +307,10 @@
   <section class="slide">
     <span class="kicker">설계 원칙 · 목표</span>
     <h2>SDOH의 세 결핍을 정확히 겨냥한다</h2>
-    <div class="cols">
-      <div class="card">
-        <h3>🔒 프라이버시 · 공동체</h3>
-        <ul>
-          <li>홈캠 영상은 <b>AI만 처리</b>, 골격(자세) 데이터만 추출 — 원본 미저장</li>
-          <li>병력 등 민감정보는 <b>[골든이웃] 서버 밖으로 유출되지 않는 구조</b></li>
-          <li>등록 허브는 <b>경로당</b>, 도로 도달시간 10분 이내 이웃으로 조직</li>
-        </ul>
-      </div>
-      <div class="card ind">
-        <h3>💙 겨냥하는 SDOH</h3>
-        <ul>
-          <li><b>의료 접근성</b> — 병원 도달 전 시간 공백을 자동 감지·신고로 단축</li>
-          <li><b>사회적 고립</b> — 이웃 상호출동으로 목격자 부재를 대체</li>
-          <li><b>물리적 환경</b> — 지형 장벽을 근거리 이웃 자원으로 상쇄</li>
-        </ul>
-      </div>
+    <div class="cols3">
+      <div class="card ind"><h3>🏥 의료 접근성</h3><ul><li>병원 도달 전 시간 공백을 자동 감지·신고로 단축</li></ul></div>
+      <div class="card ind"><h3>🧑‍🦳 사회적 고립</h3><ul><li>이웃 상호출동으로 목격자 부재를 대체</li></ul></div>
+      <div class="card ind"><h3>🗺️ 물리적 환경</h3><ul><li>지형 장벽을 근거리 이웃 자원으로 상쇄</li></ul></div>
     </div>
     <div class="keybox">우리가 대응하는 것은 특정 질환의 치료가 아니라, <b>강원의 지리·사회 조건이 만든 '응급 대응의 격차' 그 자체</b>다.</div>
     <div class="footnote">SDOH 근거: 「2023 강원의 사회지표 보고서」 · 건강보험심사평가원 지역보건의료현황 분석</div>
@@ -383,7 +347,7 @@
 
 <div id="bar"></div>
 <div id="dots"></div>
-<div id="nav"><button id="prev" aria-label="이전">‹</button><span id="count">1 / 15</span><button id="next" aria-label="다음">›</button></div>
+<div id="nav"><button id="prev" aria-label="이전">‹</button><span id="count">1 / 14</span><button id="next" aria-label="다음">›</button></div>
 <div class="hint">← → 또는 스페이스로 이동</div>
 
 <script>
