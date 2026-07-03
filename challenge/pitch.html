@@ -29,7 +29,7 @@
   .kicker.ind{color:var(--indigo)} .kicker.ind::before{background:var(--indigo)}
   h1{font-size:clamp(32px,5.4vw,64px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
   h2{font-size:clamp(25px,3.9vw,45px);line-height:1.16;font-weight:800;letter-spacing:-.02em;margin-bottom:20px}
-  .lead{font-size:clamp(15.5px,1.85vw,22px);line-height:1.6;color:var(--muted);max-width:64ch;margin-top:18px}
+  .lead{font-size:clamp(15.5px,1.85vw,22px);line-height:1.6;color:var(--muted);max-width:none;margin-top:18px}
   .em{color:var(--accent);font-weight:800} .em-red{color:var(--accent2);font-weight:800} .em-i{color:var(--indigo);font-weight:800}
   .hl{background:linear-gradient(transparent 62%,var(--accent-soft) 0);padding:0 2px;font-weight:700;color:var(--ink)}
 
@@ -90,7 +90,7 @@
     color:#c9971f;background:linear-gradient(135deg,#a9740a 0%,#e6c14a 42%,#c99320 72%,#8f6207 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .subtitle{font-size:clamp(20px,2.9vw,36px);font-weight:800;letter-spacing:-.015em;color:var(--ink);margin-top:2px}
-  .team{display:flex;flex-wrap:wrap;gap:clamp(20px,3vw,44px);margin-top:34px}
+  .team{display:flex;flex-wrap:wrap;gap:16px;width:100%;justify-content:space-between;margin-top:38px}
   .member{display:flex;flex-direction:column;align-items:center;text-align:center;width:clamp(96px,11vw,124px)}
   .member img{width:clamp(72px,8vw,96px);height:clamp(72px,8vw,96px);border-radius:50%;object-fit:cover;
     border:3px solid #fff;box-shadow:0 4px 14px rgba(18,39,64,.16);background:var(--surface)}
@@ -98,7 +98,7 @@
   .member .maff{margin-top:3px;font-size:clamp(11px,1.15vw,12.5px);color:var(--muted);line-height:1.35;word-break:keep-all}
   .footnote{margin-top:auto;padding-top:16px;font-size:12.5px;color:#8496a9;line-height:1.5;border-top:1px solid var(--line)}
   .disc{background:var(--accent2-soft);border:1px solid #f6c6d1;border-radius:var(--radius);
-    padding:22px 26px;margin-top:22px;max-width:74ch;font-size:clamp(14px,1.5vw,17px);line-height:1.6;color:var(--ink)}
+    padding:22px 26px;margin-top:22px;max-width:none;font-size:clamp(14px,1.5vw,17px);line-height:1.6;color:var(--ink)}
   .disc b{color:var(--accent2)}
   .slogan{font-size:clamp(34px,6vw,72px);line-height:1.12;font-weight:800;letter-spacing:-.025em;color:var(--ink)}
 
@@ -242,28 +242,26 @@
     <div class="archframe"><img src="diagram.svg" alt="쓰러짐 감지 모델 레이어 및 판별 로직 다이어그램"></div>
   </section>
 
-  <!-- 8.5 DEV AI / GPU -->
+  <!-- DEV AI -->
   <section class="slide">
-    <span class="kicker ind">개발에 사용한 AI · GPU</span>
+    <span class="kicker ind">개발에 사용한 AI</span>
     <h2>전부 <span class="em">온프레미스</span>로 구축했습니다</h2>
     <div class="cols">
       <div class="card ind">
-        <h3>🧠 AI</h3>
+        <h3>🧠 서비스 내 AI</h3>
         <ul>
-          <li><b>on-premise LLM (EXAONE)</b> — 서비스 내 증상 안내·요약·보조</li>
-          <li><b>클로드 코드 (Claude Code)</b> — 개발 도구</li>
+          <li><b>on-premise LLM (EXAONE)</b> — 증상 안내·요약·보조를 온프레미스에서 수행</li>
         </ul>
       </div>
       <div class="card">
-        <h3>🖥️ GPU</h3>
+        <h3>🛠️ 개발 도구</h3>
         <ul>
-          <li>온프레미스 GPU 서버에서 감지·추론 수행</li>
-          <li>데이터가 외부 클라우드로 나가지 않음</li>
+          <li><b>클로드 코드 (Claude Code)</b>로 개발</li>
         </ul>
       </div>
     </div>
     <div class="keybox">저희는 모두 온프레미스로 구축하여, <b>외부 AI를 호출하는 외부 API를 사용하는 부분이 전혀 없습니다.</b></div>
-    <div class="footnote">전 구성요소 온프레미스 · 데이터 전부 합성(PHI 없음)</div>
+    <div class="footnote">전 구성요소 온프레미스 · 외부 API 미사용 · 데이터 전부 합성(PHI 없음)</div>
   </section>
 
   <!-- 9. FAQ -->
