@@ -36,7 +36,7 @@ export async function getPatient(id: string): Promise<PatientCard> {
   return r.json();
 }
 
-/** 온디바이스 STT 텍스트 → 서버(Claude) 짧은 상황 요약. 키 없으면 서버가 에코 폴백. */
+/** 온디바이스 STT 텍스트 → 서버(로컬 EXAONE) 프로토콜 분류. Ollama 미가동 시 서버가 폴백. */
 export const sendVoice = (eventId: string, transcript: string) =>
   post<VoiceRes>("/voice", { eventId, transcript });
 

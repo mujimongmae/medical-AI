@@ -1,7 +1,7 @@
-// 맥북 브로커 서버 — 등록부·WebSocket 허브·mock 이벤트·(추후) Claude 프록시
+// 맥북 브로커 서버 — 등록부·WebSocket 허브·mock 이벤트·(추후) 로컬 EXAONE 프록시
 // spec/03-logic/01-messaging-protocol.md  ·  spec/01-architecture/README.md (데모 아키텍처)
 import { config as loadEnv } from "dotenv";
-loadEnv({ path: ".env.local" }); // ANTHROPIC_API_KEY 등 로컬 시크릿 로드 (커밋 안 됨)
+loadEnv({ path: ".env.local" }); // OLLAMA_URL·EXAONE_MODEL 등 로컬 설정 로드 (커밋 안 됨)
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
 import cors from "@fastify/cors";
@@ -23,10 +23,11 @@ import {
   events,
   nextUserId,
   nextEventId,
+  restoreUserSeq,
   type EmergencyEvent,
 } from "./registry";
 import { seedRegistry, SEED_PATIENT_ID } from "./seed";
-import { recommendVoice } from "./claude";
+import { recommendVoice } from "./exaone";
 import type { VoiceReq, VoiceRes, PushTokenReq } from "../lib/protocol/messages";
 import { initPush, sendPush } from "./push";
 import { loadStore, saveStore } from "./store";
@@ -222,16 +223,29 @@ function patientCard(p: RegisteredUser): PatientCard {
   };
 }
 
+/** 재접속 복원이 유효한 최대 이벤트 나이(ms) — 이보다 오래된 미해결 이벤트는 잔재로 보고 복원 안 함 */
+const RESTORE_TTL_MS = 10 * 60 * 1000;
+
 /** 진행 중(notifying_neighbors) 이벤트를 재접속한 이웃에게 재전송.
  *  푸시 탭으로 앱을 열면(콜드스타트/재접속) WS로 이미 보낸 NEIGHBOR_ALERT를 놓쳤으므로,
- *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다. */
+ *  HELLO 시점에 진행 중 호출을 복원해 '대기 중'이 아니라 호출 화면으로 진입시킨다.
+ *  복원 4조건(AND) — spec/logic/03-alert-restore-rules.md */
 function resendActiveAlerts(userId: string) {
   const u = users.get(userId);
   if (!u || u.role !== "neighbor") return;
+  const now = Date.now();
   // 가장 최근 진행 중 호출 1건만 복원 (테스트 반복으로 이벤트가 쌓여도 최신만).
   let latest: EmergencyEvent | undefined;
   for (const ev of events.values()) {
     if (ev.state !== "notifying_neighbors") continue;
+    // 이 이웃이 "실제로 호출된" 이벤트만 복원. 등록 이후 처음 접속한 이웃은
+    // 과거 진행 중 이벤트를 받지 않는다(자기 등록 시점 이후 새 호출만).
+    if (!ev.notified?.includes(userId)) continue;
+    // 가입 이전 이벤트 차단 — id 재사용/충돌로 notified에 남아 있어도 복원하지 않는다.
+    // registeredAt 없는 구버전 사용자 기록은 안전하게 복원 대상에서 제외.
+    if (!u.registeredAt || ev.createdAt < u.registeredAt) continue;
+    // 오래된 미해결 이벤트(테스트 잔재) 차단.
+    if (now - ev.createdAt > RESTORE_TTL_MS) continue;
     const patient = users.get(ev.patientId);
     if (!patient || patient.id === u.id || patient.village !== u.village) continue;
     latest = ev; // Map은 삽입순 → 마지막 매칭이 최신
@@ -259,6 +273,7 @@ function escalate(eventId: string) {
 
   const card = patientCard(patient);
   const neighbors = selectNeighbors(patient);
+  ev.notified = neighbors; // 이 이벤트에 호출된 이웃 — 재접속 복원은 이 목록에만.
   const priorityHint = priorityHintFromHistory(patient.history);
   app.log.info(
     `이웃 호출 ${neighbors.length}명: ${neighbors.join(", ")}${priorityHint ? ` (우선힌트 ${priorityHint.join(">")})` : ""}`,
@@ -321,8 +336,19 @@ load();setInterval(load,3000);
 
 app.post("/api/register", async (req) => {
   const b = req.body as RegisterReq;
+  // 동명(同名) 기존 사용자 제거 — 재등록이 계속 쌓이지 않게 최신 하나만 유지.
+  //  (시드 사용자 seed-*는 보호: 홈캠이 seed-patient-1로 이벤트를 보내므로 유지)
+  const nm = (b.name ?? "").trim();
+  for (const [oldId, u] of [...users]) {
+    if (oldId.startsWith("seed-")) continue;
+    if ((u.name ?? "").trim() !== nm) continue;
+    sockets.get(oldId)?.close?.();
+    sockets.delete(oldId);
+    users.delete(oldId);
+    app.log.info(`register: 동명 기존 사용자 제거 ${oldId} (${u.name})`);
+  }
   const id = nextUserId();
-  users.set(id, { id, ...b });
+  users.set(id, { id, ...b, registeredAt: Date.now() });
   saveStore();
   app.log.info(`register ${id} (${b.role}) ${b.name}@${b.village} 병력:${(b.history ?? []).join("/") || "-"}`);
   return { id };
@@ -337,17 +363,32 @@ app.get<{ Params: { id: string } }>("/api/patient/:id", async (req, reply) => {
 // mock 이벤트 진입점 (지금은 이게 이벤트 소스. 추후 실제 영상인식으로 스왑)
 app.post("/api/fall-event", async (req, reply) => {
   const b = req.body as FallEventReq;
-  const patient = users.get(b.patientId);
-  if (!patient) return reply.code(404).send({ error: "patient not found" });
-  // 환자 WebSocket이 열려 있을 때만 처리한다. 앱이 안 켜져 있으면(=WS 미연결)
-  // 감지 이벤트를 무시(이벤트/푸시/에스컬레이션 없음). — 실 감지→환자앱 실시간 경로 전용.
-  const psock = sockets.get(patient.id);
-  if (!psock || psock.readyState !== 1) {
-    app.log.info(`fall-event 무시 — 환자 ${patient.id} WS 미연결(앱 미접속)`);
-    return reply.code(200).send({ ignored: true, reason: "patient ws not open" });
+  const isOpen = (id: string) => {
+    const s = sockets.get(id);
+    return !!s && s.readyState === 1;
+  };
+  // 1) 요청된 대상 환자가 접속(WS open) 중이면 그 환자에게.
+  // 2) 아니면 현재 접속 중인 환자에게 라우팅 — 홈캠은 seed-patient-1로 보내지만,
+  //    임의 이름(예: 이영자)으로 접속해도 알람이 가도록. (데모: 보통 환자 1명)
+  let patient = users.get(b.patientId);
+  if (!patient || !isOpen(patient.id)) {
+    const online = [...users.values()].filter((u) => u.role === "patient" && isOpen(u.id));
+    patient = online[online.length - 1]; // 가장 최근 접속 환자
+    if (patient)
+      app.log.info(`fall-event 라우팅: 요청 ${b.patientId} 미접속 → 접속 환자 ${patient.id}(${patient.name})`);
+  }
+  // 접속 중인 환자가 아무도 없으면 무시(이벤트/푸시/에스컬레이션 없음).
+  if (!patient || !isOpen(patient.id)) {
+    app.log.info(`fall-event 무시 — 접속 중인 환자 없음 (요청 ${b.patientId})`);
+    return reply.code(200).send({ ignored: true, reason: "no patient online" });
   }
   const eventId = nextEventId();
-  const ev: EmergencyEvent = { eventId, patientId: b.patientId, state: "alerting_self" };
+  const ev: EmergencyEvent = {
+    eventId,
+    patientId: patient.id,
+    state: "alerting_self",
+    createdAt: Date.now(),
+  };
   events.set(eventId, ev);
   send(patient.id, { type: "ALERT_SELF", eventId, timeoutSec: ALERT_TIMEOUT_SEC });
   // 화면 꺼짐 대비 푸시 (환자 본인 깨우기)
@@ -389,13 +430,18 @@ app.post("/api/demo/trigger", async (req, reply) => {
   const patient = users.get(SEED_PATIENT_ID);
   if (!patient) return reply.code(404).send({ error: "seed patient missing" });
   const eventId = nextEventId();
-  events.set(eventId, { eventId, patientId: SEED_PATIENT_ID, state: "alerting_self" });
+  events.set(eventId, {
+    eventId,
+    patientId: SEED_PATIENT_ID,
+    state: "alerting_self",
+    createdAt: Date.now(),
+  });
   escalate(eventId); // 즉시 이웃 호출 (테스트 편의)
   app.log.info(`demo trigger ${eventId} (patient=${SEED_PATIENT_ID}) → 이웃 즉시 호출`);
   return { eventId };
 });
 
-// 온디바이스 STT 텍스트 → Claude 짧은 상황 요약 (키 없으면 fallback 에코). spec/03-logic/01 §2.2
+// 온디바이스 STT 텍스트 → 로컬 EXAONE 프로토콜 분류 (Ollama 미가동 시 fallback). spec/logic/02-voice-protocol-classification.md
 app.post("/api/voice", async (req, reply) => {
   const b = req.body as VoiceReq;
   if (!b || typeof b.transcript !== "string") {
@@ -415,6 +461,7 @@ app.post("/api/voice", async (req, reply) => {
     likelyCondition: rec.likelyCondition,
     recommendation: rec.recommendation,
     protocolId: rec.protocolId,
+    probs: rec.probs,
   };
   return res;
 });
@@ -459,6 +506,31 @@ app.get(WS_PATH, { websocket: true }, (socket) => {
 // 데모 페르소나 시드 (환자1 + 이웃4, 마을 "방림리"). mock fall-event 대상: SEED_PATIENT_ID.
 seedRegistry();
 loadStore((m) => app.log.info(`[store] ${m}`)); // 저장본으로 시드 위에 덮어쓰기
+restoreUserSeq(); // 재시작 후 신규 가입자가 과거 dev-NNN id를 재사용하지 않도록 시퀀스 복원
+
+// 시작 시 동명(同名) 중복 정리 — 누적 방지. 시드(seed-*) 우선 보호, 그 외 동명은 최신 1개만.
+{
+  const keeper = new Map<string, string>(); // name → 유지할 id
+  for (const [id, u] of users) {
+    const nm = (u.name ?? "").trim();
+    const cur = keeper.get(nm);
+    if (!cur) keeper.set(nm, id);
+    else if (!cur.startsWith("seed-")) keeper.set(nm, id); // 시드가 아니면 최신(또는 시드)로 교체
+  }
+  let removed = 0;
+  for (const [id, u] of [...users]) {
+    if (keeper.get((u.name ?? "").trim()) === id) continue;
+    users.delete(id);
+    sockets.get(id)?.close?.();
+    sockets.delete(id);
+    removed++;
+  }
+  if (removed) {
+    app.log.info(`[dedup] 시작 시 동명 중복 ${removed}명 정리`);
+    saveStore();
+  }
+}
+
 app.log.info(
   `registry ready: ${users.size} users (demo patient=${SEED_PATIENT_ID})`,
 );

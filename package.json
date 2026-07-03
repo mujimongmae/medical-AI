@@ -14,7 +14,6 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.109.1",
     "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^7.6.7",
     "@capacitor/core": "^7.6.7",

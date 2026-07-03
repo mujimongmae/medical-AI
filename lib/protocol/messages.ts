@@ -17,6 +17,7 @@ export interface RegisteredUser {
   home: GeoPoint;
   history?: string[]; // 병력 (합성)
   pushToken?: string; // FCM 토큰 (화면 꺼짐 알림용)
+  registeredAt?: number; // 등록 시각(ms) — 가입 이전 이벤트는 복원하지 않음 (spec/logic/03)
 }
 
 /** FCM 토큰 등록 (앱이 토큰 받은 뒤 브로커에 전달) */
@@ -48,17 +49,18 @@ export interface FallEventRes {
   eventId: string;
 }
 
-/** 온디바이스 STT 결과 텍스트 전송 (Claude는 오디오 직접입력 불가) */
+/** 온디바이스 STT 결과 텍스트 전송 (로컬 EXAONE이 프로토콜 분류) */
 export interface VoiceReq {
   eventId: string;
   transcript: string;
 }
-/** 병력+증상 종합 결과: 가장 가능성 높은 상태 + 추천 처치 (확정진단 아님) */
+/** 병력+증상 분류 결과: 프로토콜 매칭 + 처치는 검증된 KB에서 코드가 조립 (확정진단 아님) */
 export interface VoiceRes {
   summary: string; // 상황 요약(구급대 전달용)
   likelyCondition: string; // 가장 가능성 높은 상태 ("~가능성이 높아요")
   recommendation: string; // 추천 응급처치 (짧게, 큰 글씨용)
   protocolId?: string; // 매칭 지식베이스 프로토콜(있으면 상세 연결)
+  probs?: Record<string, number>; // 클래스별 확률(모델 자기보고값) — 분류 근거 표시용
 }
 
 /** 이웃앱에 보여줄 환자 카드 */

@@ -5,7 +5,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // 브로커(맥북)에는 빌드 시 VITE_BROKER_URL(터널 https/wss)로 직결한다.
 const config: CapacitorConfig = {
   appId: "kr.gangwon.villageaid",
-  appName: "마을 응급대응",
+  appName: "골든 이웃",
   webDir: "app/dist",
   ios: {
     contentInset: "always",

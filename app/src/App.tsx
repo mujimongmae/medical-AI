@@ -135,7 +135,7 @@ function RolePicker({ onDone }: { onDone: (m: Me) => void }) {
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-bold">마을 응급대응</h1>
+      <h1 className="text-2xl font-bold">골든 이웃</h1>
       <label className="flex flex-col gap-2 text-lg font-semibold">
         이름
         <input
