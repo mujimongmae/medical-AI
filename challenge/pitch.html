@@ -6,112 +6,109 @@
 <title>골든이웃 · 발표 슬라이드</title>
 <style>
   :root{
-    --bg:#ffffff;
-    --bg2:#f4f8fc;
-    --surface:#f5f8fc;
-    --ink:#122740;
-    --muted:#5c6f86;
-    --line:#e3ebf4;
-    --accent:#0d9488;      /* teal */
-    --accent-soft:#e2f5f2;
-    --accent2:#e11d48;      /* rose = emergency */
-    --accent2-soft:#fdeaef;
-    --amber:#b45309;
-    --radius:18px;
-    --pad:clamp(28px,4.8vw,68px);
-    --shadow:0 8px 30px rgba(18,39,64,.06);
+    --bg:#ffffff; --bg2:#f4f8fc; --surface:#f5f8fc; --ink:#122740; --muted:#5c6f86; --line:#e3ebf4;
+    --accent:#0d9488; --accent-soft:#e2f5f2; --accent2:#e11d48; --accent2-soft:#fdeaef;
+    --indigo:#4f46e5; --indigo-soft:#eef2ff; --amber:#b45309;
+    --radius:18px; --pad:clamp(26px,4.6vw,64px); --shadow:0 8px 30px rgba(18,39,64,.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
-  body{
-    font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
-    background:var(--bg);color:var(--ink);
-    overflow:hidden;-webkit-font-smoothing:antialiased;
-  }
+  body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+    background:var(--bg);color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
   #deck{position:fixed;inset:0}
-  .slide{
-    position:absolute;inset:0;
-    display:none;flex-direction:column;justify-content:center;
-    padding:var(--pad);overflow-y:auto;
-    background:radial-gradient(120% 130% at 100% 0%,var(--bg2) 0%,#ffffff 55%);
-  }
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:var(--pad);overflow-y:auto;background:radial-gradient(120% 130% at 100% 0%,var(--bg2) 0%,#ffffff 55%)}
   .slide.active{display:flex;animation:fade .45s ease}
+  .slide.arch{justify-content:flex-start}
   @keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
-  .kicker{
-    display:inline-flex;align-items:center;gap:9px;
-    font-size:clamp(12px,1.3vw,15px);font-weight:800;letter-spacing:.14em;
-    color:var(--accent);text-transform:uppercase;margin-bottom:20px;
-  }
+  .kicker{display:inline-flex;align-items:center;gap:9px;font-size:clamp(12px,1.3vw,15px);font-weight:800;
+    letter-spacing:.14em;color:var(--accent);text-transform:uppercase;margin-bottom:18px}
   .kicker::before{content:"";width:26px;height:3px;background:var(--accent);border-radius:3px}
+  .kicker.red{color:var(--accent2)} .kicker.red::before{background:var(--accent2)}
+  .kicker.ind{color:var(--indigo)} .kicker.ind::before{background:var(--indigo)}
   h1{font-size:clamp(32px,5.4vw,64px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
-  h2{font-size:clamp(26px,4vw,46px);line-height:1.16;font-weight:800;letter-spacing:-.02em;margin-bottom:22px}
-  .lead{font-size:clamp(16px,1.9vw,23px);line-height:1.62;color:var(--muted);max-width:62ch;margin-top:20px}
-  .em{color:var(--accent);font-weight:800}
-  .em-red{color:var(--accent2);font-weight:800}
+  h2{font-size:clamp(25px,3.9vw,45px);line-height:1.16;font-weight:800;letter-spacing:-.02em;margin-bottom:20px}
+  .lead{font-size:clamp(15.5px,1.85vw,22px);line-height:1.6;color:var(--muted);max-width:64ch;margin-top:18px}
+  .em{color:var(--accent);font-weight:800} .em-red{color:var(--accent2);font-weight:800} .em-i{color:var(--indigo);font-weight:800}
   .hl{background:linear-gradient(transparent 62%,var(--accent-soft) 0);padding:0 2px;font-weight:700;color:var(--ink)}
 
-  .stats{display:flex;flex-wrap:wrap;gap:16px;margin-top:34px}
+  .stats{display:flex;flex-wrap:wrap;gap:15px;margin-top:30px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:22px 26px;min-width:180px;flex:1 1 180px;box-shadow:var(--shadow)}
-  .stat .n{font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1;color:var(--ink)}
+    padding:20px 24px;min-width:170px;flex:1 1 170px;box-shadow:var(--shadow)}
+  .stat .n{font-size:clamp(26px,3.7vw,40px);font-weight:800;line-height:1;color:var(--ink)}
   .stat .n small{font-size:.5em;font-weight:700;color:var(--muted)}
-  .stat.red .n{color:var(--accent2)}
-  .stat.teal .n{color:var(--accent)}
-  .stat .l{margin-top:11px;font-size:clamp(12px,1.35vw,15px);color:var(--muted);line-height:1.45}
+  .stat.red .n{color:var(--accent2)} .stat.teal .n{color:var(--accent)}
+  .stat .l{margin-top:10px;font-size:clamp(12px,1.35vw,15px);color:var(--muted);line-height:1.45}
 
-  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:12px;margin-top:30px}
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:11px;margin-top:28px}
   .step{flex:1 1 150px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:20px 18px;box-shadow:var(--shadow)}
-  .step .idx{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.1em}
-  .step .t{margin-top:9px;font-size:clamp(15px,1.7vw,19px);font-weight:800;line-height:1.3}
-  .step .d{margin-top:7px;font-size:clamp(12px,1.35vw,14.5px);color:var(--muted);line-height:1.45}
-  .step.alert{border-color:var(--accent2);background:var(--accent2-soft)}
-  .step.alert .idx{color:var(--accent2)}
+    padding:19px 17px;box-shadow:var(--shadow)}
+  .step .idx{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.08em}
+  .step .t{margin-top:8px;font-size:clamp(15px,1.7vw,19px);font-weight:800;line-height:1.3}
+  .step .d{margin-top:6px;font-size:clamp(12px,1.35vw,14px);color:var(--muted);line-height:1.4}
+  .step.alert{border-color:var(--accent2);background:var(--accent2-soft)} .step.alert .idx{color:var(--accent2)}
 
-  .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:28px}
+  /* survival chain */
+  .chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin-top:26px}
+  .chain .step{flex:1 1 130px}
+  .arrowc{flex:0 0 auto;font-size:22px;font-weight:800;color:#c7d3e0;align-self:center;padding:0 2px}
+  @media(max-width:760px){.arrowc{transform:rotate(90deg)}}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
   @media(max-width:840px){.cols{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
-  .card h3{font-size:clamp(17px,2vw,23px);font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:10px}
-  .card ul{list-style:none;display:flex;flex-direction:column;gap:11px}
-  .card li{font-size:clamp(14px,1.55vw,17.5px);line-height:1.5;color:var(--ink);padding-left:22px;position:relative}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+  .card h3{font-size:clamp(16px,1.95vw,22px);font-weight:800;margin-bottom:13px;display:flex;align-items:center;gap:9px}
+  .card ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .card li{font-size:clamp(13.5px,1.5vw,17px);line-height:1.48;color:var(--ink);padding-left:21px;position:relative}
   .card li::before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;border-radius:50%;background:var(--accent)}
-  .card.red li::before{background:var(--accent2)}
+  .card.red li::before{background:var(--accent2)} .card.ind li::before{background:var(--indigo)}
   .card li b{color:var(--ink);font-weight:800}
 
-  /* table */
-  table.vars{width:100%;border-collapse:collapse;margin-top:28px;font-size:clamp(13px,1.5vw,17px);box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden}
-  table.vars th,table.vars td{text-align:left;padding:16px 18px;border-bottom:1px solid var(--line)}
-  table.vars thead th{background:var(--ink);color:#fff;font-weight:700;font-size:.92em;letter-spacing:.02em}
-  table.vars tbody tr{background:var(--surface)}
-  table.vars tbody tr:nth-child(even){background:#eef4fa}
-  table.vars td:first-child{font-weight:800;color:var(--accent);white-space:nowrap}
-  .badge{display:inline-block;font-size:.82em;font-weight:800;padding:3px 10px;border-radius:999px}
-  .badge.h{background:var(--accent-soft);color:var(--accent)}
-  .badge.m{background:#ede9fe;color:#6d28d9}
+  table.vars{width:100%;border-collapse:collapse;margin-top:24px;font-size:clamp(13px,1.5vw,17px);box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden}
+  table.vars th,table.vars td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--line)}
+  table.vars thead th{background:var(--ink);color:#fff;font-weight:700;font-size:.92em}
+  table.vars tbody tr{background:var(--surface)} table.vars tbody tr:nth-child(even){background:#eef4fa}
+  table.vars td:first-child{font-weight:800;color:var(--accent)} table.vars td.arw{color:var(--accent2);font-weight:800}
 
-  /* FAQ */
-  .faq{display:flex;flex-direction:column;gap:16px;margin-top:26px}
-  .qa{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 26px;box-shadow:var(--shadow)}
-  .qa .q{font-size:clamp(16px,1.8vw,20px);font-weight:800;display:flex;gap:10px;align-items:flex-start}
-  .qa .q::before{content:"Q";flex:0 0 auto;width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;font-size:15px;display:grid;place-items:center}
-  .qa .a{margin-top:12px;padding-left:38px;font-size:clamp(14px,1.55vw,17px);line-height:1.55;color:var(--muted)}
+  .faq{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+  .qa{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow)}
+  .qa .q{font-size:clamp(15px,1.75vw,20px);font-weight:800;display:flex;gap:10px;align-items:flex-start}
+  .qa .q::before{content:"Q";flex:0 0 auto;width:27px;height:27px;border-radius:8px;background:var(--accent);color:#fff;font-size:15px;display:grid;place-items:center}
+  .qa .a{margin-top:10px;padding-left:37px;font-size:clamp(13.5px,1.5vw,16.5px);line-height:1.5;color:var(--muted)}
   .qa .a b{color:var(--ink)}
+
+  .keybox{margin-top:24px;padding:20px 26px;border-left:5px solid var(--indigo);background:var(--indigo-soft);
+    border-radius:12px;font-size:clamp(15px,1.65vw,19px);font-weight:700;line-height:1.55;color:var(--ink)}
+  .keybox b{color:var(--indigo)}
 
   .tag{display:inline-block;background:var(--accent-soft);color:var(--accent);border:1px solid #b9e6e0;
     font-size:14px;font-weight:800;padding:6px 15px;border-radius:999px;margin-top:14px}
-
-  .brand{font-size:clamp(14px,1.6vw,18px);font-weight:800;color:var(--accent);letter-spacing:.02em;margin-bottom:26px}
-  .footnote{margin-top:auto;padding-top:18px;font-size:12.5px;color:#8496a9;line-height:1.5;border-top:1px solid var(--line)}
-
+  .brand{font-size:clamp(14px,1.6vw,18px);font-weight:800;color:var(--accent);margin-bottom:24px}
+  .goldtitle{font-size:clamp(56px,11vw,132px);line-height:.98;font-weight:800;letter-spacing:-.03em;margin:2px 0 6px;
+    color:#c9971f;background:linear-gradient(135deg,#a9740a 0%,#e6c14a 42%,#c99320 72%,#8f6207 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{font-size:clamp(20px,2.9vw,36px);font-weight:800;letter-spacing:-.015em;color:var(--ink);margin-top:2px}
+  .footnote{margin-top:auto;padding-top:16px;font-size:12.5px;color:#8496a9;line-height:1.5;border-top:1px solid var(--line)}
   .disc{background:var(--accent2-soft);border:1px solid #f6c6d1;border-radius:var(--radius);
-    padding:24px 28px;margin-top:24px;max-width:72ch;font-size:clamp(14px,1.5vw,17px);line-height:1.6;color:var(--ink)}
+    padding:22px 26px;margin-top:22px;max-width:74ch;font-size:clamp(14px,1.5vw,17px);line-height:1.6;color:var(--ink)}
   .disc b{color:var(--accent2)}
+  .slogan{font-size:clamp(34px,6vw,72px);line-height:1.12;font-weight:800;letter-spacing:-.025em;color:var(--ink)}
+
+  /* architecture image slides — SVG 그대로 삽입 */
+  .archframe{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:16px;
+    padding:14px;box-shadow:var(--shadow);width:100%;max-width:1180px;align-self:center}
+  .archframe img{display:block;width:100%;height:auto;max-height:74vh;object-fit:contain;border-radius:8px}
+  .archhead{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .apibadge{display:inline-flex;align-items:center;gap:7px;font-size:clamp(15px,1.7vw,20px);font-weight:800;
+    letter-spacing:.01em;color:#fff;padding:9px 20px;border-radius:999px;
+    background:linear-gradient(135deg,#f59e0b 0%,#e11d48 100%);
+    box-shadow:0 6px 18px rgba(225,29,72,.32);animation:apipulse 1.8s ease-in-out infinite}
+  @keyframes apipulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 
   #bar{position:fixed;left:0;top:0;height:4px;background:var(--accent);width:0;transition:width .35s ease;z-index:20}
   #nav{position:fixed;right:20px;bottom:18px;display:flex;align-items:center;gap:12px;z-index:20;
-    font-size:13px;font-weight:700;color:var(--muted);background:#fff;
-    padding:8px 14px;border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow)}
+    font-size:13px;font-weight:700;color:var(--muted);background:#fff;padding:8px 14px;border:1px solid var(--line);border-radius:999px;box-shadow:var(--shadow)}
   #nav button{background:none;border:none;color:var(--ink);font-size:20px;cursor:pointer;line-height:1;padding:0 6px;border-radius:8px}
   #nav button:hover{color:var(--accent)}
   #dots{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:7px;z-index:20}
@@ -127,96 +124,103 @@
   <section class="slide">
     <div class="brand">강원 지역사회 의료 AI · 해커톤 본선</div>
     <span class="kicker">도서산간 응급 초동대응</span>
-    <h1>골든타임보다 먼저 도착하는<br><span class="em">이웃의 손</span></h1>
-    <p class="lead">구급차가 산길을 넘어오는 사이, 10분 거리의 이웃이 먼저 갑니다.<br>홈캠 AI가 쓰러짐을 감지하고, 마을이 함께 살립니다.</p>
-    <span class="tag">가칭 · 골든이웃</span>
+    <h1 class="goldtitle">골든 이웃</h1>
+    <p class="subtitle">골든타임보다 먼저 도착하는 이웃의 손</p>
+    <p class="lead">저희 가톨릭 관동대가 소재한 강원도 지역에서, 구급차가 산길을 넘어오는 사이 10분 거리의 이웃이 먼저 갑니다. 홈캠 AI가 쓰러짐을 감지하고, 마을이 함께 살립니다.</p>
     <div class="footnote">본 정보는 참고용이며 의학적 진단이 아닙니다. 응급 증상(흉통·호흡곤란·의식저하 등)은 119/응급실 안내를 최우선으로 합니다.</div>
   </section>
 
   <!-- 2. PROBLEM 1 -->
   <section class="slide">
-    <span class="kicker">문제 · 강원도 도서산간</span>
-    <h2>구급차가 <span class="em-red">골든타임보다 늦게</span> 옵니다</h2>
-    <p class="lead">강원도는 심뇌혈관 질환 부담이 높은데, 도서산간은 지형 때문에 119 출동도, 병원까지 거리도 멀어 응급의 골든타임을 놓칩니다.</p>
+    <span class="kicker red">문제 ① · 넓은 땅, 몰려 있는 병원</span>
+    <h2>병원은 멀고, 구급차는 <span class="em-red">골든타임보다 늦다</span></h2>
+    <p class="lead">강원 인구는 전국의 3.0%뿐인데 면적은 16.8%다. 인구밀도가 극히 낮아 발견·신고·이송 거리가 태생적으로 길고, 의료 자원은 소수 도시에 집중된다.</p>
     <div class="stats">
-      <div class="stat red"><div class="n">4<small>분</small></div><div class="l">심정지 골든타임 — 이후 비가역적 뇌손상 시작</div></div>
-      <div class="stat red"><div class="n">17<small>분</small></div><div class="l">도서산간 119 현장도착 (도시 7분의 2.4배)</div></div>
-      <div class="stat"><div class="n">7~10<small>%↓</small></div><div class="l">1분 지연마다 떨어지는 생존율</div></div>
-      <div class="stat"><div class="n">58<small>%</small></div><div class="l">강원 주민 "외상·심뇌혈관 등 긴급의료 부족" 응답</div></div>
+      <div class="stat red"><div class="n">14.8<small>km</small></div><div class="l">종합병원까지 평균 거리(최대 70km) — 9개 군은 종합병원 자체가 없음</div></div>
+      <div class="stat red"><div class="n">17<small>분</small></div><div class="l">도서산간 119 현장도착 — 도시(7분)의 2.4배</div></div>
+      <div class="stat"><div class="n">4<small>분</small></div><div class="l">심정지 골든타임 — 이후 비가역적 뇌손상 시작</div></div>
+      <div class="stat"><div class="n">26.6<small>%</small></div><div class="l">입원 자체충족률 — 73%가 역외 유출, 양양·고성군은 0%</div></div>
     </div>
-    <div class="footnote">출처: 질병관리청 급성심장정지조사, 소방청, KJEMS(85개 시군구 분석), 강원도 지역필수의료 주민조사 p.39·45</div>
+    <div class="footnote">출처: 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석(강원도)」 · 강원도 지역필수의료 주민조사 · 소방청·KJEMS</div>
   </section>
 
   <!-- 3. PROBLEM 2 -->
   <section class="slide">
-    <span class="kicker">문제 · 집에서 혼자</span>
-    <h2>혼자 있을 때 쓰러지면,<br><span class="em-red">아무도 모릅니다</span></h2>
-    <div class="cols">
-      <div class="card red">
-        <h3>🏠 발견되지 않는 응급</h3>
-        <ul>
-          <li>가정 내 심정지 생존율은 <b>3.6%</b>로 특히 낮음</li>
-          <li>독거 어르신은 쓰러져도 <b>발견·신고할 사람이 없음</b></li>
-          <li>목격자 없는 심정지는 생존율이 <b>급감</b> (목격 시 3.7배)</li>
-        </ul>
-      </div>
-      <div class="card red">
-        <h3>🕯️ 고독사의 그림자</h3>
-        <ul>
-          <li>2024년 전국 고독사 <b>3,924명</b> (전년比 +7.2%)</li>
-          <li>강원은 <b>증가율 상위 9개 지역</b>에 포함</li>
-          <li>사망 후 발견까지 <b>평균 26~40일</b> — 응급대응 원천 불가</li>
-        </ul>
-      </div>
+    <span class="kicker red">문제 ② · 급성심장정지</span>
+    <h2>강원의 골든타임은 <span class="em-red">이미 무너져 있다</span></h2>
+    <p class="lead">강원은 급성으로 쓰러지는 질환의 부담 자체가 무겁다. 연령표준화 사망률은 330.1로 전국 1위이며, 급성심장정지가 자주 발생하는데 목격·초동대처와 구급 도착 모두 느려 생존율이 전국 평균에 못 미친다.</p>
+    <div class="stats">
+      <div class="stat red"><div class="n">전국 2위</div><div class="l">급성심장정지 발생률 — 인구 10만명당 95.8명</div></div>
+      <div class="stat red"><div class="n">7.2<small>%</small></div><div class="l">강원 심정지 생존율 — 전국 9.2%, 서울 12.4% 대비 최하위권</div></div>
+      <div class="stat"><div class="n">19.9<small>%</small></div><div class="l">도·군 일반인 CPR 시행률 — 특별시(48.2%)의 절반 이하</div></div>
+      <div class="stat"><div class="n">1/3</div><div class="l">1인가구 중 독거노인 비율 — 고독사 발견까지 평균 26~40일</div></div>
     </div>
-    <div class="footnote">출처: 질병관리청, 보건복지부 고독사 실태조사(2024), 한국보건사회연구원(2023)</div>
+    <div class="footnote">출처: 질병관리청 『급성심장정지조사』 · 강원도 「제8기 지역보건의료계획」 · 보건복지부 고독사 실태조사(2024)</div>
   </section>
 
-  <!-- 4. SOLUTION OVERVIEW -->
+  <!-- 4. KEY INSIGHT: CHAIN OF SURVIVAL -->
+  <section class="slide">
+    <span class="kicker ind">핵심 통찰 · 생존사슬</span>
+    <h2>생존은 병원이 아니라 <span class="em-i">'현장의 첫 4분'</span>에서 결정된다</h2>
+    <p class="lead">미국심장협회의 생존사슬(Chain of Survival)에서 앞쪽 세 고리는 의료인이 아니라 곁에 있는 목격자가 수행한다. 골든타임은 구급차가 도착하기 전에 끝나므로, 병원이 멀수록 앞쪽 고리가 생존을 좌우한다.</p>
+    <div class="chain">
+      <div class="step alert"><div class="idx">① 인지·신고</div><div class="t">목격자의 몫</div><div class="d">사람이 있어야 시작</div></div>
+      <div class="arrowc">→</div>
+      <div class="step alert"><div class="idx">② 조기 CPR</div><div class="t">목격자의 몫</div><div class="d">1분 지연마다 7~10%↓</div></div>
+      <div class="arrowc">→</div>
+      <div class="step alert"><div class="idx">③ 조기 제세동</div><div class="t">목격자의 몫</div><div class="d">3~5분 내 시 49~75%</div></div>
+      <div class="arrowc">→</div>
+      <div class="step"><div class="idx">④ 전문소생술</div><div class="t">구급대의 몫</div><div class="d">병원 전 단계</div></div>
+      <div class="arrowc">→</div>
+      <div class="step"><div class="idx">⑤ 통합치료</div><div class="t">병원의 몫</div><div class="d">병원 도착 이후</div></div>
+    </div>
+    <div class="keybox">강원의 사회적 조건(독거·고립·산악 지형)은 병원을 멀게 만들 뿐 아니라, <b>생존사슬의 앞쪽 고리(목격·CPR) 자체를 끊는다.</b></div>
+    <div class="footnote">출처: American Heart Association, Chain of Survival · Sasson et al., NEJM 2012 · 질병관리청·KIHASA</div>
+  </section>
+
+  <!-- 5. SOLUTION -->
   <section class="slide">
     <span class="kicker">해결 · 서비스 개요</span>
-    <h2>마을이 함께 감지하고,<br>함께 달려갑니다</h2>
-    <p class="lead">홈캠 AI가 쓰러짐을 감지하면 <span class="hl">119 자동신고</span>와 동시에 <span class="hl">10분 거리 이웃 어르신</span>에게 알림이 갑니다. 이웃은 앱이 안내하는 응급처치 프로토콜에 따라 초동조치를 하고, 구급차 도착 전 공백을 메웁니다.</p>
+    <h2>끊어진 앞쪽 고리를 <span class="em">기술로 복원</span>한다</h2>
+    <p class="lead">병원·도로 확충은 예산과 시간이 오래 걸린다. 반면 앞쪽 고리(인지·신고·목격자 CPR)는 지금 있는 홈캠·스마트폰으로 복원할 수 있고, 그 효과는 이미 국제 학술지로 검증되어 있다. <span class="hl">홈캠 AI가 목격자를 대신하고, 10분 거리 이웃이 구급차보다 먼저 도착한다.</span></p>
     <div class="stats">
-      <div class="stat teal"><div class="n">2<small>배 ↑</small></div><div class="l">목격자 심폐소생술만으로 오르는 생존율 (시행 12.2% vs 미시행 5.9%)</div></div>
-      <div class="stat teal"><div class="n">3.7<small>배</small></div><div class="l">곁에 목격자가 있을 때(목격 심정지)의 생존율</div></div>
-      <div class="stat"><div class="n">42<small>%</small></div><div class="l">해외 사례 — 시민 응답자가 구급대보다 먼저 도착한 비율</div></div>
+      <div class="stat teal"><div class="n">2.41<small>배</small></div><div class="l">스마트폰 자원자 출동 시스템의 목격자 CPR 개선 (JACC 2023)</div></div>
+      <div class="stat teal"><div class="n">1.89<small>배</small></div><div class="l">목격자 제세동 개선</div></div>
+      <div class="stat teal"><div class="n">1.22<small>배</small></div><div class="l">30일 생존 개선</div></div>
     </div>
-    <div class="footnote">출처: 질병관리청 급성심장정지조사, 스웨덴 HeartRunner</div>
+    <div class="footnote">출처: Ringh et al., NEJM 2015 · JACC 2023(자원자 출동 시스템 메타분석)</div>
   </section>
 
-  <!-- 5. HOW IT WORKS -->
+  <!-- 6. HOW IT WORKS -->
   <section class="slide">
     <span class="kicker">작동 방식</span>
     <h2>감지 → 확인 → 신고·이웃 → 초동조치</h2>
     <div class="flow">
-      <div class="step"><div class="idx">STEP 1</div><div class="t">🎥 홈캠 AI 감지</div><div class="d">AI만 영상을 처리해 쓰러짐을 판별. 사람은 영상을 볼 수 없음.</div></div>
-      <div class="step"><div class="idx">STEP 2</div><div class="t">📲 본인 재확인</div><div class="d">쓰러진 사람에게 알림 발송 → 응답 없으면(=위급) 다음 단계.</div></div>
+      <div class="step"><div class="idx">STEP 1</div><div class="t">🎥 홈캠 AI 감지</div><div class="d">AI만 영상을 처리해 쓰러짐 판별. 사람은 영상을 볼 수 없음.</div></div>
+      <div class="step"><div class="idx">STEP 2</div><div class="t">📲 본인 재확인</div><div class="d">쓰러진 사람에게 알림 → 응답 없으면(위급) 다음 단계.</div></div>
       <div class="step alert"><div class="idx">STEP 3</div><div class="t">🚑 119 + 이웃 동시</div><div class="d">위치·정보와 함께 119 자동신고, 10분 거리 이웃에 즉시 알림.</div></div>
-      <div class="step alert"><div class="idx">STEP 4</div><div class="t">🫀 응급처치 프로토콜</div><div class="d">도착한 이웃이 앱 안내(가슴압박·기도확보·회복자세)와 119 영상지도로 초동조치.</div></div>
+      <div class="step alert"><div class="idx">STEP 4</div><div class="t">🫀 응급처치 프로토콜</div><div class="d">도착한 이웃이 앱 안내(가슴압박·기도확보)와 119 영상지도로 초동조치.</div></div>
     </div>
-    <p class="lead">구급차가 오래 걸리는 도서산간의 지리적 한계를, <span class="em">근거리 이웃 자원</span>으로 극복합니다.</p>
+    <p class="lead">공동체 단위는 행정리(자연마을) 소속 + <span class="em">도로 도달시간 10분 이내</span> 이웃으로 묶는다 — 산악 지형에선 직선거리가 아닌 실제 도달시간이 진짜 변수다.</p>
     <div class="footnote">이웃은 119 도착 전 초동 지원자입니다. 119 신고는 언제나 병행됩니다.</div>
   </section>
 
-  <!-- 6. AI DETECTION -->
-  <section class="slide">
-    <span class="kicker">AI 감지 원리</span>
-    <h2>2단계로 쓰러짐을 판별합니다</h2>
-    <p class="lead"><b class="em">1차 휴리스틱</b>(빠른 규칙)으로 쓰러짐 후보를 걸러낸 뒤, <b class="em">2차 ST-GCN 딥러닝</b>으로 진짜 낙상인지 정밀 판정합니다. 각 기준은 현장에 맞게 조정 가능합니다.</p>
-    <table class="vars">
-      <thead><tr><th>조절 변수</th><th>단계</th><th>무엇을 조절하나</th></tr></thead>
-      <tbody>
-        <tr><td>하강 민감도</td><td><span class="badge h">휴리스틱</span></td><td>엉덩이가 얼마나 내려가야 "하강"으로 볼지</td></tr>
-        <tr><td>수평 각도</td><td><span class="badge h">휴리스틱</span></td><td>몸통 각도 몇 도부터 "수평"으로 볼지</td></tr>
-        <tr><td>무동작 시간</td><td><span class="badge h">휴리스틱</span></td><td>몇 초 멈춰야 ST-GCN 판정으로 넘길지</td></tr>
-        <tr><td>ST-GCN 판정 기준</td><td><span class="badge m">ST-GCN</span></td><td>모델이 낸 낙상 확률의 컷라인 (이 값 이상이면 낙상)</td></tr>
-      </tbody>
-    </table>
-    <div class="footnote">골격 키포인트(자세)만 사용 — 원본 영상은 저장·전송하지 않습니다.</div>
+  <!-- 7. ARCHITECTURE 1 (SVG 그대로) -->
+  <section class="slide arch">
+    <span class="kicker ind">시스템 아키텍처</span>
+    <div class="archframe"><img src="production-architecture-slide.svg" alt="지역사회 응급대응 AI 시스템 아키텍처"></div>
   </section>
 
-  <!-- 7. FAQ -->
+  <!-- 8. ARCHITECTURE 2 (SVG 그대로) -->
+  <section class="slide arch">
+    <div class="archhead">
+      <span class="kicker ind" style="margin-bottom:0">AI 감지 · 모델 레이어 &amp; 판별 로직</span>
+      <span class="apibadge">⚡ 자체 API 구축</span>
+    </div>
+    <div class="archframe"><img src="diagram.svg" alt="쓰러짐 감지 모델 레이어 및 판별 로직 다이어그램"></div>
+  </section>
+
+  <!-- 9. FAQ -->
   <section class="slide">
     <span class="kicker">예상 질문 · FAQ</span>
     <h2>자주 나오는 세 가지 걱정</h2>
@@ -227,7 +231,7 @@
       </div>
       <div class="qa">
         <div class="q">심각하게 쓰러진 건지, 그냥 털썩 앉은 건지 어떻게 구분하나요?</div>
-        <div class="a">쓰러질 때의 <b>급격한 하강 속도·몸통 수평 각도·무동작 지속시간</b> 등 여러 요소를 결합해 <b>민감도를 최대한 높였고</b>, 애매한 앉기·눕기는 2단계 딥러닝 판정에서 걸러냅니다.</div>
+        <div class="a">쓰러질 때의 <b>급격한 하강 속도·몸통 수평 각도·무동작 지속시간</b>을 결합해 <b>민감도를 최대한 높였고</b>, 애매한 앉기·눕기는 2단계 딥러닝(ST-GCN) 판정에서 걸러냅니다.</div>
       </div>
       <div class="qa">
         <div class="q">쓰러졌다고 바로 신고하면 오신고가 생기지 않나요?</div>
@@ -237,74 +241,50 @@
     <div class="footnote">민감도는 높이되, 오신고는 본인 재확인(2중 검증)으로 거릅니다.</div>
   </section>
 
-  <!-- 8. DESIGN PRINCIPLES -->
+  <!-- 10. DESIGN + GOAL -->
   <section class="slide">
-    <span class="kicker">설계 원칙</span>
-    <h2>누구와 묶고, 어떻게 지키나</h2>
+    <span class="kicker">설계 원칙 · 목표</span>
+    <h2>SDOH의 세 결핍을 정확히 겨냥한다</h2>
     <div class="cols">
       <div class="card">
-        <h3>🧭 공동체 단위</h3>
+        <h3>🔒 프라이버시 · 공동체</h3>
         <ul>
-          <li><b>행정리(자연마을) 소속 + 도로 도달시간 10분 이내</b> 이웃을 하나로</li>
-          <li>산·계곡 때문에 직선거리가 아닌 <b>실제 도달시간</b> 기준</li>
-          <li>등록 허브는 <b>경로당</b> — 어르신이 모이는 곳</li>
+          <li>홈캠 영상은 <b>AI만 처리</b>, 골격(자세) 데이터만 추출 — 원본 미저장</li>
+          <li>등록 허브는 <b>경로당</b>, 도로 도달시간 10분 이내 이웃으로 조직</li>
         </ul>
       </div>
-      <div class="card">
-        <h3>🔒 프라이버시 보호</h3>
+      <div class="card ind">
+        <h3>💙 겨냥하는 SDOH</h3>
         <ul>
-          <li>홈캠 영상은 <b>AI만 처리</b>, 이웃·타인은 볼 수 없음</li>
-          <li><b>쓰러짐 이벤트만</b> 전송 — 원본 영상 미저장</li>
-          <li>골격(자세) 데이터만 추출해 개인식별 최소화</li>
+          <li><b>의료 접근성</b> — 병원 도달 전 시간 공백을 자동 감지·신고로 단축</li>
+          <li><b>사회적 고립</b> — 이웃 상호출동으로 목격자 부재를 대체</li>
+          <li><b>물리적 환경</b> — 지형 장벽을 근거리 이웃 자원으로 상쇄</li>
         </ul>
       </div>
     </div>
-    <div class="footnote">출처: 개인정보위 영상정보처리기기 가이드라인 · PulsePoint 반경 알림 모델</div>
+    <div class="keybox">우리가 대응하는 것은 특정 질환의 치료가 아니라, <b>강원의 지리·사회 조건이 만든 '응급 대응의 격차' 그 자체</b>다.</div>
+    <div class="footnote">SDOH 근거: 「2023 강원의 사회지표 보고서」 · 건강보험심사평가원 지역보건의료현황 분석</div>
   </section>
 
-  <!-- 9. GOAL -->
-  <section class="slide">
-    <span class="kicker">목표</span>
-    <h2>도서산간의 <span class="em">생존율</span>을 끌어올립니다</h2>
-    <p class="lead">"구급차가 골든타임보다 늦게 오는 곳에서, 10분 거리의 이웃 손을 안전하게 위임한다." — 이것이 우리가 만드는 변화입니다.</p>
-    <div class="cols">
-      <div class="card">
-        <h3>💙 사회적 편익</h3>
-        <ul>
-          <li>고독사·미발견 응급의 조기 개입</li>
-          <li>이웃 상호돌봄망으로 <b>사회적 고립</b> 완화</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>🏛️ 실현 경로</h3>
-        <ul>
-          <li>보건소·소방·경로당이 함께 운영하는 <b>마을 단위 민·관 응급돌봄 모델</b></li>
-          <li>스마트빌리지 실증으로 검증 후 <b>지역보건사업으로 정착</b></li>
-          <li>선의의 구조자 보호(응급의료법 §5의2) 기반</li>
-        </ul>
-      </div>
-    </div>
-    <div class="footnote">SDOH: 의료접근성 · 사회적·지역사회 맥락 · 이웃·물리적 환경에 동시 개입</div>
-  </section>
-
-  <!-- 10. CLOSING -->
+  <!-- 11. CLOSING -->
   <section class="slide">
     <span class="kicker">마무리</span>
-    <h2>병원이 멀어도,<br>마을은 <span class="em">가장 가까운 응답자</span>입니다</h2>
+    <div class="slogan">지역 <span class="em">공동체</span>가,<br>이웃의 <span class="em">생명</span>을 살립니다</div>
+    <p class="lead" style="margin-top:18px">병원이 멀어도, 마을은 가장 가까운 응답자입니다. 골든이웃은 흩어진 이웃을 하나의 공동체로 잇습니다.</p>
     <div class="disc">
       <b>안전 고지</b> · 본 서비스와 자료는 참고용이며 의학적 진단이 아닙니다.
       응급 증상(흉통·호흡곤란·의식저하 등)은 <b>119·응급실 안내를 최우선</b>으로 하며,
       이웃 대응은 119 신고를 <b>대체하지 않고 병행</b>합니다.
     </div>
-    <p class="lead" style="margin-top:30px">가칭 <b class="em">골든이웃</b> · 강원 도서산간 독거 어르신을 위한 AI 초동대응</p>
-    <div class="footnote">근거 자료 전문: challenge/evidence.md · 강원도 3개 공식 보고서 + 8개 조사항목</div>
+    <p class="lead" style="margin-top:28px"><b class="em">골든이웃</b> · 강원 도서산간 독거 어르신을 위한 AI 초동대응</p>
+    <div class="footnote">근거 자료 전문: challenge/evidence.md · gangwon-sdoh.md · reports/4. 앱설계논지</div>
   </section>
 
 </div>
 
 <div id="bar"></div>
 <div id="dots"></div>
-<div id="nav"><button id="prev" aria-label="이전">‹</button><span id="count">1 / 10</span><button id="next" aria-label="다음">›</button></div>
+<div id="nav"><button id="prev" aria-label="이전">‹</button><span id="count">1 / 11</span><button id="next" aria-label="다음">›</button></div>
 <div class="hint">← → 또는 스페이스로 이동</div>
 
 <script>
