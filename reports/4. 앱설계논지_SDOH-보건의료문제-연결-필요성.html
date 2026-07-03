@@ -14,7 +14,9 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
-    background:var(--bg2);color:var(--ink);-webkit-font-smoothing:antialiased}
+    background:var(--bg2);color:var(--ink);-webkit-font-smoothing:antialiased;
+    word-break:keep-all;overflow-wrap:break-word}
+  h3{flex-wrap:wrap}
 
   .page{position:relative;min-height:100vh;padding:var(--pad);display:flex;flex-direction:column;
     justify-content:center;background:radial-gradient(120% 130% at 100% 0%,var(--bg2) 0%,#ffffff 55%);
@@ -29,13 +31,15 @@
   .p2 .partbadge{background:var(--accent2-soft);color:var(--accent2)}
   .p3 .partbadge{background:var(--indigo-soft);color:var(--indigo)}
   .p4 .partbadge{background:var(--amber-soft);color:var(--amber)}
+  .p5 .partbadge{background:#dcfce7;color:#15803d}
+  .p6 .partbadge{background:#f3e8ff;color:#7e22ce}
 
   .kicker{display:inline-flex;align-items:center;gap:9px;font-size:clamp(12px,1.2vw,14px);font-weight:800;
     letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
   h1{font-size:clamp(30px,5vw,58px);line-height:1.14;font-weight:800;letter-spacing:-.02em}
   h2{font-size:clamp(24px,3.6vw,40px);line-height:1.2;font-weight:800;letter-spacing:-.02em;margin-bottom:18px}
   h3{font-size:clamp(16px,1.9vw,21px);font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:9px}
-  .lead{font-size:clamp(15px,1.65vw,19px);line-height:1.68;color:var(--muted);max-width:78ch;margin-top:14px}
+  .lead{font-size:clamp(15px,1.65vw,19px);line-height:1.68;color:var(--muted);margin-top:14px}
   .em{color:var(--accent);font-weight:800}
   .em-red{color:var(--accent2);font-weight:800}
   .em-i{color:var(--indigo);font-weight:800}
@@ -71,14 +75,14 @@
   table.vars td.arrow{color:var(--accent);font-weight:800}
 
   .barcomp{display:flex;flex-direction:column;gap:12px;margin-top:24px}
-  .barrow{display:flex;align-items:center;gap:12px}
+  .barrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .barrow .label{width:130px;flex:0 0 auto;font-size:clamp(12px,1.3vw,14px);font-weight:700;color:var(--ink)}
-  .barrow .track{flex:1;background:#e7edf3;border-radius:7px;height:24px;position:relative;overflow:hidden}
-  .barrow .fill{height:100%;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;
-    padding-right:10px;color:#fff;font-weight:800;font-size:12.5px;white-space:nowrap;transition:width .3s}
+  .barrow .track{flex:1 1 100px;min-width:70px;background:#e7edf3;border-radius:7px;height:14px;overflow:hidden}
+  .barrow .fill{height:100%;border-radius:7px;transition:width .3s}
   .barrow .fill.muted{background:var(--gray-fill)}
   .barrow .fill.teal{background:var(--accent)}
   .barrow .fill.rose{background:var(--accent2)}
+  .barrow .val{flex:0 0 auto;min-width:150px;font-weight:800;font-size:clamp(12px,1.3vw,13.5px);color:var(--ink)}
   .chartcap{margin-top:10px;font-size:12px;color:var(--muted)}
 
   .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin-top:24px}
@@ -102,7 +106,7 @@
 
   .footnote{margin-top:auto;padding-top:16px;font-size:12px;color:#8496a9;line-height:1.5;border-top:1px solid var(--line)}
   .disc{background:var(--accent2-soft);border:1px solid #f6c6d1;border-radius:var(--radius);
-    padding:20px 24px;margin-top:20px;max-width:80ch;font-size:clamp(13px,1.4vw,15.5px);line-height:1.6;color:var(--ink)}
+    padding:20px 24px;margin-top:20px;font-size:clamp(13px,1.4vw,15.5px);line-height:1.6;color:var(--ink)}
   .disc b{color:var(--accent2)}
 
   .keybox{margin-top:22px;padding:20px 24px;border-left:5px solid var(--accent2);background:var(--accent2-soft);
@@ -115,16 +119,28 @@
     border-radius:10px;font-size:clamp(12.5px,1.3vw,14.5px);line-height:1.6;color:var(--ink)}
   .notebox b{color:var(--amber)}
 
+  .svgpage{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;box-shadow:var(--shadow)}
+  .svgpage img{display:block;width:100%;height:auto;border-radius:8px}
+
+  .criteria-icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:20px;
+    background:var(--surface);border:1px solid var(--line);flex:0 0 auto}
+  .critrow{display:flex;align-items:center;gap:14px;margin-top:14px}
+  .critrow .t{font-weight:800;font-size:clamp(14px,1.6vw,17px)}
+  .critrow .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  table.summary td, table.summary th{font-size:clamp(11.5px,1.15vw,13.5px);vertical-align:top}
+
   .pagenum{position:absolute;right:24px;bottom:20px;font-size:12px;font-weight:700;color:var(--muted)}
   .page.dark .pagenum{color:#7c93ab}
 
-  .toc{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;margin-top:28px;max-width:900px}
+  .toc{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;margin-top:28px}
   .toc a{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:inherit;font-size:14.5px;
     padding:8px 0;border-bottom:1px dashed var(--line)}
   .toc a .no{font-weight:800;color:var(--accent);min-width:22px}
   .toc a:hover{color:var(--accent)}
 
-  .indexlist{display:flex;flex-direction:column;gap:0;margin-top:26px;max-width:640px}
+  .indexlist{display:flex;flex-direction:column;gap:0;margin-top:26px}
   .indexlist a{display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit;
     padding:14px 4px;border-bottom:1px solid var(--line)}
   .indexlist a .no{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accent-soft);
@@ -149,24 +165,26 @@
 <body>
 
 <nav class="navdots" aria-hidden="true">
-  <a href="#cover"></a><a href="#p1"></a><a href="#p2"></a><a href="#p3"></a><a href="#p4"></a>
+  <a href="#cover"></a><a href="#p1"></a><a href="#p2"></a><a href="#p3"></a><a href="#p4"></a><a href="#p5"></a><a href="#p6"></a>
 </nav>
 
 <!-- 0. COVER -->
 <section class="page dark" id="cover">
   <span class="kicker" style="color:#8fd9cf">골든이웃 · 설계 논지 보고서</span>
-  <h1>강원의 사회적 조건은 어떻게<br><span style="color:#5eead4">'응급 생사'</span>의 격차가 되는가</h1>
-  <p class="lead" style="max-width:70ch">SDOH 현황 → 보건의료 문제 → 인과적 연결 → 앱 개발의 필요성. 정부·공공기관 공식 통계에 근거해 강원특별자치도 도서산간의 응급 대응 격차를 논증하고, '골든이웃' 앱이 왜 지금 이 지점에 필요한지를 보인다.</p>
+  <h1>지역 공동체가,<br><span style="color:#5eead4">이웃의 생명</span>을 살립니다.</h1>
+  <p class="lead">강원의 사회적 조건은 어떻게 '응급 생사'의 격차가 되는가 — SDOH 현황 → 보건의료 문제 → 인과적 연결 → 앱 아키텍처 → 효과 → 보급 전략의 순서로 논증한다. 정부·공공기관 공식 통계와 국제 학술 근거, 그리고 실제 구현된 아키텍처에 기반해 강원특별자치도 도서산간의 응급 대응 격차를 진단하고, '골든이웃' 앱이 왜 지금 이 지점에 필요한지, 그리고 그 효과와 보급 경로가 무엇인지를 순서대로 제시한다.</p>
   <div class="toc" style="color:#dce8f3">
     <a href="#p1" style="border-color:#254057"><span class="no">I</span> 강원지역 SDOH 분석</a>
     <a href="#p2" style="border-color:#254057"><span class="no">II</span> 강원지역 주요 보건의료 문제 분석</a>
     <a href="#p3" style="border-color:#254057"><span class="no">III</span> SDOH ↔ 보건의료 문제의 연결</a>
-    <a href="#p4" style="border-color:#254057"><span class="no">IV</span> 앱 개발의 필요성</a>
+    <a href="#p4" style="border-color:#254057"><span class="no">IV</span> 앱 아키텍처</a>
+    <a href="#p5" style="border-color:#254057"><span class="no">V</span> 앱의 효과: 활용성·효과성·효율성·안정성·사용성</a>
+    <a href="#p6" style="border-color:#254057"><span class="no">VI</span> 보급 전략</a>
   </div>
   <div style="margin-top:26px">
-    <span class="tag" style="background:#123b34;color:#5eead4;border-color:#1c5348">근거: 공공기관 통계 12종</span>
+    <span class="tag" style="background:#123b34;color:#5eead4;border-color:#1c5348">근거: 공공기관 통계·아키텍처·국제 학술지 20종+</span>
   </div>
-  <div class="footnote" style="border-color:#254057">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) · 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석」 · 강원도 「제8기 지역보건의료계획」 · 질병관리청 『급성심장정지조사』 · NEJM·JACC 등 국제 학술지. 상세 서지는 IV부 말미 참고문헌 참조.</div>
+  <div class="footnote" style="border-color:#254057">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) · 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석」 · 강원도 「제8기 지역보건의료계획」 · 질병관리청 『급성심장정지조사』 · NEJM·JACC 등 국제 학술지 · 실제 프로덕션 아키텍처. 상세 서지는 V부 말미 참고문헌 참조.</div>
 </section>
 
 <!-- ===================== PART I ===================== -->
@@ -174,7 +192,7 @@
 <section class="page p1" id="p1">
   <span class="partbadge">Part I · 강원지역 SDOH 분석 — 개요</span>
   <h2>SDOH란 무엇이며, 이 장은 무엇을 다루는가</h2>
-  <p class="lead"><b class="em">건강의 사회적 결정요인(SDOH)</b>은 사람이 태어나고 살아가며 나이 드는 조건 — 소득·주거·교통·의료접근성·사회적 관계 — 이 건강 결과를 좌우한다는 관점이다. 「2023 강원의 사회지표 보고서」의 지표를 SDOH 틀로 재구성하면, 도서산간 응급 대응과 직결되는 세부항목은 다음 7가지로 정리된다.</p>
+  <p class="lead"><b class="em">건강의 사회적 결정요인(SDOH)</b>은 사람이 태어나고 살아가며 나이 드는 조건 — 소득·주거·교통·의료접근성·사회적 관계 — 이 개인의 건강 결과를 좌우한다는 관점이다. 같은 질병이라도 어디서 누구와 사는가에 따라 예방·발견·치료의 기회가 달라진다는 것이 이 프레임의 핵심이다. 「2023 강원의 사회지표 보고서」는 인구·건강·노동·주거·안전 등 11개 영역에 걸쳐 강원의 사회상을 담고 있는데, 이 지표들을 SDOH 틀로 재구성하면 <b class="em">도서산간 독거 어르신의 응급 상황</b>과 직결되는 세부항목이 다음 7가지로 정리된다. 각 항목은 뒤에서 하나의 결론 — '응급 대응의 격차' — 으로 수렴한다.</p>
   <div class="indexlist">
     <a href="#i1"><span class="no">①</span><span><span class="t">인구구조와 고령화</span><div class="d">고령화율 23.3%, 인구 자연감소, 지방소멸 압력</div></span></a>
     <a href="#i2"><span class="no">②</span><span><span class="t">경제적 안정</span><div class="d">재정자립도·기초생활보장 수급률의 도농 격차</div></span></a>
@@ -185,7 +203,7 @@
     <a href="#i7"><span class="no">⑦</span><span><span class="t">환경</span><div class="d">생활권 녹지 접근성의 지역 편차</div></span></a>
   </div>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024). 11개 영역 중 본 사업과 직결되는 7개 세부항목만 발췌 구성.</div>
-  <span class="pagenum">2 / 21</span>
+  <span class="pagenum">2 / 29</span>
 </section>
 
 <section class="page p1" id="i1">
@@ -197,9 +215,9 @@
     <div class="stat"><div class="n">-5.1</div><div class="l">인구 자연증가율(2022) — 영월 -12.7·평창 -11.6로 농촌 집중</div></div>
     <div class="stat"><div class="n">-1,397<small>명</small></div><div class="l">2023년 순유출 전환 — 2019~2022 순유입에서 반전, 지방소멸 압력</div></div>
   </div>
-  <p class="lead" style="margin-top:20px">고령화와 인구감소는 도시부(춘천·원주·강릉)가 아니라 <b>도서산간 군 지역에 집중</b>되어 있다. 이 지리적 편중이 이후 의료 접근성·사회적 고립 문제와 그대로 겹친다.</p>
+  <p class="lead" style="margin-top:20px">주민등록인구는 2022년 기준 약 153.6만 명으로 2018년 이후 계속 줄고 있으며, 조출생률이 낮아지는 동안 조사망률은 7.8(2018)에서 9.9(2022)로 높아져 인구 자연감소가 심화되고 있다. 노년부양비도 35.0으로, 생산가능인구가 짊어지는 부양 부담이 급격히 커졌다. 무엇보다 이 고령화와 인구감소는 도시부(춘천·원주·강릉)가 아니라 <b>도서산간 군 지역에 집중</b>되어 있으며, 이 지리적 편중이 이후 살펴볼 의료 접근성·사회적 고립 문제와 그대로 겹친다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.81·84·86·91</div>
-  <span class="pagenum">3 / 21</span>
+  <span class="pagenum">3 / 29</span>
 </section>
 
 <section class="page p1" id="i2">
@@ -223,9 +241,9 @@
       </ul>
     </div>
   </div>
-  <p class="lead" style="margin-top:20px">재정자립도·산재사망률에서 드러난 도농 격차는, 다음 항목의 건강·의료 지표에서 더 뚜렷한 형태로 반복된다.</p>
+  <p class="lead" style="margin-top:20px">노동시장 지표는 완만하게 개선되고 있으나, 재정과 복지의 취약성은 뚜렷하다. 기초생활보장 수급자 비율은 2013년 3.7%에서 2022년 5.6%로 꾸준히 늘었고, "생계유지에 어려움을 겪은 적이 있다"는 응답이 38.9%에 달하는데 특히 이혼·사별·월세 거주·저학력 계층에서 높게 나타났다 — 이는 곧 <b>독거 고령층의 상당수가 경제적으로도 취약</b>하다는 뜻이다. 재정자립도·산재사망률에서 드러난 도농 격차는, 다음 항목의 건강·의료 지표에서 더 뚜렷한 형태로 반복된다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.192·193·196·217·219·232</div>
-  <span class="pagenum">4 / 21</span>
+  <span class="pagenum">4 / 29</span>
 </section>
 
 <section class="page p1" id="i3">
@@ -242,10 +260,10 @@
     </div>
     <div>
       <div class="barcomp" style="margin-top:0">
-        <div class="barrow"><div class="label">병상(인구 1만명당)</div><div class="track"><div class="fill rose" style="width:77%">강원 99.9개</div></div></div>
-        <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:96%">전국 125.3개</div></div></div>
-        <div class="barrow"><div class="label">의료인력(1천명당)</div><div class="track"><div class="fill rose" style="width:79%">강원 7.9명</div></div></div>
-        <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:88%">전국 8.8명</div></div></div>
+        <div class="barrow"><div class="label">병상(인구 1만명당)</div><div class="track"><div class="fill rose" style="width:77%"></div></div><div class="val">강원 99.9개</div></div>
+        <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:96%"></div></div><div class="val">전국 125.3개</div></div>
+        <div class="barrow"><div class="label">의료인력(1천명당)</div><div class="track"><div class="fill rose" style="width:79%"></div></div><div class="val">강원 7.9명</div></div>
+        <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:88%"></div></div><div class="val">전국 8.8명</div></div>
       </div>
     </div>
   </div>
@@ -254,8 +272,9 @@
     <div class="stat red"><div class="n">9<small>개 군</small></div><div class="l">종합병원이 아예 없는 군(횡성·평창·정선·철원·화천·양구·인제·고성·양양)</div></div>
     <div class="stat"><div class="n">0<small>개</small></div><div class="l">고성·양양군 병상 수 — 인제·고성 간호사 0.1명/천명</div></div>
   </div>
+  <p class="lead" style="margin-top:18px">강원은 심장질환·뇌혈관질환 사망 부담이 큰 지역임에도, 그 응급환자를 받아줄 의료 자원은 소수 도시에 극심하게 몰려 있다. <b class="em-red">9개 군에 종합병원이 아예 없고</b>, 종합병원까지 평균 14.8km(최대 70km)를 이동해야 한다. 병원이 멀수록 정규 의료체계에 도달하기까지의 시간이 구조적으로 길어지며, 이는 곧 <b>병원 도착 이전 단계의 초동대응이 생존을 좌우</b>한다는 것을 의미한다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.108·110·112·115~116</div>
-  <span class="pagenum">5 / 21</span>
+  <span class="pagenum">5 / 29</span>
 </section>
 
 <section class="page p1" id="i4">
@@ -267,9 +286,9 @@
     <div class="stat"><div class="n">3.00<small>점</small></div><div class="l">시내·마을버스 만족도(11점 척도 하위권), 고성 기차 만족도 2.12점</div></div>
     <div class="stat"><div class="n">68.1<small>%</small></div><div class="l">화천 상수도 보급률(전체 평균 93.9%) — 기반시설 지역 격차</div></div>
   </div>
-  <p class="lead" style="margin-top:20px">산·계곡 지형은 "생활 인프라까지의 시간"뿐 아니라 <b class="em-red">119 구급차의 현장 도달 시간</b>도 함께 늘린다. <b>직선거리가 아닌 실제 도로 도달시간</b>이 응급 대응의 진짜 변수가 된다.</p>
+  <p class="lead" style="margin-top:20px">생활편의시설까지의 평균 소요시간은 도보 14.4분이지만 대중교통을 이용하면 23.8분으로 늘고, 시외버스 기준 인제군은 53.8분에 달한다. 차량이 없으면 이동 자체가 어려운 구조이나 승용차 의존도는 군 지역에서 70%를 넘는다 — 즉 <b>차가 없는 독거 어르신일수록 지형에 그대로 갇힌다.</b> 이 산·계곡 지형은 "생활 인프라까지의 시간"뿐 아니라 <b class="em-red">119 구급차의 현장 도달 시간</b>도 함께 늘리므로, <b>직선거리가 아닌 실제 도로 도달시간</b>이 응급 대응의 진짜 변수가 된다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.63~66·248~249·355</div>
-  <span class="pagenum">6 / 21</span>
+  <span class="pagenum">6 / 29</span>
 </section>
 
 <section class="page p1" id="i5">
@@ -293,7 +312,7 @@
   </div>
   <p class="lead" style="margin-top:20px">삶의 만족감 자체는 낮지 않지만, 정보·문화 인프라 접근성의 도농 격차는 <b class="em">고령층의 고립을 심화</b>시키는 배경 조건이 된다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.278~279·286·311</div>
-  <span class="pagenum">7 / 21</span>
+  <span class="pagenum">7 / 29</span>
 </section>
 
 <section class="page p1" id="i6">
@@ -305,9 +324,9 @@
     <div class="stat"><div class="n">1,944<small>건</small></div><div class="l">화재 발생(2022) — 사망 29명</div></div>
     <div class="stat"><div class="n">7,420<small>ha</small></div><div class="l">산불 피해 면적(2022)</div></div>
   </div>
-  <p class="lead" style="margin-top:20px">고령자 안전사고 사망률의 재상승은, 다음 파트에서 다룰 <b class="em-red">급성심장정지·낙상 등 '갑자기 쓰러지는' 사건</b>이 고령 인구에게 특히 위협적임을 뒷받침한다.</p>
+  <p class="lead" style="margin-top:20px">2022년 고령자 안전사고 사망자는 416명, 사망률은 10만 명당 122.1로 최근 다시 상승세로 돌아섰다. 여기에 65세 이상 자살률(54.1)까지 겹쳐, 강원의 고령·고립이 실제 생명 위험으로 이어지고 있음을 드러낸다. 이 고령자 안전사고 사망률의 재상승은, 다음 파트에서 다룰 <b class="em-red">급성심장정지·낙상 등 '갑자기 쓰러지는' 사건</b>이 고령 인구에게 특히 위협적임을 뒷받침한다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.316~318</div>
-  <span class="pagenum">8 / 21</span>
+  <span class="pagenum">8 / 29</span>
 </section>
 
 <section class="page p1" id="i7">
@@ -319,13 +338,13 @@
   </div>
   <p class="lead" style="margin-top:20px">대기·폐기물 등 환경 부하는 오히려 원주 등 도시부에서 높게 나타나, 환경 영역은 앞선 항목들과 달리 <b>"도시가 더 취약한"</b> 유일한 지표다. 다만 생활권 녹지 접근성은 다른 인프라와 동일하게 <b class="em-red">군 지역이 불리</b>하다.</p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.352</div>
-  <span class="pagenum">9 / 21</span>
+  <span class="pagenum">9 / 29</span>
 </section>
 
 <section class="page p1">
   <span class="partbadge">Part I · 종합 — 7개 항목 중 3가지로 수렴</span>
   <h2>본 사업과 직결되는 3대 SDOH</h2>
-  <p class="lead">앞선 7개 세부항목 가운데, 도서산간 독거 어르신의 응급 상황을 겨냥하는 본 사업과 직접 맞닿는 SDOH는 다음 세 가지로 수렴한다.</p>
+  <p class="lead">앞선 7개 세부항목은 서로 무관한 통계가 아니라, 도서산간 독거 어르신의 <b>한 번의 응급 상황</b>에서 동시에 작동하는 조건들이다. 이 가운데 본 사업과 직접 맞닿는 SDOH는 다음 세 가지로 수렴한다.</p>
   <div class="cols3">
     <div class="card">
       <h3>🏥 의료 접근성 <span class="tag" style="margin:0">③</span></h3>
@@ -342,7 +361,7 @@
   </div>
   <p class="lead" style="margin-top:20px"><b class="em">요컨대 본 사업이 대응하려는 문제는 특정 질환의 치료가 아니라, 강원의 지리·사회 조건이 만든 '응급 대응의 격차' 그 자체다.</b></p>
   <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) 종합 — challenge/1. gangwon-sdoh.md</div>
-  <span class="pagenum">10 / 21</span>
+  <span class="pagenum">10 / 29</span>
 </section>
 
 <!-- ===================== PART II ===================== -->
@@ -350,7 +369,7 @@
 <section class="page p2" id="p2">
   <span class="partbadge">Part II · 보건의료 문제 분석 — 1/3</span>
   <h2>"넓은 땅, 흩어진 사람, 몰려 있는 병원"</h2>
-  <p class="lead">강원 인구는 전국의 <b class="em-red">3.0%</b>뿐이지만 면적은 <b class="em-red">16.8%</b>를 차지한다. 인구밀도가 극히 낮아 발견·신고·이송의 물리적 거리가 태생적으로 길다. 여기에 의료 자원은 소수 도시에 집중된다.</p>
+  <p class="lead">강원 인구는 전국의 <b class="em-red">3.0%</b>뿐이지만 면적은 <b class="em-red">16.8%</b>를 차지한다(7개 시·11개 군). 즉 전국 평균 대비 인구밀도가 극히 낮고 생활권이 넓게 흩어져 있어, 응급환자가 발생했을 때 발견·신고·이송에 이르는 물리적 거리가 태생적으로 길다. 여기에 의료 자원마저 소수 도시에 몰려 있어, "넓은 땅에 흩어진 사람과 몰려 있는 병원"이라는 구조가 만들어진다.</p>
   <table class="vars">
     <thead><tr><th>지표</th><th>강원</th><th>전국</th><th>격차</th></tr></thead>
     <tbody>
@@ -365,18 +384,18 @@
     <b>거리 해석 시 유의</b> — 이 "25km·30분"은 고성군청(읍내) 소재지를 기준으로 산출된 값으로 추정된다(지자체 통계는 통상 행정 중심지를 기준점으로 삼는다). 그러나 Part I-④에서 확인했듯 강원 군 지역은 대중교통 소요시간이 최대 53.8분(인제)에 달하고 승용차 의존도가 70%를 넘는다. 즉 <b>군청에서 먼 외곽 마을일수록, 차량이 없는 독거 어르신일수록</b> 실제 병원 도달 시간은 이 수치보다 훨씬 길어진다 — 교통 인프라의 취약함이 의료 접근성 격차를 한 번 더 벌리는 것이다.
   </div>
   <div class="footnote">출처: 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석(강원도)」 p.13~18·41~45</div>
-  <span class="pagenum">11 / 21</span>
+  <span class="pagenum">11 / 29</span>
 </section>
 
 <section class="page p2">
   <span class="partbadge">Part II · 보건의료 문제 분석 — 2/3</span>
   <h2>급성질환 부담 — 전국 최고 수준</h2>
-  <p class="lead">강원은 자원만 부족한 게 아니라, <b class="em-red">급성으로 쓰러지는 질환의 부담 자체</b>가 전국에서 가장 무겁다.</p>
+  <p class="lead">강원은 자원만 부족한 게 아니라, <b class="em-red">급성으로 쓰러지는 질환의 부담 자체</b>가 전국에서 가장 무겁다. 심뇌혈관 급성사건의 최대 위험요인인 고혈압·당뇨의 진단경험률이 전국을 웃돌고, 그 결과 심장질환 사망률과 전체 연령표준화 사망률 모두 전국 최고 수준을 기록한다. 위험은 크고 대응 인프라는 약한, 전형적인 <b>"고위험–저대응" 지역</b>이다.</p>
   <div class="barcomp">
-    <div class="barrow"><div class="label">연령표준화 사망률</div><div class="track"><div class="fill rose" style="width:94%">강원 330.1 (전국 1위)</div></div></div>
-    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:85%">전국 평균 298.3</div></div></div>
-    <div class="barrow"><div class="label">심장질환 사망률</div><div class="track"><div class="fill rose" style="width:89%">강원 31.2</div></div></div>
-    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:77%">전국 27.1</div></div></div>
+    <div class="barrow"><div class="label">연령표준화 사망률</div><div class="track"><div class="fill rose" style="width:94%"></div></div><div class="val">강원 330.1 (전국 1위)</div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:85%"></div></div><div class="val">전국 평균 298.3</div></div>
+    <div class="barrow"><div class="label">심장질환 사망률</div><div class="track"><div class="fill rose" style="width:89%"></div></div><div class="val">강원 31.2</div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:77%"></div></div><div class="val">전국 27.1</div></div>
   </div>
   <div class="chartcap">단위: 인구 10만명당 사망자 수. 출처: 강원도 「제8기 지역보건의료계획」(2023) p.17~18</div>
   <div class="stats" style="margin-top:20px">
@@ -385,19 +404,19 @@
     <div class="stat red"><div class="n">2<small>위</small></div><div class="l">사망원인 순위 — 암 › <b>심장질환</b> › 자살 › 폐렴 › 뇌혈관질환</div></div>
   </div>
   <div class="footnote">출처: 강원도 「제8기(2023–2026) 지역보건의료계획」 p.17~19; 건강보험심사평가원 현황분석 p.28~29·51</div>
-  <span class="pagenum">12 / 21</span>
+  <span class="pagenum">12 / 29</span>
 </section>
 
 <section class="page p2">
   <span class="partbadge">Part II · 보건의료 문제 분석 — 3/3</span>
   <h2>급성심장정지 — 강원의 골든타임은 이미 무너져 있다</h2>
-  <p class="lead">앞의 구조적·질병적 취약성은 급성심장정지(OHCA) 지표에서 가장 극적으로 나타난다.</p>
+  <p class="lead">앞의 구조적·질병적 취약성은 급성심장정지(OHCA) 지표에서 가장 극적으로 나타난다. 급성심장정지는 몇 분 안에 결과가 확정되는 사건이라, 강원의 넓은 면적·느린 구급 도착·낮은 목격자 대처가 그대로 낮은 생존율로 귀결되기 때문이다.</p>
   <div class="barcomp">
-    <div class="barrow"><div class="label">생존율</div><div class="track"><div class="fill rose" style="width:51%">강원 7.2%</div></div></div>
-    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:66%">전국 평균 9.2%</div></div></div>
-    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:89%">서울 12.4%</div></div></div>
-    <div class="barrow"><div class="label">일반인 CPR 시행률</div><div class="track"><div class="fill muted" style="width:96%">특별시 48.2%</div></div></div>
-    <div class="barrow"><div class="label"></div><div class="track"><div class="fill rose" style="width:40%">도·군 19.9%</div></div></div>
+    <div class="barrow"><div class="label">생존율</div><div class="track"><div class="fill rose" style="width:51%"></div></div><div class="val">강원 7.2%</div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:66%"></div></div><div class="val">전국 평균 9.2%</div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:89%"></div></div><div class="val">서울 12.4%</div></div>
+    <div class="barrow"><div class="label">일반인 CPR 시행률</div><div class="track"><div class="fill muted" style="width:96%"></div></div><div class="val">특별시 48.2%</div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill rose" style="width:40%"></div></div><div class="val">도·군 19.9%</div></div>
   </div>
   <div class="stats" style="margin-top:20px">
     <div class="stat red big"><div class="n">전국 2위</div><div class="l">강원 급성심장정지 <b>발생률</b> — 인구 10만명당 95.8명, 고령·만성질환 부담(Part II-2)과 일치</div></div>
@@ -408,7 +427,7 @@
     강원에서는 <b>① 급성심장정지가 자주 발생</b>하고, <b>② 목격·초기대처가 부족</b>하며, <b>③ 구급차 도착도 느려서</b>, 결국 생존율이 전국 평균에 못 미친다.
   </div>
   <div class="footnote">출처: 질병관리청 『급성심장정지조사』(발생률·생존율·CPR시행률) · 중앙응급의료센터 · 한국응급구조학회지(전국 4분이내 도착률) · 소방청·KJEMS(85개 시군구 분석)·강원도 지역필수의료 주민조사 p.39·45(강원 도서산간 현장도착시간)</div>
-  <span class="pagenum">13 / 21</span>
+  <span class="pagenum">13 / 29</span>
 </section>
 
 <!-- ===================== PART III ===================== -->
@@ -434,7 +453,7 @@
     <div class="card ind"><h3>③ 개입 효과가 가장 크다</h3><ul><li>초동 개입이 생존율을 <b>2~3배</b> 바꿈 — 투입 대비 효과 최대</li></ul></div>
   </div>
   <div class="footnote">출처: reports/2. 연결논리_SDOH에서-급성심장정지로.md §1; Part I·Part II 종합</div>
-  <span class="pagenum">14 / 21</span>
+  <span class="pagenum">14 / 29</span>
 </section>
 
 <section class="page p3">
@@ -452,12 +471,12 @@
     <div class="chainarrow">→</div>
     <div class="step"><div class="idx">⑤ 소생 후 통합치료</div><div class="t">병원의 몫</div><div class="d">병원 도착 이후</div></div>
   </div>
-  <p class="lead" style="margin-top:20px">심정지의 <b class="em-i">골든타임(4~5분)은 구급차가 도착하기 전에 이미 끝난다.</b> 강원처럼 종합병원까지 평균 14.8km인 지역에서는, 생존사슬의 뒤쪽 고리(EMS·병원)가 구조적으로 늦다.</p>
+  <p class="lead" style="margin-top:20px">여기서 결정적인 것은 <b>시간의 물리학</b>이다. 심정지 후 CPR이 없으면 생존율은 1분마다 약 7~10%씩 떨어지고, 반대로 3~5분 이내에 CPR과 제세동이 이뤄지면 생존율은 49~75%까지 올라간다. 즉 심정지의 <b class="em-i">골든타임(4~5분)은 구급차가 도착하기 전에 이미 끝난다.</b> 강원처럼 종합병원까지 평균 14.8km(최대 70km)인 지역에서는, 생존사슬의 뒤쪽 고리(EMS·병원)가 구조적으로 늦을 수밖에 없다.</p>
   <div class="keybox ind">
     그렇다면 생존을 살릴 여지는 생존사슬의 <b>앞쪽 고리(인지·CPR·제세동)에 압도적으로 쏠린다.</b> 병원이 멀수록, 곁의 첫 대응이 더 중요해지는 것이다.
   </div>
   <div class="footnote">출처: American Heart Association, Chain of Survival; Sudden Cardiac Arrest Foundation</div>
-  <span class="pagenum">15 / 21</span>
+  <span class="pagenum">15 / 29</span>
 </section>
 
 <section class="page p3">
@@ -478,7 +497,7 @@
     <b style="color:var(--indigo)">한 문장 요약</b> — 강원에서 사람이 급성으로 쓰러지면, 목격할 이웃도(사회적 고립), 빨리 도달할 병원도(물리적 환경) 없기에, 생존사슬의 앞쪽 고리가 끊긴다.
   </div>
   <div class="footnote">출처: Sasson et al., NEJM 2012;367:1607-1615 · 질병관리청·KIHASA · PMC9317767 (도농 OHCA 비교연구, 2022)</div>
-  <span class="pagenum">16 / 21</span>
+  <span class="pagenum">16 / 29</span>
 </section>
 
 <section class="page p3">
@@ -513,74 +532,239 @@
         ▼
 [Part IV] 앱 개발의 필요성 — 생존사슬의 앞쪽 고리 복원 설계</pre>
   <div class="footnote">출처: Ringh et al., NEJM 2015;372:2316-2325 · JACC 2023;SAMBA RCT(JAMA Cardiology 2022)</div>
-  <span class="pagenum">17 / 21</span>
+  <span class="pagenum">17 / 29</span>
 </section>
 
 <!-- ===================== PART IV ===================== -->
 
 <section class="page p4" id="p4">
-  <span class="partbadge">Part IV · 앱 개발의 필요성 — 1/4</span>
+  <span class="partbadge">Part IV · 앱 아키텍처 — 1/4</span>
   <h2>문제와 해결의 정확한 연결</h2>
-  <p class="lead">우리 앱은 <b>가정 내 홈캠이 급성질환으로 쓰러지는 상황을 자동 감지 → 119 자동 신고 → 동시에 주변 이웃·가족에게 알람</b>을 보내 초동 심폐소생술 등 응급처치를 유도한다. 이는 강원의 문제 지점을 하나하나 겨냥한다.</p>
+  <p class="lead">우리 앱 <b class="em">골든이웃</b>은 <b>가정 내 홈캠이 급성질환으로 쓰러지는 상황을 온디바이스 AI로 감지 → 본인에게 15초 확인 알림 → 무응답 시에만 119 자동신고 + 이웃 동시 호출</b>로 초동 심폐소생술 등 응급처치를 유도한다. 병원 접근성은 단기간에 해결하기 어려운 구조적 문제지만, "쓰러진 순간의 자동 인지 + 즉시 신고 + 주변 초동대처"는 소프트웨어로 지금 당장 개선할 수 있는 영역이며, 그 효과는 이미 근거로 확인된다. 아래 표처럼 이는 강원의 문제 지점을 하나하나 겨냥한다.</p>
   <table class="vars">
     <thead><tr><th>강원의 문제 (근거)</th><th>앱이 메우는 지점</th></tr></thead>
     <tbody>
-      <tr><td>넓은 면적·낮은 인구밀도 → 도서산간 119 현장도착 평균 17분</td><td>발생 즉시 <b>자동 신고</b>로 인지·출동 시점을 최대한 앞당김</td></tr>
+      <tr><td>넓은 면적·낮은 인구밀도 → 도서산간 119 현장도착 평균 17분</td><td>온디바이스 AI가 <b>즉시 감지</b>하고 무응답 시 자동신고 — 신고까지의 지연을 최소화</td></tr>
       <tr><td>고령·독거 비중 높아 목격자 없이 발견 지연</td><td>홈캠이 <b>목격자 역할</b>을 대신해 무인 상황에서도 감지·신고</td></tr>
-      <tr><td>도·군 일반인 CPR 시행률 19.9%로 낮음</td><td><b>주변인 알람</b>으로 골든타임 내 초동 CPR 시행률 제고</td></tr>
+      <tr><td>도·군 일반인 CPR 시행률 19.9%로 낮음</td><td><b>이웃 동시 호출(NEIGHBOR_ALERT)</b>과 CPR 가이드 영상으로 초동 CPR 시행률 제고</td></tr>
       <tr><td>입원 자체충족률 26.6%, 병원급 없는 군 다수</td><td>병원이 먼 지역일수록 <b>병원 도착 전 초기대응</b>의 가치가 큼</td></tr>
       <tr><td>심장질환·전체 사망률 전국 최고</td><td>생존을 좌우하는 <b>"첫 4분"</b>에 직접 개입</td></tr>
     </tbody>
   </table>
-  <div class="footnote">출처: reports/3. 강원도-보건의료문제-분석_급성질환-자동신고앱.md §4</div>
-  <span class="pagenum">18 / 21</span>
-</section>
-
-<section class="page p4">
-  <span class="partbadge">Part IV · 앱 개발의 필요성 — 2/4</span>
-  <h2>골든이웃 — 무엇을 만드는가</h2>
-  <p class="lead">위 근거에 기반해 설계한 서비스가 <b class="em">가칭 '골든이웃'</b>이다. 상세 아키텍처·AI 감지 로직·화면 설계는 별도의 앱 구조 문서에서 다루며, 여기서는 문제와 직결되는 골격만 제시한다.</p>
-  <div class="flow">
-    <div class="step"><div class="idx">STEP 1</div><div class="t">🎥 홈캠 AI 감지</div><div class="d">AI만 영상을 처리해 쓰러짐 판별</div></div>
-    <div class="step"><div class="idx">STEP 2</div><div class="t">📲 본인 재확인</div><div class="d">응답 없으면 위급 상황으로 판정</div></div>
-    <div class="step hot"><div class="idx">STEP 3</div><div class="t">🚑 119 + 이웃 동시</div><div class="d">자동신고와 함께 10분 거리 이웃에 즉시 알림</div></div>
-    <div class="step hot"><div class="idx">STEP 4</div><div class="t">🫀 초동 응급처치</div><div class="d">이웃이 앱 안내에 따라 CPR 등 초동조치</div></div>
+  <div class="notebox">
+    <b>참여는 전적으로 자발적·동의 기반이다</b> — 홈캠 설치·낙상 감지·119 자동신고·이웃 호출로 이어지는 모든 과정은 <b>사전에 명시적으로 동의하고 서비스를 신청한 어르신, 그리고 자발적으로 등록한 이웃 대응자</b>에 한해서만 작동한다. 동의하지 않은 사람은 감지·알림 대상에서 완전히 제외되며, 어르신은 언제든 서비스를 중단하거나 홈캠을 끌 수 있고 등록 이웃도 자유롭게 참여를 철회할 수 있다.
   </div>
-  <p class="lead" style="margin-top:20px">공동체 단위는 행정리(자연마을) 소속 + <b>도로 도달시간 10분 이내</b> 이웃으로 묶는다 — 직선거리가 아닌 실제 도달시간 기준이라는 Part III의 결론을 그대로 구현한 것이다.</p>
-  <div class="footnote">상세 UX·AI 판별 로직·안전장치는 후속 문서 「앱 구조 및 효과성·효율성·안정성·사용성 분석」에서 다룸</div>
-  <span class="pagenum">19 / 21</span>
+  <div class="footnote">출처: reports/3. 강원도-보건의료문제-분석_급성질환-자동신고앱.md §4; production-architecture.svg</div>
+  <span class="pagenum">18 / 29</span>
 </section>
 
 <section class="page p4">
-  <span class="partbadge">Part IV · 앱 개발의 필요성 — 3/4</span>
-  <h2>이 근거는 심사 기준과 어떻게 연결되는가</h2>
-  <p class="lead">본 보고서(문제 정의)는 다음 평가 기준의 <b class="em">근거 토대</b>를 제공한다. 정량적 검증(사용자 테스트, 처리 속도, 오탐률 등)은 후속 「앱 구조」 문서에서 구체화한다.</p>
+  <span class="partbadge">Part IV · 앱 아키텍처 — 2/4</span>
+  <h2>골든이웃 — 3개 레이어로 작동한다</h2>
   <div class="cols3">
-    <div class="card"><h3>🎯 활용성</h3><ul><li>강원 9개 군 종합병원 부재·독거노인 1/3이라는 <b>실제 현장 조건</b>에서 도출된 설계 — 가상 시나리오가 아님</li></ul></div>
-    <div class="card"><h3>📈 효과성</h3><ul><li>목격자 CPR 2배 이상, 자원자 출동 시스템 도입 시 생존 1.22배 — <b>국제 학술지로 검증된 개입 효과</b>를 동일 메커니즘에 적용</li></ul></div>
-    <div class="card"><h3>⚙️ 효율성</h3><ul><li>병원 신축·도로 확충 대신 <b>기존 홈캠·스마트폰 인프라</b>로 병목(첫 4분)만 정밀 타격</li></ul></div>
+    <div class="card">
+      <h3>① 홈캠·엣지 (온디바이스 AI)</h3>
+      <ul><li>카메라 → MediaPipe Pose 33 + COCO-SSD(온디바이스)</li><li>휴리스틱 상태머신(하강+수평+무동작)</li><li><b>로컬 ST-GCN(주 판정)</b> → 낙상 확정 이벤트</li><li>원본 영상은 기기 밖으로 전송하지 않음</li></ul>
+    </div>
+    <div class="card">
+      <h3>② 응급대응 백엔드</h3>
+      <ul><li>이벤트 라우팅(<code>/api/fall-event</code>) → 환자에게 <b>ALERT_SELF</b></li><li><b>15초 무응답</b> 시에만 119 자동신고 + <b>NEIGHBOR_ALERT</b></li><li>병력 DB(합성데이터·RLS) + 심평원 과거력 자동조회로 트리아지 우선힌트</li></ul>
+    </div>
+    <div class="card ind">
+      <h3>③ 주민 앱 (환자·이웃)</h3>
+      <ul><li>환자: 전체화면 경보+사이렌 → 자가확인(<b>SELF_CANCEL</b>)</li><li>이웃: 환자 카드+CPR 가이드 영상 → 수락/도착 응답</li><li>현장 음성은 온디바이스 STT로 텍스트만 추출, <b>자체 서버 온프레미스 EXAONE</b>가 상황·처치 요약</li></ul>
+    </div>
+  </div>
+  <div class="keybox ind">
+    확정 게이트는 <b>환자 본인</b>이다 — 낙상이 감지돼도 즉시 신고하지 않고, 15초 자가확인 기회를 먼저 준다. "민감도는 높이되 오신고는 본인 확인으로 거른다"는 원칙이 아키텍처 단계에 내장돼 있다.
+  </div>
+  <div class="notebox">
+    <b>왜 자체 개발인가</b> — 시장조사 결과, 홈캠 영상만으로 노인의 낙상 여부를 실시간 판정해주는 <b>기성 외부 모델·API가 존재하지 않았다.</b> 이에 골격 추정(MediaPipe) 위에 낙상 여부를 직접 판정하는 <b>자체 Cascade Model 기반 판정 모델</b>을 구성하고, 이 모델과 백엔드 서버가 통신하는 <b>전용 API(FastAPI, <code>:8000/fall</code>)</b>를 처음부터 직접 구축했다. 이는 곧 <b>Part V·안정성</b>에서 다루는 "자체 개발 모델이므로 별도의 실측 검증이 필요하다"는 과제로 이어진다.
+  </div>
+  <div class="footnote">출처: production-architecture.svg·on-device-ai.svg — 실제 구현된 런타임 아키텍처(backend/server.py :8000)</div>
+  <span class="pagenum">19 / 29</span>
+</section>
+
+<section class="page p4">
+  <span class="partbadge">Part IV · 앱 아키텍처 — 3/4 · on-device AI</span>
+  <h2>온디바이스·로컬 AI 아키텍처</h2>
+  <p class="lead">쓰러짐 감지 파이프라인과 증상 STT 모두 <b class="em">추론은 기기(온디바이스)와 자체 서버(온프레미스)에서 수행</b>한다. 특히 이웃의 상황 설명을 STT로 추출한 뒤 요약·처치 추천을 만드는 단계는 클라우드 API가 아니라 <b class="em">골든이웃 자체 서버의 온프레미스 LLM(EXAONE)</b>이 담당하므로, <b class="em-i">병력 등 민감정보가 골든이웃 서버 밖으로 나가지 않는다.</b> Claude Vision은 낙상 키프레임 보조 확인에만 선택적으로 개입한다.</p>
+  <div class="svgpage">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjgwIDc2MCIgd2lkdGg9IjEyODAiIGhlaWdodD0iNzYwIiBmb250LWZhbWlseT0iJ0FwcGxlIFNEIEdvdGhpYyBOZW8nLCdNYWxndW4gR290aGljJywnUHJldGVuZGFyZCcsc3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+CiAgPGRlZnM+CiAgICA8bWFya2VyIGlkPSJtR3JheSIgbWFya2VyV2lkdGg9IjkiIG1hcmtlckhlaWdodD0iOSIgcmVmWD0iNyIgcmVmWT0iNCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPjxwYXRoIGQ9Ik0wLDAgTDgsNCBMMCw4IFoiIGZpbGw9IiM2NDc0OGIiLz48L21hcmtlcj4KICAgIDxtYXJrZXIgaWQ9Im1HcmVlbiIgbWFya2VyV2lkdGg9IjEwIiBtYXJrZXJIZWlnaHQ9IjEwIiByZWZYPSI3IiByZWZZPSI0IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+PHBhdGggZD0iTTAsMCBMOCw0IEwwLDggWiIgZmlsbD0iIzE2YTM0YSIvPjwvbWFya2VyPgogICAgPG1hcmtlciBpZD0ibUFtYmVyIiBtYXJrZXJXaWR0aD0iOSIgbWFya2VySGVpZ2h0PSI5IiByZWZYPSI3IiByZWZZPSI0IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+PHBhdGggZD0iTTAsMCBMOCw0IEwwLDggWiIgZmlsbD0iI2Y1OWUwYiIvPjwvbWFya2VyPgogICAgPG1hcmtlciBpZD0ibVJlZCIgbWFya2VyV2lkdGg9IjEwIiBtYXJrZXJIZWlnaHQ9IjEwIiByZWZYPSI3IiByZWZZPSI0IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+PHBhdGggZD0iTTAsMCBMOCw0IEwwLDggWiIgZmlsbD0iI2RjMjYyNiIvPjwvbWFya2VyPgogICAgPHN0eWxlPgogICAgICAudGl0bGV7Zm9udC1zaXplOjI0cHg7Zm9udC13ZWlnaHQ6ODAwO2ZpbGw6IzBmMTcyYX0KICAgICAgLnN1Yntmb250LXNpemU6MTNweDtmaWxsOiM0NzU1Njl9CiAgICAgIC5zZWN7Zm9udC1zaXplOjE1cHg7Zm9udC13ZWlnaHQ6ODAwO2ZpbGw6IzMzNDE1NX0KICAgICAgLmJ0e2ZvbnQtc2l6ZToxMi41cHg7Zm9udC13ZWlnaHQ6NzAwO2ZpbGw6IzBmMTcyYX0KICAgICAgLmJze2ZvbnQtc2l6ZToxMC41cHg7ZmlsbDojNDc1NTY5fQogICAgICAuZmlsZXtmb250LXNpemU6OS41cHg7ZmlsbDojNjQ3NDhiO2ZvbnQtZmFtaWx5OidTRk1vbm8tUmVndWxhcicsTWVubG8sQ29uc29sYXMsbW9ub3NwYWNlfQogICAgICAubGJse2ZvbnQtc2l6ZToxMHB4O2ZvbnQtd2VpZ2h0OjcwMDtmaWxsOiMzMzQxNTV9CiAgICAgIC5lbXBoe2ZvbnQtc2l6ZToxMnB4O2ZvbnQtd2VpZ2h0OjcwMDtmaWxsOiMxNTgwM2R9CiAgICAgIC5mb290e2ZvbnQtc2l6ZToxMXB4O2ZpbGw6IzY0NzQ4Yn0KICAgICAgLnBpbGx7Zm9udC1zaXplOjkuNXB4O2ZvbnQtd2VpZ2h0OjgwMH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgoKICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3NjAiIGZpbGw9IiNmZmZmZmYiLz4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gVElUTEUgPT09PT09PT09PT09PT09PT09PT09IC0tPgogIDx0ZXh0IHg9IjQwIiB5PSI0MCIgY2xhc3M9InRpdGxlIj7smKjrlJTrsJTsnbTsiqQgwrcg66Gc7LusIEFJIOyVhO2CpO2FjeyymDwvdGV4dD4KICA8dGV4dCB4PSI0MCIgeT0iNjIiIGNsYXNzPSJzdWIiPuyTsOufrOynkCDqsJDsp4Ag7YyM7J207ZSE65287J24ICsg7Kad7IOBIFNUVCAmIzgyMTI7IOy2lOuhoOydgCDquLDquLAo7Jio65SU67CU7J207IqkKeyZgCDsnpDssrQg7ISc67KEKOyYqO2UhOugiOuvuOyKpCBFWEFPTkUp7JeQ7IScIOyImO2WiSDCtyDrr7zqsJDsoJXrs7TripQg6rOo65Og7J207JuDIOuwluycvOuhnCDrgpjqsIDsp4Ag7JWK7J2MPC90ZXh0PgoKICA8IS0tID09PT09PT09PT09PT09PT09PT09PSBTRUNUSU9OIEEgOiBGQUxMIERFVEVDVElPTiA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPHJlY3QgeD0iMjQiIHk9Ijc4IiB3aWR0aD0iMTIzMiIgaGVpZ2h0PSIzMzAiIHJ4PSIxNCIgZmlsbD0iI2Y4ZmFmYyIgc3Ryb2tlPSIjY2JkNWUxIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDx0ZXh0IHg9IjQwIiB5PSIxMDIiIGNsYXNzPSJzZWMiPuKRoCDsk7Drn6zsp5Ag6rCQ7KeAIO2MjOydtO2UhOudvOyduDwvdGV4dD4KICA8cmVjdCB4PSIyNjAiIHk9Ijg5IiB3aWR0aD0iMTY4IiBoZWlnaHQ9IjE4IiByeD0iOSIgZmlsbD0iI2RjZmNlNyIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIzNDQiIHk9IjEwMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InBpbGwiIGZpbGw9IiMxNTgwM2QiPuyYqOuUlOuwlOydtOyKpCDCtyDroZzsu6wg7LaU66GgPC90ZXh0PgoKICA8IS0tIGF1eDogQ2xhdWRlIFZpc2lvbiAoY2xvdWQsIGRhc2hlZCkgLS0+CiAgPHJlY3QgeD0iODU1IiB5PSIxMTYiIHdpZHRoPSIyMzIiIGhlaWdodD0iODIiIHJ4PSIxMSIgZmlsbD0iI2ZmZmJlYiIgc3Ryb2tlPSIjZjU5ZTBiIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWRhc2hhcnJheT0iNiA0Ii8+CiAgPHJlY3QgeD0iMTAxMyIgeT0iMTI0IiB3aWR0aD0iNjAiIGhlaWdodD0iMTUiIHJ4PSI3LjUiIGZpbGw9IiNmZmVkZDUiIHN0cm9rZT0iI2Y1OWUwYiIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMTA0MyIgeT0iMTM1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0icGlsbCIgZmlsbD0iI2I0NTMwOSI+7YG065287Jqw65OcPC90ZXh0PgogIDx0ZXh0IHg9Ijg3MSIgeT0iMTQwIiBjbGFzcz0iYnQiPkNsYXVkZSBWaXNpb24gwrcg67O07KGwPC90ZXh0PgogIDx0ZXh0IHg9Ijg3MSIgeT0iMTU5IiBjbGFzcz0iYnMiPu2CpO2UhOugiOyehCBWTE0g7YyQ7KCVIMK3IOyYpO2DkCDsoJzqsbA8L3RleHQ+CiAgPHRleHQgeD0iODcxIiB5PSIxODAiIGNsYXNzPSJmaWxlIj53ZWIvYXBwL2FwaS9jb25maXJtIMK3IGNvbmZpcm0tY2xpZW50LnRzPC90ZXh0PgoKICA8IS0tIG1haW4gcGlwZWxpbmUgcm93ICh5IDIyOC0zNTIpIC0tPgogIDwhLS0gQjEgY2FtZXJhIChuZXV0cmFsIGRldmljZSkgLS0+CiAgPHJlY3QgeD0iODAiIHk9IjIyOCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMjQiIHJ4PSIxMSIgZmlsbD0iI2YxZjVmOSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDx0ZXh0IHg9IjE4MCIgeT0iMjcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnQiPu2ZiOy6oCDsubTrqZTrnbw8L3RleHQ+CiAgPHRleHQgeD0iMTgwIiB5PSIyOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJicyI+7JiB7IOBIO2UhOugiOyehCAo67iM65287Jqw7KCAKTwvdGV4dD4KICA8dGV4dCB4PSIxODAiIHk9IjMxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImZpbGUiPndlYi9hcHAvcmVjZWl2ZXI8L3RleHQ+CgogIDwhLS0gQjIgcG9zZSArIGNvY28gKG9uLWRldmljZSkgLS0+CiAgPHJlY3QgeD0iMzEwIiB5PSIyMjgiIHdpZHRoPSIyMDAiIGhlaWdodD0iMTI0IiByeD0iMTEiIGZpbGw9IiNmMGZkZjQiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxLjYiLz4KICA8dGV4dCB4PSI0MTAiIHk9IjI2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJ0Ij5NZWRpYVBpcGUgUG9zZSAzMzwvdGV4dD4KICA8dGV4dCB4PSI0MTAiIHk9IjI4MiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJ0Ij4rIENPQ08tU1NEPC90ZXh0PgogIDx0ZXh0IHg9IjQxMCIgeT0iMzAyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnMiPuu4jOudvOyasOyggCBXQVNNIMK3IOyYqOuUlOuwlOydtOyKpDwvdGV4dD4KICA8dGV4dCB4PSI0MTAiIHk9IjMyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImZpbGUiPndlYi9saWIvZGV0ZWN0b3JzLnRzPC90ZXh0PgogIDx0ZXh0IHg9IjQxMCIgeT0iMzQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iZmlsZSI+QG1lZGlhcGlwZS90YXNrcy12aXNpb248L3RleHQ+CgogIDwhLS0gQjMgaGV1cmlzdGljIHN0YXRlIG1hY2hpbmUgKG9uLWRldmljZSkgLS0+CiAgPHJlY3QgeD0iNTQwIiB5PSIyMjgiIHdpZHRoPSIyMDAiIGhlaWdodD0iMTI0IiByeD0iMTEiIGZpbGw9IiNmMGZkZjQiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxLjYiLz4KICA8dGV4dCB4PSI2NDAiIHk9IjI2NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJ0Ij7tnLTrpqzsiqTti7Eg7IOB7YOc66i47IugPC90ZXh0PgogIDx0ZXh0IHg9IjY0MCIgeT0iMjg0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnMiPu2VmOqwlSvsiJjtj4kr66y064+Z7J6RPC90ZXh0PgogIDx0ZXh0IHg9IjY0MCIgeT0iMzAxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnMiPuyXkO2UvOyGjOuTnCDrnpjsuZggKOyLnOqwhCB3aW5kb3cpPC90ZXh0PgogIDx0ZXh0IHg9IjY0MCIgeT0iMzI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iZmlsZSI+d2ViL2xpYi88L3RleHQ+CiAgPHRleHQgeD0iNjQwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJmaWxlIj5jb2xsYXBzZS1zdGF0ZS1tYWNoaW5lLnRzPC90ZXh0PgoKICA8IS0tIEI0IGxvY2FsIFNULUdDTiAoUFJJTUFSWSwgZW1waGFzaXplZCkgLS0+CiAgPHJlY3QgeD0iNzcwIiB5PSIyMjgiIHdpZHRoPSIyMDAiIGhlaWdodD0iMTI0IiByeD0iMTEiIGZpbGw9IiNkY2ZjZTciIHN0cm9rZT0iIzE1ODAzZCIgc3Ryb2tlLXdpZHRoPSIyLjYiLz4KICA8dGV4dCB4PSI4NzAiIHk9IjI2MiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJ0Ij7roZzsu6wgU1QtR0NOIMK3IOyjvCDtjJDsoJU8L3RleHQ+CiAgPHRleHQgeD0iODcwIiB5PSIyODEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJicyI+TXVsdGlTY2FsZVRDTkF0dG48L3RleHQ+CiAgPHRleHQgeD0iODcwIiB5PSIyOTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJicyI+66Gc7LusIEZhc3RBUEkgKyBQeVRvcmNoIOy2lOuhoDwvdGV4dD4KICA8dGV4dCB4PSI4NzAiIHk9IjMyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImZpbGUiPmJhY2tlbmQvc2VydmVyLnB5IDo4MDAwPC90ZXh0PgogIDx0ZXh0IHg9Ijg3MCIgeT0iMzM2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iZmlsZSI+bGliL2ZhbGwtY2xpZW50LnRzIOKGkiAvZmFsbDwvdGV4dD4KCiAgPCEtLSBCNSBmYWxsIGNvbmZpcm1lZCBldmVudCAoaW5kaWdvIHRpbnQgYWNjZW50IOKAlCBubyByZWQpIC0tPgogIDxyZWN0IHg9IjEwMDAiIHk9IjIyOCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMjQiIHJ4PSIxMSIgZmlsbD0iI2VlZjJmZiIgc3Ryb2tlPSIjNGY0NmU1IiBzdHJva2Utd2lkdGg9IjIuNCIvPgogIDx0ZXh0IHg9IjExMDAiIHk9IjI2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJ0IiBmaWxsPSIjMzEyZTgxIj7rgpnsg4Eg7ZmV7KCVIOKGkiDsnbTrsqTtirg8L3RleHQ+CiAgPHRleHQgeD0iMTEwMCIgeT0iMjg2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnMiIGZpbGw9IiM0MzM4Y2EiPmlzRmFsbCA9IFNULUdDTijso7wpICsg67O07KGwPC90ZXh0PgogIDx0ZXh0IHg9IjExMDAiIHk9IjMxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImZpbGUiIGZpbGw9IiM2MzY2ZjEiPndlYi9hcHAvcGFnZS50c3g8L3RleHQ+CiAgPHRleHQgeD0iMTEwMCIgeT0iMzMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iZmlsZSIgZmlsbD0iIzYzNjZmMSI+bGliL2Jyb2tlci1jbGllbnQudHM8L3RleHQ+CgogIDwhLS0gbWFpbiBhcnJvd3MgKGdyZWVuLCBvbi1kZXZpY2UgZmxvdykgLS0+CiAgPGxpbmUgeDE9IjI4MCIgeTE9IjI5MCIgeDI9IjMxMCIgeTI9IjI5MCIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjIuMiIgbWFya2VyLWVuZD0idXJsKCNtR3JlZW4pIi8+CiAgPGxpbmUgeDE9IjUxMCIgeTE9IjI5MCIgeDI9IjU0MCIgeTI9IjI5MCIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjIuMiIgbWFya2VyLWVuZD0idXJsKCNtR3JlZW4pIi8+CiAgPGxpbmUgeDE9Ijc0MCIgeTE9IjI5MCIgeDI9Ijc3MCIgeTI9IjI5MCIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjIuMiIgbWFya2VyLWVuZD0idXJsKCNtR3JlZW4pIi8+CiAgPGxpbmUgeDE9Ijk3MCIgeTE9IjI5MCIgeDI9IjEwMDAiIHkyPSIyOTAiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIyLjYiIG1hcmtlci1lbmQ9InVybCgjbUdyZWVuKSIvPgogIDx0ZXh0IHg9Ijk4NSIgeT0iMzEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibGJsIiBmaWxsPSIjMTU4MDNkIj7so7wg7YyQ7KCVPC90ZXh0PgoKICA8IS0tIGF1eCBhcnJvd3MgKGFtYmVyIGRhc2hlZCkgLS0+CiAgPGxpbmUgeDE9IjkwMCIgeTE9IjIyOCIgeDI9IjkwMCIgeTI9IjE5OCIgc3Ryb2tlPSIjZjU5ZTBiIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWRhc2hhcnJheT0iNSA0IiBtYXJrZXItZW5kPSJ1cmwoI21BbWJlcikiLz4KICA8dGV4dCB4PSI5MDYiIHk9IjIxNiIgY2xhc3M9ImxibCIgZmlsbD0iI2I0NTMwOSI+7YKk7ZSE66CI7J6EPC90ZXh0PgogIDxsaW5lIHgxPSIxMDUwIiB5MT0iMTk4IiB4Mj0iMTA5NiIgeTI9IjIyOCIgc3Ryb2tlPSIjZjU5ZTBiIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWRhc2hhcnJheT0iNSA0IiBtYXJrZXItZW5kPSJ1cmwoI21BbWJlcikiLz4KICA8dGV4dCB4PSIxMDkyIiB5PSIyMTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJsYmwiIGZpbGw9IiNiNDUzMDkiPuuztOyhsCDtmZXsnbg8L3RleHQ+CgogIDwhLS0gZW1waGFzaXMgc3RyaXAgQSAtLT4KICA8cmVjdCB4PSI4MCIgeT0iMzY2IiB3aWR0aD0iMTEyMCIgaGVpZ2h0PSIzMCIgcng9IjkiIGZpbGw9IiNmMGZkZjQiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxLjMiLz4KICA8dGV4dCB4PSI2NDAiIHk9IjM4NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImVtcGgiPvCflJIg7JuQ67O4IOyYgeyDgSDsiqTtirjrprzsnYAg6riw6riwIOuwluycvOuhnCDrgpjqsIDsp4Ag7JWK7J2MICjtlITrnbzsnbTrsoTsi5wpIMK3IOyggOyngOyXsCDCtyDsmKTtlITrnbzsnbgg6rKs6rOgICYjODIxMjsg67O07KGwIO2ZleyduCDsi5zsl5Drp4wg7YKk7ZSE66CI7J6EIOydvOu2gOulvCDtgbTrnbzsmrDrk5zroZwg7KCE7IahPC90ZXh0PgoKICA8IS0tID09PT09PT09PT09PT09PT09PT09PSBTRUNUSU9OIEIgOiBTWU1QVE9NIFNUVCA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPHJlY3QgeD0iMjQiIHk9IjQyNCIgd2lkdGg9IjEyMzIiIGhlaWdodD0iMjA2IiByeD0iMTQiIGZpbGw9IiNmOGZhZmMiIHN0cm9rZT0iI2NiZDVlMSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8dGV4dCB4PSI0MCIgeT0iNDUwIiBjbGFzcz0ic2VjIj7ikaEg7Kad7IOBIFNUVDwvdGV4dD4KICA8cmVjdCB4PSIxNTAiIHk9IjQzNyIgd2lkdGg9IjE3NiIgaGVpZ2h0PSIxOCIgcng9IjkiIGZpbGw9IiNkY2ZjZTciIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgPHRleHQgeD0iMjM4IiB5PSI0NTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJwaWxsIiBmaWxsPSIjMTU4MDNkIj7smKjrlJTrsJTsnbTsiqQg7J2M7ISx7J247IudPC90ZXh0PgoKICA8IS0tIFMxIG1pYyAtLT4KICA8cmVjdCB4PSI4MCIgeT0iNDcwIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjExMiIgcng9IjExIiBmaWxsPSIjZjFmNWY5IiBzdHJva2U9IiM5NGEzYjgiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHRleHQgeD0iMTgwIiB5PSI1MTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCI+7Y+wIOuniOydtO2BrCAo7J2M7ISxKTwvdGV4dD4KICA8dGV4dCB4PSIxODAiIHk9IjUzMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJzIj7snbTsm4Mg7ZiE7J6lIOuwnO2ZlCAo7ZmY7J6QIOyDge2DnCk8L3RleHQ+CgogIDwhLS0gUzIgbmF0aXZlIHNwZWVjaCByZWNvZ25pdGlvbiAob24tZGV2aWNlKSAtLT4KICA8cmVjdCB4PSIzMzAiIHk9IjQ3MCIgd2lkdGg9IjI3MCIgaGVpZ2h0PSIxMTIiIHJ4PSIxMSIgZmlsbD0iI2YwZmRmNCIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjEuNiIvPgogIDx0ZXh0IHg9IjQ2NSIgeT0iNTAyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnQiPuuEpOydtO2LsOu4jCDsnYzshLHsnbjsi50gwrcg7Jio65SU67CU7J207IqkPC90ZXh0PgogIDx0ZXh0IHg9IjQ2NSIgeT0iNTIxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnMiPlNwZWVjaFJlY29nbml0aW9uIChrby1LUiwgcGFydGlhbCk8L3RleHQ+CiAgPHRleHQgeD0iNDY1IiB5PSI1NDMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJmaWxlIj5AY2FwYWNpdG9yLWNvbW11bml0eS9zcGVlY2gtcmVjb2duaXRpb248L3RleHQ+CiAgPHRleHQgeD0iNDY1IiB5PSI1NTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJmaWxlIj5hcHAvc3JjL2xpYi9zdHQudHMgwrcgV2ViIFNwZWVjaCBBUEkg7Y+067CxPC90ZXh0PgoKICA8IS0tIFMzIHRleHQgb25seSAtLT4KICA8cmVjdCB4PSI2NTAiIHk9IjQ3MCIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMTIiIHJ4PSIxMSIgZmlsbD0iI2YwZmRmNCIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjEuNiIvPgogIDx0ZXh0IHg9Ijc0NSIgeT0iNTEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnQiPu2FjeyKpO2KuOunjCDstpTstpw8L3RleHQ+CiAgPHRleHQgeD0iNzQ1IiB5PSI1MzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJicyI+7J247IudIOqysOqzvCBtYXRjaGVzWzBdPC90ZXh0PgoKICA8IS0tIFM0IG9uLXByZW1pc2UgRVhBT05FIHN1bW1hcnkgLS0+CiAgPHJlY3QgeD0iODkwIiB5PSI0NzAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMTEyIiByeD0iMTEiIGZpbGw9IiNmMGZkZjQiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxLjgiLz4KICA8dGV4dCB4PSIxMDQwIiB5PSI1MDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCI+RVhBT05FIOyalOyVvSDCtyDsmKjtlITroIjrr7jsiqQ8L3RleHQ+CiAgPHRleHQgeD0iMTA0MCIgeT0iNTIxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnMiPuyDge2ZqcK37LKY7LmYIOy2lOyynCDCtyDqtazquInrjIAg7KCE64us7JqpPC90ZXh0PgogIDx0ZXh0IHg9IjEwNDAiIHk9IjU0MyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImZpbGUiPlBPU1QgL2FwaS92b2ljZSDihpIg7J6Q7LK0IOyEnOuyhCBFWEFPTkUg7LaU66GgPC90ZXh0PgogIDxyZWN0IHg9IjExMDgiIHk9IjQ3NSIgd2lkdGg9Ijc2IiBoZWlnaHQ9IjE1IiByeD0iNy41IiBmaWxsPSIjZGNmY2U3IiBzdHJva2U9IiMxNmEzNGEiIHN0cm9rZS13aWR0aD0iMSIvPgogIDx0ZXh0IHg9IjExNDYiIHk9IjQ4NiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9InBpbGwiIGZpbGw9IiMxNTgwM2QiPuyekOyytOyEnOuyhDwvdGV4dD4KCiAgPCEtLSBTVFQgYXJyb3dzIC0tPgogIDxsaW5lIHgxPSIyODAiIHkxPSI1MjYiIHgyPSIzMzAiIHkyPSI1MjYiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIyLjIiIG1hcmtlci1lbmQ9InVybCgjbUdyZWVuKSIvPgogIDxsaW5lIHgxPSI2MDAiIHkxPSI1MjYiIHgyPSI2NTAiIHkyPSI1MjYiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIyLjIiIG1hcmtlci1lbmQ9InVybCgjbUdyZWVuKSIvPgogIDxsaW5lIHgxPSI4NDAiIHkxPSI1MjYiIHgyPSI4OTAiIHkyPSI1MjYiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIyLjIiIG1hcmtlci1lbmQ9InVybCgjbUdyZWVuKSIvPgogIDx0ZXh0IHg9Ijg2NSIgeT0iNTE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibGJsIiBmaWxsPSIjMTU4MDNkIj7thY3siqTtirjrp4w8L3RleHQ+CgogIDwhLS0gZW1waGFzaXMgc3RyaXAgQiAtLT4KICA8cmVjdCB4PSI4MCIgeT0iNTk2IiB3aWR0aD0iMTExMCIgaGVpZ2h0PSIyOCIgcng9IjkiIGZpbGw9IiNmMGZkZjQiIHN0cm9rZT0iIzE2YTM0YSIgc3Ryb2tlLXdpZHRoPSIxLjMiLz4KICA8dGV4dCB4PSI2MzUiIHk9IjYxNSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImVtcGgiPvCflJIg7Jik65SU7Jik64qUIOq4sOq4sOyXkOyEnCDsspjrpqwgwrcg7ISc67KE66Gc64qUIO2FjeyKpO2KuOunjCDsoITshqEo7JuQ7J2MIOuvuOyghOyGoSkgwrcg7JqU7JW964+EIOyekOyytCDshJzrsoQgRVhBT05F7JeQ7IScIOyImO2WiSAmIzgyMTI7IOuzkeugpSDrk7Eg66+86rCQ7KCV67O064qUIOqzqOuToOydtOybgyDshJzrsoQg67CW7Jy866GcIOuCmOqwgOyngCDslYrsnYw8L3RleHQ+CgogIDwhLS0gPT09PT09PT09PT09PT09PT09PT09IExFR0VORCA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPGxpbmUgeDE9IjQwIiB5MT0iNjU0IiB4Mj0iMTI0MCIgeTI9IjY1NCIgc3Ryb2tlPSIjZTJlOGYwIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8bGluZSB4MT0iNDAiIHkxPSI2NzIiIHgyPSI3MCIgeTI9IjY3MiIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjIuNiIgbWFya2VyLWVuZD0idXJsKCNtR3JlZW4pIi8+CiAgPHRleHQgeD0iNzYiIHk9IjY3NiIgY2xhc3M9ImZvb3QiPuyYqOuUlOuwlOydtOyKpCAvIOuhnOy7rCDstpTroaAgKOyjvCDqsr3roZwpPC90ZXh0PgogIDxyZWN0IHg9IjMzMCIgeT0iNjY2IiB3aWR0aD0iMzAiIGhlaWdodD0iMTIiIHJ4PSI0IiBmaWxsPSIjZjBmZGY0IiBzdHJva2U9IiMxNmEzNGEiIHN0cm9rZS13aWR0aD0iMS40Ii8+CiAgPHRleHQgeD0iMzY4IiB5PSI2NzYiIGNsYXNzPSJmb290Ij7snpDssrQg7ISc67KEKOyYqO2UhOugiOuvuOyKpCkgRVhBT05FIOyalOyVvTwvdGV4dD4KICA8cmVjdCB4PSI2NDAiIHk9IjY2NiIgd2lkdGg9IjE0IiBoZWlnaHQ9IjEyIiByeD0iMyIgZmlsbD0iI2VlZjJmZiIgc3Ryb2tlPSIjNGY0NmU1IiBzdHJva2Utd2lkdGg9IjEuNCIvPgogIDx0ZXh0IHg9IjY2MiIgeT0iNjc2IiBjbGFzcz0iZm9vdCI+64KZ7IOBIO2ZleyglSDsnbTrsqTtirggKOy1nOyihSk8L3RleHQ+CiAgPHJlY3QgeD0iODgwIiB5PSI2NjYiIHdpZHRoPSIxNCIgaGVpZ2h0PSIxMiIgcng9IjMiIGZpbGw9IiNmMWY1ZjkiIHN0cm9rZT0iIzk0YTNiOCIvPgogIDx0ZXh0IHg9IjkwMiIgeT0iNjc2IiBjbGFzcz0iZm9vdCI+6riw6riwIO2VmOuTnOybqOyWtCAo7Lm066mU6528wrfrp4jsnbTtgawpPC90ZXh0PgoKICA8IS0tID09PT09PT09PT09PT09PT09PT09PSBGT09URVIgPT09PT09PT09PT09PT09PT09PT09IC0tPgogIDx0ZXh0IHg9IjQwIiB5PSI3MDAiIGNsYXNzPSJmb290Ij7qsJDsp4AgPSDsmKjrlJTrsJTsnbTsiqQoTWVkaWFQaXBlIO2PrOymiCArIOuhnOy7rCBTVC1HQ04sIOyjvCDtjJDsoJUpIMK3IENsYXVkZSBWaXNpb27snYAg7YKk7ZSE66CI7J6EIOuztOyhsCDtmZXsnbgo7ISg7YOdKS4gU1RUID0g7Jio65SU67CU7J207IqkIOydjOyEseyduOyLnSjthY3siqTtirjrp4wg7KCE7IahKSDCtyDsmpTslb0gPSDsnpDssrQg7ISc67KEIEVYQU9ORSjsmKjtlITroIjrr7jsiqQpLjwvdGV4dD4KICA8dGV4dCB4PSI0MCIgeT0iNzE4IiBjbGFzcz0iZm9vdCI+67O4IOygleuztOuKlCDssLjqs6DsmqnsnbTrqbAg7J2Y7ZWZ7KCBIOynhOuLqOydtCDslYTri5nri4jri6QuIMK3IOuNsOydtO2EsOuKlCDsoITrtoAg7ZWp7ISxKFBISSDsl4bsnYwpIMK3IOuhnOy7rCBTVC1HQ04g6rCA7KSR7LmYOiBhcmlzdTA0L01lZGljYWxfRmFsbF9EZXRlY3Rpb24gKE11bHRpU2NhbGVUQ05BdHRuKTwvdGV4dD4KPC9zdmc+Cg==" alt="온디바이스·로컬 AI 아키텍처 — 쓰러짐 감지 파이프라인 + 증상 STT" />
+  </div>
+  <div class="footnote">출처: on-device-ai.svg. 골격 좌표(포즈)만 처리 · 원본 영상·원음 미전송 · 로컬 ST-GCN 가중치: arisu04/Medical_Fall_Detection(MultiScaleTCNAttn)</div>
+  <span class="pagenum">20 / 29</span>
+</section>
+
+<section class="page p4">
+  <span class="partbadge">Part IV · 앱 아키텍처 — 4/4 · 프로덕션 아키텍처</span>
+  <h2>지역사회 응급대응 AI · 한눈에 보는 아키텍처</h2>
+  <p class="lead">홈캠 감지 → 응급대응 백엔드 → 환자·이웃 앱 + 119 자동신고로 이어지는 <b class="em">실서비스 런타임 구성</b>이다. 상황 요약은 백엔드 안의 <b class="em">온프레미스 EXAONE</b>가 담당하므로, 병력 등 민감정보가 골든이웃 서버 밖으로 나가지 않는다.</p>
+  <div class="svgpage">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjgwIDc2MCIgd2lkdGg9IjEyODAiIGhlaWdodD0iNzYwIiBmb250LWZhbWlseT0iJ0FwcGxlIFNEIEdvdGhpYyBOZW8nLCdNYWxndW4gR290aGljJywnUHJldGVuZGFyZCcsc3lzdGVtLXVpLC1hcHBsZS1zeXN0ZW0sc2Fucy1zZXJpZiI+CiAgPGRlZnM+CiAgICA8bWFya2VyIGlkPSJtR3JheSIgbWFya2VyV2lkdGg9IjEwIiBtYXJrZXJIZWlnaHQ9IjEwIiByZWZYPSI3IiByZWZZPSI0IiBvcmllbnQ9ImF1dG8tc3RhcnQtcmV2ZXJzZSI+PHBhdGggZD0iTTAsMCBMOCw0IEwwLDggWiIgZmlsbD0iIzY0NzQ4YiIvPjwvbWFya2VyPgogICAgPG1hcmtlciBpZD0ibUJsdWUiIG1hcmtlcldpZHRoPSIxMSIgbWFya2VySGVpZ2h0PSIxMSIgcmVmWD0iNyIgcmVmWT0iNCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPjxwYXRoIGQ9Ik0wLDAgTDgsNCBMMCw4IFoiIGZpbGw9IiMzYjgyZjYiLz48L21hcmtlcj4KICAgIDxtYXJrZXIgaWQ9Im1SZWQiIG1hcmtlcldpZHRoPSIxMiIgbWFya2VySGVpZ2h0PSIxMiIgcmVmWD0iNyIgcmVmWT0iNCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPjxwYXRoIGQ9Ik0wLDAgTDgsNCBMMCw4IFoiIGZpbGw9IiM0ZjQ2ZTUiLz48L21hcmtlcj4KICAgIDxtYXJrZXIgaWQ9Im1JbmRpZ28iIG1hcmtlcldpZHRoPSIxMCIgbWFya2VySGVpZ2h0PSIxMCIgcmVmWD0iNyIgcmVmWT0iNCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPjxwYXRoIGQ9Ik0wLDAgTDgsNCBMMCw4IFoiIGZpbGw9IiM2MzY2ZjEiLz48L21hcmtlcj4KICAgIDxtYXJrZXIgaWQ9Im1QdXJwbGUiIG1hcmtlcldpZHRoPSIxMCIgbWFya2VySGVpZ2h0PSIxMCIgcmVmWD0iNyIgcmVmWT0iNCIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPjxwYXRoIGQ9Ik0wLDAgTDgsNCBMMCw4IFoiIGZpbGw9IiNhODU1ZjciLz48L21hcmtlcj4KICAgIDxtYXJrZXIgaWQ9Im1DeWFuIiBtYXJrZXJXaWR0aD0iMTEiIG1hcmtlckhlaWdodD0iMTEiIHJlZlg9IjciIHJlZlk9IjQiIG9yaWVudD0iYXV0by1zdGFydC1yZXZlcnNlIj48cGF0aCBkPSJNMCwwIEw4LDQgTDAsOCBaIiBmaWxsPSIjMDg5MWIyIi8+PC9tYXJrZXI+CiAgICA8c3R5bGU+CiAgICAgIC50aXRsZXtmb250LXNpemU6MjdweDtmb250LXdlaWdodDo4MDA7ZmlsbDojMGYxNzJhfQogICAgICAuc3Vie2ZvbnQtc2l6ZToxNXB4O2ZpbGw6IzQ3NTU2OX0KICAgICAgLnNlY3tmb250LXNpemU6MThweDtmb250LXdlaWdodDo4MDA7ZmlsbDojMzM0MTU1fQogICAgICAuYnR7Zm9udC1zaXplOjIwcHg7Zm9udC13ZWlnaHQ6ODAwO2ZpbGw6IzBmMTcyYX0KICAgICAgLmt3e2ZvbnQtc2l6ZToxNHB4O2ZpbGw6IzY0NzQ4Yn0KICAgICAgLmxibHtmb250LXNpemU6MTJweDtmb250LXdlaWdodDo4MDA7ZmlsbDojMzM0MTU1fQogICAgICAuZm9vdHtmb250LXNpemU6MTIuNXB4O2ZpbGw6IzY0NzQ4Yn0KICAgICAgLmNsb3Vke2ZvbnQtc2l6ZToxMi41cHg7Zm9udC13ZWlnaHQ6ODAwO2ZpbGw6IzZiNzI4MH0KICAgICAgLnBpbGx7Zm9udC1zaXplOjEwcHg7Zm9udC13ZWlnaHQ6ODAwfQogICAgICAubm90ZXtmb250LXNpemU6MTEuNXB4O2ZpbGw6Izk0YTNiOH0KICAgIDwvc3R5bGU+CiAgPC9kZWZzPgoKICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3NjAiIGZpbGw9IiNmZmZmZmYiLz4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gVElUTEUgPT09PT09PT09PT09PT09PT09PT09IC0tPgogIDx0ZXh0IHg9IjQwIiB5PSI0NiIgY2xhc3M9InRpdGxlIj7sp4Dsl63sgqztmowg7J2R6riJ64yA7J2RIEFJIMK3IO2VnOuIiOyXkCDrs7TripQg7JWE7YKk7YWN7LKYPC90ZXh0PgogIDx0ZXh0IHg9IjQwIiB5PSI3MCIgY2xhc3M9InN1YiI+7ZmI7LqgIOqwkOyngCAg4oaSICDsnZHquInrjIDsnZEg67Cx7JeU65OcICDihpIgIO2ZmOyekCDCtyDsnbTsm4Mg7JWxICArICAxMTkg7J6Q64+Z7Iug6rOgPC90ZXh0PgoKICA8IS0tID09PT09PT09PT09PT09PT09PT09PSBDTE9VRCBCQU5EID09PT09PT09PT09PT09PT09PT09PSAtLT4KICA8cmVjdCB4PSIzMCIgeT0iODAiIHdpZHRoPSI3OTAiIGhlaWdodD0iNzYiIHJ4PSIxNCIgZmlsbD0iI2ZiZmNmZiIgc3Ryb2tlPSIjY2JkNWUxIiBzdHJva2Utd2lkdGg9IjEuNCIgc3Ryb2tlLWRhc2hhcnJheT0iNiA1Ii8+CiAgPHRleHQgeD0iNDQiIHk9Ijk5IiBjbGFzcz0iY2xvdWQiPuKYgSDtgbTrnbzsmrDrk5wgKOq0gOumrO2YlSBBSSDCtyDrqZTsi5zsp5UpPC90ZXh0PgogIDxyZWN0IHg9IjQ0IiB5PSIxMDUiIHdpZHRoPSI0NDAiIGhlaWdodD0iNDQiIHJ4PSIxMSIgZmlsbD0iI2ZmZmJlYiIgc3Ryb2tlPSIjZjU5ZTBiIiBzdHJva2Utd2lkdGg9IjEuNiIvPgogIDx0ZXh0IHg9IjI2NCIgeT0iMTMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnQiIGZpbGw9IiMwZjE3MmEiPkNsYXVkZSBWaXNpb24gwrcg6rCQ7KeAIOuztOyhsCAo7ISg7YOdKTwvdGV4dD4KICA8cmVjdCB4PSI1MDAiIHk9IjEwNSIgd2lkdGg9IjMwNiIgaGVpZ2h0PSI0NCIgcng9IjExIiBmaWxsPSIjZWVmMmZmIiBzdHJva2U9IiM2MzY2ZjEiIHN0cm9rZS13aWR0aD0iMS42Ii8+CiAgPHRleHQgeD0iNjUzIiB5PSIxMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCIgZmlsbD0iIzBmMTcyYSI+RkNNIO2RuOyLnDwvdGV4dD4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gSElSQSAoZXh0ZXJuYWwgZGF0YSBzb3VyY2UpID09PT09PT09PT09PT09PT09PT09PSAtLT4KICA8cmVjdCB4PSI4NDYiIHk9IjgwIiB3aWR0aD0iNDEwIiBoZWlnaHQ9Ijc2IiByeD0iMTQiIGZpbGw9IiNlY2ZlZmYiIHN0cm9rZT0iIzA4OTFiMiIgc3Ryb2tlLXdpZHRoPSIxLjQiIHN0cm9rZS1kYXNoYXJyYXk9IjYgNSIvPgogIDx0ZXh0IHg9Ijg2MCIgeT0iOTkiIGNsYXNzPSJjbG91ZCIgZmlsbD0iIzBlNzQ5MCI+8J+PpSDsmbjrtoAg642w7J207YSwIMK3IOyLrO2PieybkDwvdGV4dD4KICA8cmVjdCB4PSI4NjAiIHk9IjEwNSIgd2lkdGg9IjM4MiIgaGVpZ2h0PSI0NCIgcng9IjExIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwNmI2ZDQiIHN0cm9rZS13aWR0aD0iMS42Ii8+CiAgPHRleHQgeD0iMTA1MSIgeT0iMTMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnQiIGZpbGw9IiMwZTc0OTAiPuqzvOqxsOugpSDsnpDrj5kg7KGw7ZqMPC90ZXh0PgogIDxsaW5lIHgxPSIxMDUxIiB5MT0iMTU2IiB4Mj0iMTA1MSIgeTI9IjE3MCIgc3Ryb2tlPSIjMDg5MWIyIiBzdHJva2Utd2lkdGg9IjIuOCIgbWFya2VyLWVuZD0idXJsKCNtQ3lhbikiLz4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gRURHRSBQQU5FTCA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPHJlY3QgeD0iMjQiIHk9IjE3MCIgd2lkdGg9IjMwMCIgaGVpZ2h0PSI0MjAiIHJ4PSIxNCIgZmlsbD0iI2Y4ZmFmYyIgc3Ryb2tlPSIjY2JkNWUxIiBzdHJva2Utd2lkdGg9IjEuNSIvPgogIDx0ZXh0IHg9IjQwIiB5PSIyMDAiIGNsYXNzPSJzZWMiPuKRoCDtmYjsuqAgwrcg7Jej7KeAPC90ZXh0PgogIDxyZWN0IHg9IjIwNiIgeT0iMTg2IiB3aWR0aD0iMTAyIiBoZWlnaHQ9IjE4IiByeD0iOSIgZmlsbD0iI2RjZmNlNyIgc3Ryb2tlPSIjMTZhMzRhIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8dGV4dCB4PSIyNTciIHk9IjE5OC41IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0icGlsbCIgZmlsbD0iIzE1ODAzZCI+7Jio65SU67CU7J207IqkIEFJPC90ZXh0PgoKICA8cmVjdCB4PSI0MiIgeT0iMjQwIiB3aWR0aD0iMjUyIiBoZWlnaHQ9IjEyMCIgcng9IjEyIiBmaWxsPSIjZWNmZWZmIiBzdHJva2U9IiMwNmI2ZDQiIHN0cm9rZS13aWR0aD0iMS44Ii8+CiAgPHRleHQgeD0iMTY4IiB5PSIyOTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCI+7Y+s7KaIIOy2lOyglTwvdGV4dD4KICA8dGV4dCB4PSIxNjgiIHk9IjMyMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Imt3Ij7subTrqZTrnbwgwrcgTWVkaWFQaXBlICjsmKjrlJTrsJTsnbTsiqQpPC90ZXh0PgoKICA8cmVjdCB4PSI0MiIgeT0iNDEwIiB3aWR0aD0iMjUyIiBoZWlnaHQ9IjEyMCIgcng9IjEyIiBmaWxsPSIjZmFmNWZmIiBzdHJva2U9IiNhODU1ZjciIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjE2OCIgeT0iNDY0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0iYnQiIGZpbGw9IiM0MzM4Y2EiPuuCmeyDgSDtmZXsoJU8L3RleHQ+CiAgPHRleHQgeD0iMTY4IiB5PSI0OTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJrdyI+U1QtR0NOIO2MkOyglSAo66Gc7LusKTwvdGV4dD4KCiAgPHRleHQgeD0iNDAiIHk9IjU2MCIgY2xhc3M9Im5vdGUiPuyYqOuUlOuwlOydtOyKpCDstpTroaAgwrcg7JuQ67O4IOyYgeyDgSDrr7jsoITshqEgKO2UhOudvOydtOuyhOyLnCk8L3RleHQ+CgogIDxsaW5lIHgxPSIxNjgiIHkxPSIzNjAiIHgyPSIxNjgiIHkyPSI0MTAiIHN0cm9rZT0iI2E4NTVmNyIgc3Ryb2tlLXdpZHRoPSIyLjQiIG1hcmtlci1lbmQ9InVybCgjbVB1cnBsZSkiLz4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gQkFDS0VORCBQQU5FTCA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPHJlY3QgeD0iNDQwIiB5PSIxNzAiIHdpZHRoPSIzNDAiIGhlaWdodD0iNDIwIiByeD0iMTQiIGZpbGw9IiNmOGZhZmMiIHN0cm9rZT0iI2NiZDVlMSIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICA8dGV4dCB4PSI0NTYiIHk9IjIwMCIgY2xhc3M9InNlYyI+4pGhIOydkeq4ieuMgOydkSDrsLHsl5Trk5w8L3RleHQ+CgogIDxyZWN0IHg9IjQ1NiIgeT0iMjQwIiB3aWR0aD0iMzA4IiBoZWlnaHQ9IjEyMCIgcng9IjEyIiBmaWxsPSIjZWZmNmZmIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMS44Ii8+CiAgPHRleHQgeD0iNjEwIiB5PSIyOTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCI+7Iuk7Iuc6rCEIOydtOuypO2KuCDtl4jruIw8L3RleHQ+CiAgPHRleHQgeD0iNjEwIiB5PSIzMjIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJrdyI+65287Jqw7YyFIMK3IFdlYlNvY2tldCDCtyDrs5HroKUgREI8L3RleHQ+CgogIDxyZWN0IHg9IjQ1NiIgeT0iNDEwIiB3aWR0aD0iMzA4IiBoZWlnaHQ9IjEyMCIgcng9IjEyIiBmaWxsPSIjZmZmN2VkIiBzdHJva2U9IiNmNTllMGIiIHN0cm9rZS13aWR0aD0iMS44Ii8+CiAgPHRleHQgeD0iNjEwIiB5PSI0NTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCI+MTE5IMK3IOydtOybgyDtmLjstpw8L3RleHQ+CiAgPHRleHQgeD0iNjEwIiB5PSI0ODYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJrdyI+MTXstIgg7JeQ7Iqk7Lus66CI7J207IWYPC90ZXh0PgogIDx0ZXh0IHg9IjYxMCIgeT0iNTA4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ia3ciPkVYQU9ORSDsmpTslb0gKOyekOyytOyEnOuyhMK37Jio7ZSE66CI66+47IqkKTwvdGV4dD4KCiAgPGxpbmUgeDE9IjYxMCIgeTE9IjM2MCIgeDI9IjYxMCIgeTI9IjQxMCIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIuMiIgbWFya2VyLWVuZD0idXJsKCNtR3JheSkiLz4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gUEhPTkUgUEFORUwgPT09PT09PT09PT09PT09PT09PT09IC0tPgogIDxyZWN0IHg9IjkwMCIgeT0iMTcwIiB3aWR0aD0iMzU2IiBoZWlnaHQ9IjQyMCIgcng9IjE0IiBmaWxsPSIjZjhmYWZjIiBzdHJva2U9IiNjYmQ1ZTEiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPHRleHQgeD0iOTE2IiB5PSIyMDAiIGNsYXNzPSJzZWMiPuKRoiDso7zrr7wg7JWxIMK3IO2PsDwvdGV4dD4KCiAgPCEtLSBwYXRpZW50IGFwcCAtLT4KICA8cmVjdCB4PSI5MTIiIHk9IjI0MCIgd2lkdGg9IjMzMiIgaGVpZ2h0PSIxNTAiIHJ4PSIxMiIgZmlsbD0iI2VlZjJmZiIgc3Ryb2tlPSIjNjM2NmYxIiBzdHJva2Utd2lkdGg9IjEuOCIvPgogIDx0ZXh0IHg9IjEwNzgiIHk9IjMwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9ImJ0IiBmaWxsPSIjNDMzOGNhIj7tmZjsnpAg7JWxPC90ZXh0PgogIDx0ZXh0IHg9IjEwNzgiIHk9IjMzMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Imt3Ij7soITssrTtmZTrqbQg6rK967O0IMK3IOyCrOydtOugjDwvdGV4dD4KICA8dGV4dCB4PSIxMDc4IiB5PSIzNTYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJrdyI+MTXstIgg64K0IOyekOqwgOy3qOyGjDwvdGV4dD4KCiAgPCEtLSBuZWlnaGJvciBhcHAgLS0+CiAgPHJlY3QgeD0iOTEyIiB5PSI0MTAiIHdpZHRoPSIzMzIiIGhlaWdodD0iMTUwIiByeD0iMTIiIGZpbGw9IiNmMGZkZjQiIHN0cm9rZT0iIzIyYzU1ZSIgc3Ryb2tlLXdpZHRoPSIxLjgiLz4KICA8dGV4dCB4PSIxMDc4IiB5PSI0NzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCIgZmlsbD0iIzE1ODAzZCI+7J207JuDIOyVsTwvdGV4dD4KICA8dGV4dCB4PSIxMDc4IiB5PSI1MDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJrdyI+6rCA6rmM7Jq0IOydtOybgyDsoITsm5Ag7Zi47LacPC90ZXh0PgogIDx0ZXh0IHg9IjEwNzgiIHk9IjUyNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgY2xhc3M9Imt3Ij7tmITsnqUgU1RUIMK3IENQUiDqsIDsnbTrk5w8L3RleHQ+CgogIDwhLS0gPT09PT09PT09PT09PT09PT09PT09IEVNUyA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPHJlY3QgeD0iOTQwIiB5PSI2MTIiIHdpZHRoPSIzMTYiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iI2VlZjJmZiIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8dGV4dCB4PSIxMDk4IiB5PSI2NDYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJidCIgZmlsbD0iIzFkNGVkOCI+MTE5IMK3IOq1rOq4ieuMgDwvdGV4dD4KCiAgPCEtLSA9PT09PT09PT09PT09PT09PT09PT0gSU5URVItU1lTVEVNIEFSUk9XUyA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPCEtLSBlZGdlIC0+IGJhY2tlbmQgLS0+CiAgPHBhdGggZD0iTTI5NCw0NzAgTDM2OCw0NzAgTDM2OCwzMDAgTDQ0MCwzMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRmNDZlNSIgc3Ryb2tlLXdpZHRoPSIyLjgiIG1hcmtlci1lbmQ9InVybCgjbVJlZCkiLz4KICA8dGV4dCB4PSIzNjYiIHk9IjM5MiIgdHJhbnNmb3JtPSJyb3RhdGUoOTAgMzY2IDM5MikiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJsYmwiIGZpbGw9IiM0MzM4Y2EiPuuCmeyDgSDsnbTrsqTtirg8L3RleHQ+CgogIDwhLS0gYmFja2VuZCAtPiBwYXRpZW50IC0tPgogIDxsaW5lIHgxPSI3ODAiIHkxPSIzMDAiIHgyPSI5MTAiIHkyPSIzMDAiIHN0cm9rZT0iIzNiODJmNiIgc3Ryb2tlLXdpZHRoPSIyLjYiIG1hcmtlci1lbmQ9InVybCgjbUJsdWUpIi8+CiAgPHRleHQgeD0iODQ1IiB5PSIyOTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJsYmwiIGZpbGw9IiMxZDRlZDgiPkFMRVJUX1NFTEY8L3RleHQ+CgogIDwhLS0gYmFja2VuZCAtPiBuZWlnaGJvciAtLT4KICA8bGluZSB4MT0iNzgwIiB5MT0iNDcwIiB4Mj0iOTEwIiB5Mj0iNDcwIiBzdHJva2U9IiMzYjgyZjYiIHN0cm9rZS13aWR0aD0iMi42IiBtYXJrZXItZW5kPSJ1cmwoI21CbHVlKSIvPgogIDx0ZXh0IHg9Ijg0NSIgeT0iNDYyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibGJsIiBmaWxsPSIjMWQ0ZWQ4Ij5ORUlHSEJPUl9BTEVSVDwvdGV4dD4KICA8IS0tIG5laWdoYm9yIC0+IGJhY2tlbmQgOiB2b2ljZSBTVFQgLS0+CiAgPGxpbmUgeDE9IjkxMCIgeTE9IjUwNiIgeDI9Ijc4MCIgeTI9IjUwNiIgc3Ryb2tlPSIjNGY0NmU1IiBzdHJva2Utd2lkdGg9IjIuNCIgbWFya2VyLWVuZD0idXJsKCNtUmVkKSIvPgogIDx0ZXh0IHg9Ijg0NSIgeT0iNDk4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBjbGFzcz0ibGJsIiBmaWxsPSIjNDMzOGNhIj7tmITsnqUgU1RUPC90ZXh0PgoKICA8IS0tIGJhY2tlbmQgLT4gRU1TIC0tPgogIDxwYXRoIGQ9Ik02MTAsNTkwIEw2MTAsNjM5IEw5NDAsNjM5IiBmaWxsPSJub25lIiBzdHJva2U9IiM0ZjQ2ZTUiIHN0cm9rZS13aWR0aD0iMi42IiBtYXJrZXItZW5kPSJ1cmwoI21SZWQpIi8+CiAgPHRleHQgeD0iNzc1IiB5PSI2MzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGNsYXNzPSJsYmwiIGZpbGw9IiM0MzM4Y2EiPjExOSDsnpDrj5nsi6Dqs6A8L3RleHQ+CgogIDwhLS0gPT09PT09PT09PT09PT09PT09PT09IExFR0VORCA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPGxpbmUgeDE9IjMwIiB5MT0iNjkwIiB4Mj0iMTI1MCIgeTI9IjY5MCIgc3Ryb2tlPSIjZTJlOGYwIiBzdHJva2Utd2lkdGg9IjEiLz4KICA8bGluZSB4MT0iNDAiIHkxPSI3MDgiIHgyPSI3MCIgeTI9IjcwOCIgc3Ryb2tlPSIjNGY0NmU1IiBzdHJva2Utd2lkdGg9IjIuOCIgbWFya2VyLWVuZD0idXJsKCNtUmVkKSIvPgogIDx0ZXh0IHg9Ijc4IiB5PSI3MTIiIGNsYXNzPSJmb290Ij5IVFRQUyAo7J2067Kk7Yq4IMK3IOydjOyEsSk8L3RleHQ+CiAgPGxpbmUgeDE9IjI5MCIgeTE9IjcwOCIgeDI9IjMyMCIgeTI9IjcwOCIgc3Ryb2tlPSIjM2I4MmY2IiBzdHJva2Utd2lkdGg9IjIuOCIgbWFya2VyLWVuZD0idXJsKCNtQmx1ZSkiLz4KICA8dGV4dCB4PSIzMjgiIHk9IjcxMiIgY2xhc3M9ImZvb3QiPldlYlNvY2tldCAo7Iuk7Iuc6rCEIOyVjOumvCk8L3RleHQ+CiAgPGxpbmUgeDE9IjU2MCIgeTE9IjcwOCIgeDI9IjU5MCIgeTI9IjcwOCIgc3Ryb2tlPSIjMDg5MWIyIiBzdHJva2Utd2lkdGg9IjIuOCIgbWFya2VyLWVuZD0idXJsKCNtQ3lhbikiLz4KICA8dGV4dCB4PSI1OTgiIHk9IjcxMiIgY2xhc3M9ImZvb3QiPuyLrO2PieybkCDqs7zqsbDroKUg7KGw7ZqMPC90ZXh0PgogIDxsaW5lIHgxPSI4MjAiIHkxPSI3MDgiIHgyPSI4NTAiIHkyPSI3MDgiIHN0cm9rZT0iI2E4NTVmNyIgc3Ryb2tlLXdpZHRoPSIyLjgiIG1hcmtlci1lbmQ9InVybCgjbVB1cnBsZSkiLz4KICA8dGV4dCB4PSI4NTgiIHk9IjcxMiIgY2xhc3M9ImZvb3QiPuyYqOuUlOuwlOydtOyKpCDtjJDsoJU8L3RleHQ+CgogIDwhLS0gPT09PT09PT09PT09PT09PT09PT09IEZPT1RFUiA9PT09PT09PT09PT09PT09PT09PT0gLS0+CiAgPHRleHQgeD0iNDAiIHk9Ijc0MCIgY2xhc3M9Im5vdGUiPuyYqOuUlOuwlOydtOyKpCDqsJDsp4AoTWVkaWFQaXBlICsg66Gc7LusIFNULUdDTikgwrcg7ZiE7J6lIFNUVOuKlCDsnbTsm4Mg7Y+wIMK3IOyDge2ZqSDsmpTslb3snYAg7J6Q7LK0IOyEnOuyhCBFWEFPTkUo7Jio7ZSE66CI66+47IqkKSDCtyDrs5HroKUg65OxIOuvvOqwkOygleuztOuKlCDqs6jrk6DsnbTsm4Mg7ISc67KEIOuwluycvOuhnCDrgpjqsIDsp4Ag7JWK7J2MIMK3IOuNsOydtO2EsCDsoITrtoAg7ZWp7ISxKFBISSDsl4bsnYwpPC90ZXh0Pgo8L3N2Zz4K" alt="지역사회 응급대응 AI 한눈에 보는 아키텍처 요약" />
+  </div>
+  <div class="footnote">출처: production-architecture-slide.svg. HTTPS(낙상 이벤트·음성) · WebSocket(실시간 알림) · 심평원 과거력 조회 · 온디바이스 판정</div>
+  <span class="pagenum">21 / 29</span>
+</section>
+
+<!-- ===================== PART V ===================== -->
+
+<section class="page p5" id="p5">
+  <span class="partbadge">Part V · 앱의 효과 — 개요</span>
+  <h2>이제, 실제 효과를 검증한다</h2>
+  <p class="lead">Part I~III은 <b class="em">왜</b> 이 개입이 필요한지를, Part IV는 골든이웃이 <b class="em">어떻게</b> 작동하는지를 보였다. 이제 이 설계가 실사용 시 만들어낼 <b class="em-i">활용성·효과성·효율성·안정성·사용성</b>을 국내외 실증 연구와 함께 점검한다 — 심사 기준(주최측 발표준비 안내)에서 요구하는 다섯 항목이다.</p>
+  <div class="critrow"><div class="criteria-icon">🎯</div><div><div class="t">활용성</div><div class="d">실제 현장 조건에서, 이미 검증된 개입 모델을 이식</div></div></div>
+  <div class="critrow"><div class="criteria-icon">📈</div><div><div class="t">효과성</div><div class="d">검증된 메커니즘의 정량적 기대효과</div></div></div>
+  <div class="critrow"><div class="criteria-icon">⚙️</div><div><div class="t">효율성</div><div class="d">인프라 대신 소프트웨어, 클라우드 대신 엣지</div></div></div>
+  <div class="critrow"><div class="criteria-icon">🛡️</div><div><div class="t">안정성</div><div class="d">오탐 억제와 프라이버시 보호를 구조로 담보</div></div></div>
+  <div class="critrow"><div class="criteria-icon">🖐️</div><div><div class="t">사용성</div><div class="d">고령자가 실제로 쓸 수 있는 설계</div></div></div>
+  <div class="footnote">근거 문서: reports/5. 앱효과분석_활용성-효과성-효율성-안정성-사용성.md</div>
+  <span class="pagenum">22 / 29</span>
+</section>
+
+<section class="page p5">
+  <span class="partbadge">Part V · 활용성</span>
+  <h2>실제 현장 조건에서, 이미 검증된 모델을 이식</h2>
+  <p class="lead">골든이웃의 설계 요소(도로 도달시간 10분 이내 이웃 조직화, 경로당 등록 허브)는 Part I에서 확인한 강원의 실제 조건 — 9개 군 종합병원 부재, 승용차 의존도 70%+, 1인가구 약 1/3 독거노인 — 을 그대로 반영했다. 가상의 시나리오가 아니라 데이터에서 역산된 설계다. 더 나아가 '위치 기반으로 인근 시민 자원자를 호출해 초동 대응을 유도'하는 방식 자체가 이미 여러 나라에서 실서비스로 검증되어 있다.</p>
+  <div class="stats">
+    <div class="stat teal"><div class="n">80<small>%</small></div><div class="l">PulsePoint(미국) 이용자가 구급대보다 먼저 도착했을 때 목격자 CPR이 시행된 비율</div></div>
+    <div class="stat"><div class="n">2015</div><div class="l">스톡홀름 무작위대조시험(Ringh, NEJM) — 자원자 출동이 목격자 CPR을 유의하게 높임</div></div>
+    <div class="stat teal"><div class="n">2.41<small>배</small></div><div class="l">다국가 메타분석(JACC 2023) — 자원자 출동 시스템의 목격자 CPR 개선</div></div>
+  </div>
+  <div class="keybox">
+    이 모델들은 모두 <b>"목격자가 있다"</b>는 전제 위에 있다. 강원 도서산간처럼 독거·고립 비율이 높은 지역에서는 이 전제가 무너지므로, 골든이웃은 <b>홈캠 온디바이스 AI로 목격자 역할 자체를 대신</b>한다 — 검증된 모델을 한 단계 더 확장한 것이다.
+  </div>
+  <div class="footnote">출처: PulsePoint 관련 University of Florida Health 연구; Ringh et al., NEJM 2015;372:2316-2325; JACC 2023</div>
+  <span class="pagenum">23 / 29</span>
+</section>
+
+<section class="page p5">
+  <span class="partbadge">Part V · 효과성</span>
+  <h2>검증된 메커니즘의 정량적 기대효과</h2>
+  <div class="stats">
+    <div class="stat teal"><div class="n">2<small>배 이상</small></div><div class="l">목격자 CPR 시행 시 생존율(14.3% vs 6.4%) — Part II 재인용</div></div>
+    <div class="stat teal"><div class="n">1.22<small>배</small></div><div class="l">자원자 출동 시스템 도입 시 30일 생존 개선(JACC 2023)</div></div>
+    <div class="stat teal"><div class="n">10.3<small>%</small></div><div class="l">CFR+AED 결합 시 병원 전 CPR·제세동 시행률(4.2%→10.3%, CEOR 2024)</div></div>
+    <div class="stat"><div class="n">29<small>명</small></div><div class="l">PAD 다기관 RCT — CPR+AED군 생존(CPR-only군 14명), NEJM 2004</div></div>
+  </div>
+  <div class="keybox ind">
+    네 갈래 근거를 종합하면, 골든이웃이 겨냥하는 "목격자 CPR 시행률 제고"는 단일 개입 중 생존율 승수 효과가 가장 크게 검증된 영역이다. 다만 이는 해외·타 지역 연구의 정량적 유추이며, <b>강원 도서산간에서의 실측 효과는 파일럿 검증이 필요</b>함을 밝혀둔다.
+  </div>
+  <div class="footnote">출처: 질병관리청 급성심장정지조사; JACC 2023; Cost-Effectiveness of a CFR System, ClinicoEconomics and Outcomes Research(2024); Public Access Defibrillation Trial, NEJM 2004;351:637-646</div>
+  <span class="pagenum">24 / 29</span>
+</section>
+
+<section class="page p5">
+  <span class="partbadge">Part V · 효율성</span>
+  <h2>인프라 대신 소프트웨어, 클라우드 대신 엣지</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>💰 자본 투입 대비 효과</h3>
+      <ul><li>병원 신축·의료인력 확충은 예산·시간이 크게 소요됨</li><li>골든이웃은 <b>기존 인프라(스마트폰·홈캠)를 재사용</b></li><li>Lay-responder AED 프로그램의 ICER은 "다른 일반 보건 개입과 유사한 수준"(Ann Emerg Med 2009)</li></ul>
+    </div>
+    <div class="card teal" style="border-color:var(--accent)">
+      <h3>⚡ 온디바이스 우선 설계</h3>
+      <ul><li>1차 판정은 <b>로컬(MediaPipe+로컬 ST-GCN)</b>에서 완료 — 클라우드 왕복 없이 즉시 판정</li><li>상황 요약은 <b>자체 서버 온프레미스 EXAONE</b>가 처리 → 외부 LLM API 호출·비용 자체가 없음</li><li>원본 영상 상시 전송 없음 → 대역폭 절감, 오프라인에서도 1차 판정 유지</li></ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px">Edge AI 문헌에서도 온디바이스 처리는 "대역폭 절감·실시간성 확보"의 대표 이점으로 꼽히며, 상시 촬영되는 홈캠 영상처럼 데이터량이 큰 경우 절감 효과가 크다.</p>
+  <div class="footnote">출처: production-architecture.svg; Cost-Effectiveness of Lay Responder Defibrillation, Ann Emerg Med 2009(PubMed 19321228); Edge AI in Wearable Health Devices(업계·학술 종합)</div>
+  <span class="pagenum">25 / 29</span>
+</section>
+
+<section class="page p5">
+  <span class="partbadge">Part V · 안정성</span>
+  <h2>오탐 억제와 프라이버시 보호를 구조로 담보</h2>
+  <div class="stats">
+    <div class="stat teal"><div class="n">96~100<small>%</small></div><div class="l">동일 계열(골격 기반 ST-GCN) 낙상 감지 <b>공개 벤치마크</b> 정확도(TST v2·UR Fall·Le2i 등), 민감도 97%+ — 참고치</div></div>
+    <div class="stat"><div class="n">15<small>초</small></div><div class="l">낙상 확정 후 본인 재확인 카운트다운 — 무응답 시에만 에스컬레이션</div></div>
+    <div class="stat ind"><div class="n">3<small>중</small></div><div class="l">휴리스틱 → 로컬 ST-GCN(주판정) → Claude Vision(보조확인)의 판정 구조</div></div>
+  </div>
+  <div class="notebox">
+    <b>자체 개발 모델의 검증 과제</b> — Part IV에서 밝혔듯, 골든이웃의 판정 모델과 API는 시중에 대체할 외부 모델이 없어 <b>직접 구축</b>한 것이다. 위 96~100%는 동일 계열 아키텍처가 <b>공개 데이터셋</b>에서 낸 참고 수치일 뿐, <b>우리 모델 자체의 정밀도·재현율은 아직 우리 데이터로 실측되지 않았다.</b> 따라서 실배포 전 자체 낙상·비낙상 시나리오 데이터셋 기반의 성능 검증이 안정성 확보의 최우선 과제다.
   </div>
   <div class="cols" style="margin-top:16px">
-    <div class="card red"><h3>🛡️ 안정성</h3><ul><li>2중 검증(본인 재확인) 오신고 방지, 골격 데이터만 처리해 <b>영상 프라이버시 보호</b> — 상세는 후속 문서</li></ul></div>
-    <div class="card ind"><h3>🖐️ 사용성</h3><ul><li>고령자 등록 허브를 <b>경로당</b>으로 설정, 별도 학습 없이 알림·문자 수준의 조작 — 상세는 후속 문서</li></ul></div>
+    <div class="card">
+      <h3>🔒 프라이버시 — 민감정보 2중 보호</h3>
+      <ul><li><b>발생 전</b>: 병력 등 민감정보는 환자 휴대폰(앱) 안에만 머무름</li><li><b>발생 후 AI 보조 시</b>: 요약을 <b>온프레미스 EXAONE</b>가 처리 → 민감정보가 골든이웃 서버 밖으로 안 나감</li><li>원본 영상·원음 미전송(골격 좌표·텍스트만), 병력 DB는 합성·RLS 적용</li></ul>
+    </div>
+    <div class="card red">
+      <h3>⚖️ 법적 안전판</h3>
+      <ul><li>「응급의료에 관한 법률」 제5조의2(선의의 응급의료 면책)</li><li>고의·중과실 없는 일반 시민의 응급처치는 민사책임 면제·형사책임 감면</li><li>이웃의 초동 CPR이 법적으로 보호받는 행위임을 뒷받침</li></ul>
+    </div>
   </div>
-  <div class="footnote">본 페이지는 다음 평가 항목의 근거 위치를 안내하는 로드맵이며, 세부 수치는 앱 구조 문서에서 제시됨</div>
-  <span class="pagenum">20 / 21</span>
+  <div class="footnote">출처: Zheng et al.; Keskes & Noumeir 등 ST-GCN 낙상감지 벤치마크(2023~2024); 응급의료에 관한 법률 제5조의2, 국가법령정보센터; on-device-ai.svg</div>
+  <span class="pagenum">26 / 29</span>
 </section>
 
-<section class="page p4">
-  <span class="partbadge">Part IV · 앱 개발의 필요성 — 4/4</span>
-  <h2>결론</h2>
-  <p class="lead">정부·공공기관 보고서가 그리는 강원의 상(像)은 일관된다. 인구는 적고 넓게 흩어져 있으며 급속히 고령화되고, 급성심뇌혈관 위험요인과 사망률은 전국 최고 수준이지만, 이를 감당할 병원·인력은 소수 도시에 집중되어 있다. 그 결과가 전국 평균을 밑도는 급성심장정지 생존율(7.2%)이다.</p>
-  <p class="lead">이 문제의 핵심 병목은 <b class="em">"병원 도착까지의 시간"</b>이며, 생존을 가르는 것은 쓰러진 직후의 <b class="em">자동 인지·신고·주변 초동대처</b>다. 골든이웃은 바로 이 지점에 집중하는, 강원의 지역보건의료 현실에 정확히 대응하는 근거 기반(evidence-based) 해법이다.</p>
+<section class="page p5">
+  <span class="partbadge">Part V · 사용성</span>
+  <h2>고령자가 실제로 쓸 수 있는 설계</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>👵 고령자 설계 원칙 부합</h3>
+      <ul><li>환자 조작: 전체화면 경보 확인 후 취소 버튼 하나 — 학습 불필요</li><li>이웃 조작: 알림 → 환자 카드 → CPR 가이드 <b>영상</b> — 의료지식 무관</li><li>등록·관리 허브는 <b>경로당</b>(오프라인 대면 지원 가능)</li></ul>
+    </div>
+    <div class="card ind">
+      <h3>📚 근거·선례</h3>
+      <ul><li>고령자 대상 mHealth 앱 사용성 연구(JMIR 2023 등): 단순 내비게이션·큰 버튼·음성 상호작용이 핵심</li><li>PulsePoint 사용성 연구: 지역사회 대응 개선에 유용성 확인</li></ul>
+    </div>
+  </div>
+  <div class="notebox">
+    <b>남은 과제</b> — 문헌은 고령층의 자기효능감·디지털 친숙도 격차를 주요 장벽으로 지적한다. 실제 배포 단계에서는 <b>경로당 단위 대면 온보딩과 정기 교육</b>이 병행되어야 한다.
+  </div>
+  <div class="footnote">출처: Design Guidelines of Mobile Apps for Older Adults, JMIR mHealth and uHealth 2023;11:e43186; Usability of the PulsePoint app, Canadian Journal of Nursing Informatics</div>
+  <span class="pagenum">27 / 29</span>
+</section>
+
+<!-- ===================== PART VI ===================== -->
+
+<section class="page p6" id="p6">
+  <span class="partbadge">Part VI · 보급 전략</span>
+  <h2>새 채널을 만들지 않는다 — 이미 있는 정부 채널에 올라탄다</h2>
+  <p class="lead">아무리 근거가 탄탄해도, 독거 어르신이 실제로 앱을 설치하고 <b>스스로 동의해 참여</b>하지 않으면 무용하다. 골든이웃의 가장 큰 보급 장벽은 바로 <b class="em-red">"신규 앱 설치·동의를 어떻게 유도하는가"</b>다. 새 예산·새 유통망을 만드는 대신, 정부가 이미 강원도에서 가동 중인 4개 채널에 얹어 <b>기존 방문 인력이 직접 동의를 받고 설치를 돕는</b> 방식을 택한다.</p>
+  <table class="vars">
+    <thead><tr><th>기존 정부 채널</th><th>현황</th><th>골든이웃 연계 방안</th></tr></thead>
+    <tbody>
+      <tr><td>응급안전안심서비스<br><span class="chartcap" style="margin:0">(보건복지부)</span></td><td>전국 약 30만 독거노인 가구에 ICT 댁내장비(화재·활동량 감지센서, 태블릿) 보급 중. 2025~ <b>노후장비 9만 대 교체</b>(5개년 846억 원) 진행</td><td>교체되는 <b>차세대 댁내장비의 연동 앱</b>으로 제안 — 신규 설치 대상 가구에 별도 홍보 없이 동시 보급</td></tr>
+      <tr><td>노인맞춤돌봄서비스<br><span class="chartcap" style="margin:0">(생활지원사 방문망)</span></td><td>생활지원사가 독거노인을 <b>주 1회 이상 직접 방문</b>, 주 2회 이상 전화 확인(전국 상시 운영)</td><td>방문 시 <b>앱 설치·사용법 대면 교육</b>을 결합 — Part V 사용성에서 지적한 디지털 격차를 오프라인으로 보완</td></tr>
+      <tr><td>스마트빌리지 보급·확산사업<br><span class="chartcap" style="margin:0">(과기정통부·NIA)</span></td><td>강원 삼척시 근덕면 등 <b>기 선정 이력</b> 보유(양방향 통신 어르신 돌봄 서비스 포함), 매년 지자체 공모 진행. 하위사업 "스마트경로당"(춘천 사례)은 경로당을 디지털 복지 허브로 전환</td><td>강원도 신규 공모 지역에 <b>골든이웃을 서비스 항목으로 포함 제안</b> — 경로당 등록 허브 설계와 직접 부합</td></tr>
+      <tr><td>지자체·통신사 협력 돌봄기기 보급<br><span class="chartcap" style="margin:0">(효돌·다솜이 등 선례)</span></td><td>지자체 예산 편성 + 통신사 유통망으로 민간 돌봄기기를 독거노인에게 <b>무료 보급</b>한 선례 다수</td><td>동일한 <b>지자체 조달·예산편성 모델</b>로 강원도 시·군 단위 무료 보급 제안</td></tr>
+    </tbody>
+  </table>
+  <div class="keybox">
+    새 예산·새 채널을 만드는 대신, 국가가 이미 구축한 <b>독거노인 등록명부·방문 인력·경로당 인프라·장비 교체 예산</b>에 올라타는 것이 가장 빠르고 저비용인 보급 경로다.
+  </div>
+  <div class="footnote">출처: KDI 경제교육정보센터(응급안전안심서비스 차세대 댁내장비 10만 대 보급); 보건복지부 2025년 노인보건복지·노인맞춤돌봄서비스 사업안내; NIA 스마트빌리지 보급·확산사업 지침(2025~2026년도); 뉴스후플러스(춘천 스마트경로당); 로봇신문·SPRi(효돌·다솜이 지자체 보급 사례)</div>
+  <span class="pagenum">28 / 29</span>
+</section>
+
+<!-- ===================== PART VII ===================== -->
+
+<section class="page p5">
+  <span class="partbadge">마무리 · 종합 결론</span>
+  <h2>다섯 기준의 종합</h2>
+  <div style="overflow-x:auto">
+  <table class="vars summary">
+    <thead><tr><th>기준</th><th>핵심 근거</th><th>한계·향후 과제</th></tr></thead>
+    <tbody>
+      <tr><td>활용성</td><td>강원 실제 SDOH 데이터 기반 설계, PulsePoint·HeartRunner 등 실사용 검증</td><td>도서산간 특화 요소는 국내외 선례 없어 자체 검증 필요</td></tr>
+      <tr><td>효과성</td><td>목격자CPR 2배 이상, 자원출동 CPR 2.41배·생존 1.22배, PAD RCT(29명 vs 14명)</td><td>강원 현지 실측 데이터 부재 — 파일럿 실증 필요</td></tr>
+      <tr><td>효율성</td><td>온디바이스+온프레미스 설계로 지연시간·대역폭 절감 및 <b>외부 LLM API 미사용</b>, Lay-AED ICER 양호</td><td>온디바이스·자체 서버 모델의 기기·서버 성능 의존성, 저사양 기기 대응 필요</td></tr>
+      <tr><td>안정성</td><td>동일계열 ST-GCN 벤치마크 96~100%(참고치), 이중 확인(15초 재확인), 온디바이스 프라이버시, 선의의 구조자 면책법</td><td><b>자체 개발한 판정 모델·API</b>이므로 우리 데이터 기준 실측 정밀도·재현율 검증이 최우선 과제</td></tr>
+      <tr><td>사용성</td><td>고령자 앱 설계원칙 부합(단순조작·영상가이드·경로당 허브), PulsePoint 사용성 선례</td><td>디지털 친숙도 격차 — 대면 온보딩·교육 병행 필요</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="lead" style="margin-top:20px">골든이웃은 강원의 SDOH·보건의료 문제 분석(Part I~III)에서 도출된 요구를, 이미 해외에서 검증된 개입 메커니즘(자원자 출동·목격자 CPR)에 <b class="em">온디바이스 AI라는 기술적 보완</b>을 더해 구현한 설계다. 다섯 기준 모두 학술적·실증적 근거를 가지고 있으며, <b class="em-i">보급은 신규 채널이 아닌 기존 정부 돌봄 인프라(Part VI)</b>에 얹는다. 강원 도서산간이라는 특수 환경에서의 실측 검증은 후속 파일럿 과제로 남는다.</p>
   <div class="disc">
     <b>안전 고지</b> · 본 자료는 정책·기획 참고용이며 의학적 진단이 아닙니다. 응급 증상(흉통·호흡곤란·의식저하 등)은 <b>119·응급실 안내를 최우선</b>으로 하며, 이웃 초동대응은 119 신고를 대체하지 않고 병행합니다.
   </div>
-  <p class="lead" style="margin-top:20px;font-size:13px;color:var(--muted)">
-  <b>참고문헌</b> — 강원특별자치도 「2023 강원의 사회지표 보고서」(2024); 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석(강원도)」(2023); 강원도 「제8기(2023–2026) 지역보건의료계획」(2023); 질병관리청 『급성심장정지조사』; 소방청 구급활동 통계; KJEMS(85개 시군구 분석); 강원도 지역필수의료 주민조사; Sasson C, et al. <i>NEJM</i> 2012;367:1607-1615; Ringh M, et al. <i>NEJM</i> 2015;372:2316-2325; <i>JACC</i> 2023 (자원자 출동 시스템 메타분석); Disparities in Survival Outcomes of OHCA between Urban and Rural Areas, PMC9317767 (2022).
+  <p class="lead" style="margin-top:16px;font-size:12.5px;color:var(--muted)">
+  <b>참고문헌(Part IV~VI)</b> — production-architecture.svg·on-device-ai.svg(실제 프로덕션 아키텍처, 상황 요약은 온프레미스 LLM EXAONE); PulsePoint 관련 연구(Canadian Journal of Nursing Informatics, PMC4069540); Ringh M, et al. NEJM 2015;372:2316-2325; JACC 2023; Cost-Effectiveness of a Community First Responder System, ClinicoEconomics and Outcomes Research, PMC12054549(2024); Public Access Defibrillation Trial Investigators, NEJM 2004;351:637-646; Cost-Effectiveness of Lay Responder Defibrillation, Ann Emerg Med 2009(PubMed 19321228); 골격기반 ST-GCN 낙상감지 벤치마크 종합(2023~2024); 응급의료에 관한 법률 제5조의2; Design Guidelines of Mobile Apps for Older Adults, JMIR mHealth and uHealth 2023;11:e43186; KDI 경제교육정보센터·보건복지부 2025년 노인보건복지 사업안내(응급안전안심서비스·노인맞춤돌봄서비스); NIA 스마트빌리지 보급·확산사업 지침. Part I~III 서지는 reports/5. 앱효과분석...md 및 각 파트 각주 참조.
   </p>
-  <div class="footnote">다음 문서 — 「골든이웃 앱 구조 및 효과성·효율성·안정성·사용성 분석」에서 구현 세부와 정량적 검증을 다룸</div>
-  <span class="pagenum">21 / 21</span>
+  <div class="footnote">골든이웃 · 강원 도서산간 독거 어르신을 위한 AI 초동대응 — 발표 자료 끝</div>
+  <span class="pagenum">29 / 29</span>
 </section>
 
 </body>
