@@ -56,7 +56,8 @@
   @media(max-width:760px){.arrowc{transform:rotate(90deg)}}
 
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:26px}
-  @media(max-width:840px){.cols{grid-template-columns:1fr}}
+  .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:26px}
+  @media(max-width:840px){.cols,.cols3{grid-template-columns:1fr}}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
   .card h3{font-size:clamp(16px,1.95vw,22px);font-weight:800;margin-bottom:13px;display:flex;align-items:center;gap:9px}
   .card ul{list-style:none;display:flex;flex-direction:column;gap:10px}
@@ -165,7 +166,7 @@
   <section class="slide">
     <span class="kicker red">문제 ② · 급성심장정지</span>
     <h2>강원의 골든타임은 <span class="em-red">이미 무너져 있다</span></h2>
-    <p class="lead">강원은 급성으로 쓰러지는 질환의 부담 자체가 무겁다. 연령표준화 사망률은 330.1로 전국 1위이며, 급성심장정지가 자주 발생하는데 목격·초동대처와 구급 도착 모두 느려 생존율이 전국 평균에 못 미친다.</p>
+    <p class="lead">강원은 급성으로 쓰러지는 질환의 부담 자체가 전국 최고다. 연령표준화 사망률 330.1로 전국 1위, 심장질환 사망률도 전국(27.1)을 웃도는 31.2, 남성 기대수명은 전국 16위다. 위험은 큰데 대응 인프라는 약한 '고위험·저대응' 지역이라, 목격·초동대처와 구급 도착이 모두 느려 생존율이 전국 평균에 못 미친다.</p>
     <div class="stats">
       <div class="stat red"><div class="n">전국 2위</div><div class="l">급성심장정지 발생률 — 인구 10만명당 95.8명</div></div>
       <div class="stat red"><div class="n">7.2<small>%</small></div><div class="l">강원 심정지 생존율 — 전국 9.2%, 서울 12.4% 대비 최하위권</div></div>
@@ -191,7 +192,7 @@
       <div class="arrowc">→</div>
       <div class="step"><div class="idx">⑤ 통합치료</div><div class="t">병원의 몫</div><div class="d">병원 도착 이후</div></div>
     </div>
-    <div class="keybox">강원의 사회적 조건(독거·고립·산악 지형)은 병원을 멀게 만들 뿐 아니라, <b>생존사슬의 앞쪽 고리(목격·CPR) 자체를 끊는다.</b></div>
+    <div class="keybox">강원의 사회적 조건(독거·고립·산악 지형)은 병원을 멀게 만들 뿐 아니라, <b>생존사슬의 앞쪽 고리(목격·CPR) 자체를 끊는다.</b> 우리가 급성심장정지에 집중하는 이유는 ① 부담이 가장 크고 ② 세 SDOH가 한순간에 겹치며 ③ 초동 개입 효과가 2~3배로 가장 크기 때문이다.</div>
     <div class="footnote">출처: American Heart Association, Chain of Survival · Sasson et al., NEJM 2012 · 질병관리청·KIHASA</div>
   </section>
 
@@ -241,6 +242,30 @@
     <div class="archframe"><img src="diagram.svg" alt="쓰러짐 감지 모델 레이어 및 판별 로직 다이어그램"></div>
   </section>
 
+  <!-- 8.5 DEV AI / GPU -->
+  <section class="slide">
+    <span class="kicker ind">개발에 사용한 AI · GPU</span>
+    <h2>전부 <span class="em">온프레미스</span>로 구축했습니다</h2>
+    <div class="cols">
+      <div class="card ind">
+        <h3>🧠 AI</h3>
+        <ul>
+          <li><b>on-premise LLM (EXAONE)</b> — 서비스 내 증상 안내·요약·보조</li>
+          <li><b>클로드 코드 (Claude Code)</b> — 개발 도구</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🖥️ GPU</h3>
+        <ul>
+          <li>온프레미스 GPU 서버에서 감지·추론 수행</li>
+          <li>데이터가 외부 클라우드로 나가지 않음</li>
+        </ul>
+      </div>
+    </div>
+    <div class="keybox">저희는 모두 온프레미스로 구축하여, <b>외부 AI를 호출하는 외부 API를 사용하는 부분이 전혀 없습니다.</b></div>
+    <div class="footnote">전 구성요소 온프레미스 · 데이터 전부 합성(PHI 없음)</div>
+  </section>
+
   <!-- 9. FAQ -->
   <section class="slide">
     <span class="kicker">예상 질문 · FAQ</span>
@@ -260,6 +285,47 @@
       </div>
     </div>
     <div class="footnote">민감도는 높이되, 오신고는 본인 재확인(2중 검증)으로 거릅니다.</div>
+  </section>
+
+  <!-- 사용성 -->
+  <section class="slide">
+    <span class="kicker">사용성</span>
+    <h2>고령자가 <span class="em">실제로 쓸 수 있는</span> 설계</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>👵 단순 조작</h3>
+        <ul>
+          <li>환자: 전체화면 경보 확인 후 <b>취소 버튼 하나</b> — 학습 불필요</li>
+          <li>이웃: 알림 → 환자 카드 → <b>CPR 가이드 영상</b> — 의료지식 없어도 됨</li>
+          <li>등록·관리 허브는 <b>경로당</b> — 대면 온보딩·교육</li>
+        </ul>
+      </div>
+      <div class="card ind">
+        <h3>📚 근거</h3>
+        <ul>
+          <li>고령자 mHealth 앱 사용성 연구(JMIR 2023): 큰 버튼·단순 내비게이션·음성 상호작용이 핵심</li>
+          <li>PulsePoint 사용성 연구로 지역사회 대응 유용성 확인</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footnote">출처: JMIR mHealth and uHealth 2023;11:e43186 · PulsePoint 사용성 연구</div>
+  </section>
+
+  <!-- 보급 전략 -->
+  <section class="slide">
+    <span class="kicker">보급 전략</span>
+    <h2>새 채널이 아니라, <span class="em">이미 있는 정부 채널</span>에 올라탑니다</h2>
+    <table class="vars">
+      <thead><tr><th>정부 채널</th><th>골든이웃 연계 방안</th></tr></thead>
+      <tbody>
+        <tr><td>응급안전안심서비스 (복지부)</td><td>전국 30만 독거노인 댁내장비 — 노후장비 9만 대 교체분의 <b>연동 앱</b>으로</td></tr>
+        <tr><td>노인맞춤돌봄서비스</td><td>생활지원사 주 1회 방문 시 <b>앱 설치·사용 교육</b> 결합</td></tr>
+        <tr><td>스마트빌리지·스마트경로당</td><td>강원 신규 공모에 <b>서비스 항목으로 포함</b> 제안</td></tr>
+        <tr><td>지자체·통신사 협력</td><td>효돌·다솜이 선례처럼 <b>무료 보급</b> 모델</td></tr>
+      </tbody>
+    </table>
+    <div class="keybox">국가가 이미 구축한 <b>등록명부·방문 인력·경로당·장비 교체 예산</b>에 올라타는 것이 가장 빠르고 저비용인 보급 경로입니다.</div>
+    <div class="footnote">출처: 보건복지부 2025 노인보건복지 사업안내 · NIA 스마트빌리지 지침 · KDI 경제교육정보센터</div>
   </section>
 
   <!-- 10. DESIGN + GOAL -->
@@ -288,6 +354,19 @@
     <div class="footnote">SDOH 근거: 「2023 강원의 사회지표 보고서」 · 건강보험심사평가원 지역보건의료현황 분석</div>
   </section>
 
+  <!-- 기대효과 -->
+  <section class="slide">
+    <span class="kicker">기대효과</span>
+    <h2>강원에서 검증하고, <span class="em">전국으로</span></h2>
+    <p class="lead">골든이웃은 강원 도서산간에서 먼저 검증하지만, 그 문제 구조 — 의료취약지·독거노인·긴 구급 도착시간 — 는 전국의 농어촌·도서 지역이 그대로 공유합니다. 강원에서 효과를 입증한 뒤 <b>전국으로 확대</b>하는 것을 목표로 합니다.</p>
+    <div class="cols3">
+      <div class="card"><h3>1단계 · 강원 파일럿</h3><ul><li>도서산간 시·군에서 실증 — 생존율·목격자 CPR 개선 측정</li></ul></div>
+      <div class="card"><h3>2단계 · 전국 확대</h3><ul><li>동일 SDOH 구조의 전국 의료취약지·농어촌으로 확산</li></ul></div>
+      <div class="card ind"><h3>확산 기반</h3><ul><li>응급안전안심서비스가 이미 <b>전국 30만 가구</b> — 별도 유통망 불필요</li></ul></div>
+    </div>
+    <div class="footnote">전국 의료취약지·농어촌으로의 단계적 확대를 기대</div>
+  </section>
+
   <!-- 11. CLOSING -->
   <section class="slide">
     <span class="kicker">마무리</span>
@@ -306,7 +385,7 @@
 
 <div id="bar"></div>
 <div id="dots"></div>
-<div id="nav"><button id="prev" aria-label="이전">‹</button><span id="count">1 / 11</span><button id="next" aria-label="다음">›</button></div>
+<div id="nav"><button id="prev" aria-label="이전">‹</button><span id="count">1 / 15</span><button id="next" aria-label="다음">›</button></div>
 <div class="hint">← → 또는 스페이스로 이동</div>
 
 <script>
