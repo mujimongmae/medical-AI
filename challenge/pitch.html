@@ -89,6 +89,12 @@
     color:#c9971f;background:linear-gradient(135deg,#a9740a 0%,#e6c14a 42%,#c99320 72%,#8f6207 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .subtitle{font-size:clamp(20px,2.9vw,36px);font-weight:800;letter-spacing:-.015em;color:var(--ink);margin-top:2px}
+  .team{display:flex;flex-wrap:wrap;gap:clamp(20px,3vw,44px);margin-top:34px}
+  .member{display:flex;flex-direction:column;align-items:center;text-align:center;width:clamp(96px,11vw,124px)}
+  .member img{width:clamp(72px,8vw,96px);height:clamp(72px,8vw,96px);border-radius:50%;object-fit:cover;
+    border:3px solid #fff;box-shadow:0 4px 14px rgba(18,39,64,.16);background:var(--surface)}
+  .member .mname{margin-top:11px;font-size:clamp(14px,1.5vw,17px);font-weight:800;color:var(--ink)}
+  .member .maff{margin-top:3px;font-size:clamp(11px,1.15vw,12.5px);color:var(--muted);line-height:1.35;word-break:keep-all}
   .footnote{margin-top:auto;padding-top:16px;font-size:12.5px;color:#8496a9;line-height:1.5;border-top:1px solid var(--line)}
   .disc{background:var(--accent2-soft);border:1px solid #f6c6d1;border-radius:var(--radius);
     padding:22px 26px;margin-top:22px;max-width:74ch;font-size:clamp(14px,1.5vw,17px);line-height:1.6;color:var(--ink)}
@@ -104,7 +110,12 @@
     letter-spacing:.01em;color:#fff;padding:9px 20px;border-radius:999px;
     background:linear-gradient(135deg,#f59e0b 0%,#e11d48 100%);
     box-shadow:0 6px 18px rgba(225,29,72,.32);animation:apipulse 1.8s ease-in-out infinite}
+  .apibadge.secure{background:linear-gradient(135deg,#0d9488 0%,#4f46e5 100%);box-shadow:0 6px 18px rgba(79,70,229,.28)}
   @keyframes apipulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  .securenote{margin-top:14px;padding:14px 20px;border-left:5px solid var(--indigo);background:var(--indigo-soft);
+    border-radius:12px;font-size:clamp(13px,1.4vw,16px);line-height:1.55;color:var(--ink);max-width:1180px;align-self:center;width:100%}
+  .securenote b{color:var(--indigo)}
+  .archframe.compact img{max-height:58vh}
 
   #bar{position:fixed;left:0;top:0;height:4px;background:var(--accent);width:0;transition:width .35s ease;z-index:20}
   #nav{position:fixed;right:20px;bottom:18px;display:flex;align-items:center;gap:12px;z-index:20;
@@ -127,6 +138,12 @@
     <h1 class="goldtitle">골든 이웃</h1>
     <p class="subtitle">골든타임보다 먼저 도착하는 이웃의 손</p>
     <p class="lead">저희 가톨릭 관동대가 소재한 강원도 지역에서, 구급차가 산길을 넘어오는 사이 10분 거리의 이웃이 먼저 갑니다. 홈캠 AI가 쓰러짐을 감지하고, 마을이 함께 살립니다.</p>
+    <div class="team">
+      <div class="member"><img src="team/jeong-seunghyun.jpg" alt="정승현"><div class="mname">정승현</div><div class="maff">가톨릭관동대 의학과</div></div>
+      <div class="member"><img src="team/jo-geonhui.jpg" alt="조건희"><div class="mname">조건희</div><div class="maff">가톨릭관동대 의학과</div></div>
+      <div class="member"><img src="team/kim-junhwi.jpg" alt="김준휘"><div class="mname">김준휘</div><div class="maff">카이스트 전산학부</div></div>
+      <div class="member"><img src="team/lee-jinhyeong.png" alt="이진형"><div class="mname">이진형</div><div class="maff">카이스트 전기 및 전자공학부</div></div>
+    </div>
     <div class="footnote">본 정보는 참고용이며 의학적 진단이 아닙니다. 응급 증상(흉통·호흡곤란·의식저하 등)은 119/응급실 안내를 최우선으로 합니다.</div>
   </section>
 
@@ -194,12 +211,12 @@
   <!-- 6. HOW IT WORKS -->
   <section class="slide">
     <span class="kicker">작동 방식</span>
-    <h2>감지 → 확인 → 신고·이웃 → 초동조치</h2>
+    <h2>감지 → 본인 재확인 → 119신고·이웃 알림 → 초동조치</h2>
     <div class="flow">
       <div class="step"><div class="idx">STEP 1</div><div class="t">🎥 홈캠 AI 감지</div><div class="d">AI만 영상을 처리해 쓰러짐 판별. 사람은 영상을 볼 수 없음.</div></div>
       <div class="step"><div class="idx">STEP 2</div><div class="t">📲 본인 재확인</div><div class="d">쓰러진 사람에게 알림 → 응답 없으면(위급) 다음 단계.</div></div>
       <div class="step alert"><div class="idx">STEP 3</div><div class="t">🚑 119 + 이웃 동시</div><div class="d">위치·정보와 함께 119 자동신고, 10분 거리 이웃에 즉시 알림.</div></div>
-      <div class="step alert"><div class="idx">STEP 4</div><div class="t">🫀 응급처치 프로토콜</div><div class="d">도착한 이웃이 앱 안내(가슴압박·기도확보)와 119 영상지도로 초동조치.</div></div>
+      <div class="step alert"><div class="idx">STEP 4</div><div class="t">🫀 응급처치 프로토콜</div><div class="d">도착한 이웃이 앱이 안내하는 프로토콜(가슴압박·기도확보 등)과, 마이크로 증상을 말하면 LLM이 답하는 안내로 초동조치.</div></div>
     </div>
     <p class="lead">공동체 단위는 행정리(자연마을) 소속 + <span class="em">도로 도달시간 10분 이내</span> 이웃으로 묶는다 — 산악 지형에선 직선거리가 아닌 실제 도달시간이 진짜 변수다.</p>
     <div class="footnote">이웃은 119 도착 전 초동 지원자입니다. 119 신고는 언제나 병행됩니다.</div>
@@ -207,8 +224,12 @@
 
   <!-- 7. ARCHITECTURE 1 (SVG 그대로) -->
   <section class="slide arch">
-    <span class="kicker ind">시스템 아키텍처</span>
-    <div class="archframe"><img src="production-architecture-slide.svg" alt="지역사회 응급대응 AI 시스템 아키텍처"></div>
+    <div class="archhead">
+      <span class="kicker ind" style="margin-bottom:0">시스템 아키텍처</span>
+      <span class="apibadge secure">🔒 민감정보 외부 유출 차단</span>
+    </div>
+    <div class="securenote"><b>병력 등 민감정보는 서버 밖으로 나갈 수 없는 구조입니다.</b> ① 응급 발생 <b>전</b>에는 민감정보가 <b>환자 휴대폰(앱) 안에만</b> 머무르고, ② 응급 시 AI 보조를 받을 때에도 <b>[골든이웃] 서버 밖으로 절대 빠져나가지 않습니다.</b></div>
+    <div class="archframe compact"><img src="production-architecture-slide.svg" alt="지역사회 응급대응 AI 시스템 아키텍처"></div>
   </section>
 
   <!-- 8. ARCHITECTURE 2 (SVG 그대로) -->
@@ -250,6 +271,7 @@
         <h3>🔒 프라이버시 · 공동체</h3>
         <ul>
           <li>홈캠 영상은 <b>AI만 처리</b>, 골격(자세) 데이터만 추출 — 원본 미저장</li>
+          <li>병력 등 민감정보는 <b>[골든이웃] 서버 밖으로 유출되지 않는 구조</b></li>
           <li>등록 허브는 <b>경로당</b>, 도로 도달시간 10분 이내 이웃으로 조직</li>
         </ul>
       </div>
