@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>골든이웃 · 설계 논지 — SDOH에서 앱 필요성까지</title>
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#f4f8fc; --surface:#f5f8fc; --ink:#122740; --muted:#5c6f86; --line:#e3ebf4;
+    --accent:#0d9488; --accent-soft:#e2f5f2; --accent2:#e11d48; --accent2-soft:#fdeaef;
+    --indigo:#4f46e5; --indigo-soft:#eef2ff; --amber:#b45309; --amber-soft:#fef3e2;
+    --gray-fill:#94a3b8; --radius:18px; --pad:clamp(28px,4.6vw,64px); --shadow:0 8px 30px rgba(18,39,64,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+    background:var(--bg2);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  .page{position:relative;min-height:100vh;padding:var(--pad);display:flex;flex-direction:column;
+    justify-content:center;background:radial-gradient(120% 130% at 100% 0%,var(--bg2) 0%,#ffffff 55%);
+    border-bottom:1px solid var(--line)}
+  .page.dark{background:linear-gradient(160deg,#0d2033 0%,#0a1626 100%);color:#eef4fa}
+  .page.dark .lead{color:#b7c6d9}
+  .page.dark .footnote{color:#7c93ab}
+
+  .partbadge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;
+    letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:999px;margin-bottom:18px}
+  .p1 .partbadge{background:var(--accent-soft);color:var(--accent)}
+  .p2 .partbadge{background:var(--accent2-soft);color:var(--accent2)}
+  .p3 .partbadge{background:var(--indigo-soft);color:var(--indigo)}
+  .p4 .partbadge{background:var(--amber-soft);color:var(--amber)}
+
+  .kicker{display:inline-flex;align-items:center;gap:9px;font-size:clamp(12px,1.2vw,14px);font-weight:800;
+    letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+  h1{font-size:clamp(30px,5vw,58px);line-height:1.14;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(24px,3.6vw,40px);line-height:1.2;font-weight:800;letter-spacing:-.02em;margin-bottom:18px}
+  h3{font-size:clamp(16px,1.9vw,21px);font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:9px}
+  .lead{font-size:clamp(15px,1.65vw,19px);line-height:1.68;color:var(--muted);max-width:78ch;margin-top:14px}
+  .em{color:var(--accent);font-weight:800}
+  .em-red{color:var(--accent2);font-weight:800}
+  .em-i{color:var(--indigo);font-weight:800}
+  .hl{background:linear-gradient(transparent 62%,var(--accent-soft) 0);padding:0 2px;font-weight:700;color:var(--ink)}
+
+  .stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:26px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;min-width:150px;flex:1 1 150px;box-shadow:var(--shadow)}
+  .stat .n{font-size:clamp(24px,3vw,34px);font-weight:800;line-height:1;color:var(--ink)}
+  .stat .n small{font-size:.5em;font-weight:700;color:var(--muted)}
+  .stat.red .n{color:var(--accent2)} .stat.teal .n{color:var(--accent)} .stat.ind .n{color:var(--indigo)}
+  .stat .l{margin-top:9px;font-size:clamp(11.5px,1.2vw,13px);color:var(--muted);line-height:1.4}
+  .stat.big .n{font-size:clamp(28px,3.6vw,40px)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+  .cols3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:22px}
+  @media(max-width:900px){.cols,.cols3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+  .card ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .card li{font-size:clamp(13px,1.4vw,15.5px);line-height:1.5;color:var(--ink);padding-left:20px;position:relative}
+  .card li::before{content:"";position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .card.red li::before{background:var(--accent2)}
+  .card.ind li::before{background:var(--indigo)}
+  .card li b{color:var(--ink);font-weight:800}
+
+  table.vars{width:100%;border-collapse:collapse;margin-top:22px;font-size:clamp(12px,1.25vw,14.5px);
+    box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden}
+  table.vars th,table.vars td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+  table.vars thead th{background:var(--ink);color:#fff;font-weight:700;font-size:.9em;letter-spacing:.02em}
+  table.vars tbody tr{background:var(--surface)}
+  table.vars tbody tr:nth-child(even){background:#eef4fa}
+  table.vars td:first-child{font-weight:700;color:var(--ink)}
+  table.vars td.arrow{color:var(--accent);font-weight:800}
+
+  .barcomp{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+  .barrow{display:flex;align-items:center;gap:12px}
+  .barrow .label{width:130px;flex:0 0 auto;font-size:clamp(12px,1.3vw,14px);font-weight:700;color:var(--ink)}
+  .barrow .track{flex:1;background:#e7edf3;border-radius:7px;height:24px;position:relative;overflow:hidden}
+  .barrow .fill{height:100%;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;
+    padding-right:10px;color:#fff;font-weight:800;font-size:12.5px;white-space:nowrap;transition:width .3s}
+  .barrow .fill.muted{background:var(--gray-fill)}
+  .barrow .fill.teal{background:var(--accent)}
+  .barrow .fill.rose{background:var(--accent2)}
+  .chartcap{margin-top:10px;font-size:12px;color:var(--muted)}
+
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin-top:24px}
+  .step{flex:1 1 130px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 15px;box-shadow:var(--shadow)}
+  .step .idx{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.08em}
+  .step .t{margin-top:7px;font-size:clamp(13.5px,1.5vw,16.5px);font-weight:800;line-height:1.3}
+  .step .d{margin-top:6px;font-size:clamp(11px,1.2vw,12.5px);color:var(--muted);line-height:1.4}
+  .step.hot{border-color:var(--accent2);background:var(--accent2-soft)}
+  .step.hot .idx{color:var(--accent2)}
+
+  .chainflow{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-top:24px}
+  .chainflow .step{flex:1 1 140px}
+  .chainarrow{flex:0 0 auto;font-size:22px;font-weight:800;color:#c7d3e0;padding:0 4px;align-self:center}
+  @media(max-width:760px){.chainarrow{transform:rotate(90deg);padding:4px 0}}
+
+  .tag{display:inline-block;background:var(--accent-soft);color:var(--accent);border:1px solid #b9e6e0;
+    font-size:13px;font-weight:800;padding:5px 13px;border-radius:999px;margin-top:12px;margin-right:8px}
+  .tag.i{background:var(--indigo-soft);color:var(--indigo);border-color:#d3d8fb}
+  .tag.a{background:var(--amber-soft);color:var(--amber);border-color:#f3ddb3}
+
+  .footnote{margin-top:auto;padding-top:16px;font-size:12px;color:#8496a9;line-height:1.5;border-top:1px solid var(--line)}
+  .disc{background:var(--accent2-soft);border:1px solid #f6c6d1;border-radius:var(--radius);
+    padding:20px 24px;margin-top:20px;max-width:80ch;font-size:clamp(13px,1.4vw,15.5px);line-height:1.6;color:var(--ink)}
+  .disc b{color:var(--accent2)}
+
+  .keybox{margin-top:22px;padding:20px 24px;border-left:5px solid var(--accent2);background:var(--accent2-soft);
+    border-radius:12px;font-size:clamp(14px,1.55vw,17px);font-weight:700;line-height:1.6;color:var(--ink)}
+  .keybox b{color:var(--accent2)}
+  .keybox.ind{border-left-color:var(--indigo);background:var(--indigo-soft)}
+  .keybox.ind b{color:var(--indigo)}
+
+  .notebox{margin-top:18px;padding:16px 20px;border-left:4px solid var(--amber);background:var(--amber-soft);
+    border-radius:10px;font-size:clamp(12.5px,1.3vw,14.5px);line-height:1.6;color:var(--ink)}
+  .notebox b{color:var(--amber)}
+
+  .pagenum{position:absolute;right:24px;bottom:20px;font-size:12px;font-weight:700;color:var(--muted)}
+  .page.dark .pagenum{color:#7c93ab}
+
+  .toc{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;margin-top:28px;max-width:900px}
+  .toc a{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:inherit;font-size:14.5px;
+    padding:8px 0;border-bottom:1px dashed var(--line)}
+  .toc a .no{font-weight:800;color:var(--accent);min-width:22px}
+  .toc a:hover{color:var(--accent)}
+
+  .indexlist{display:flex;flex-direction:column;gap:0;margin-top:26px;max-width:640px}
+  .indexlist a{display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit;
+    padding:14px 4px;border-bottom:1px solid var(--line)}
+  .indexlist a .no{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accent-soft);
+    color:var(--accent);font-weight:800;font-size:15px;display:grid;place-items:center}
+  .indexlist a .t{font-weight:800;font-size:clamp(14px,1.6vw,17px)}
+  .indexlist a .d{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .indexlist a:hover .no{background:var(--accent);color:#fff}
+
+  .navdots{position:fixed;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;
+    gap:9px;z-index:30}
+  .navdots a{width:9px;height:9px;border-radius:50%;background:#cdd9e6;display:block;transition:.2s}
+  .navdots a:hover,.navdots a.p1{background:var(--accent)}
+  @media(max-width:720px){.navdots{display:none}}
+
+  @media print{
+    body{background:#fff}
+    .navdots{display:none}
+    .page{min-height:auto;page-break-after:always;border-bottom:none}
+  }
+</style>
+</head>
+<body>
+
+<nav class="navdots" aria-hidden="true">
+  <a href="#cover"></a><a href="#p1"></a><a href="#p2"></a><a href="#p3"></a><a href="#p4"></a>
+</nav>
+
+<!-- 0. COVER -->
+<section class="page dark" id="cover">
+  <span class="kicker" style="color:#8fd9cf">골든이웃 · 설계 논지 보고서</span>
+  <h1>강원의 사회적 조건은 어떻게<br><span style="color:#5eead4">'응급 생사'</span>의 격차가 되는가</h1>
+  <p class="lead" style="max-width:70ch">SDOH 현황 → 보건의료 문제 → 인과적 연결 → 앱 개발의 필요성. 정부·공공기관 공식 통계에 근거해 강원특별자치도 도서산간의 응급 대응 격차를 논증하고, '골든이웃' 앱이 왜 지금 이 지점에 필요한지를 보인다.</p>
+  <div class="toc" style="color:#dce8f3">
+    <a href="#p1" style="border-color:#254057"><span class="no">I</span> 강원지역 SDOH 분석</a>
+    <a href="#p2" style="border-color:#254057"><span class="no">II</span> 강원지역 주요 보건의료 문제 분석</a>
+    <a href="#p3" style="border-color:#254057"><span class="no">III</span> SDOH ↔ 보건의료 문제의 연결</a>
+    <a href="#p4" style="border-color:#254057"><span class="no">IV</span> 앱 개발의 필요성</a>
+  </div>
+  <div style="margin-top:26px">
+    <span class="tag" style="background:#123b34;color:#5eead4;border-color:#1c5348">근거: 공공기관 통계 12종</span>
+  </div>
+  <div class="footnote" style="border-color:#254057">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) · 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석」 · 강원도 「제8기 지역보건의료계획」 · 질병관리청 『급성심장정지조사』 · NEJM·JACC 등 국제 학술지. 상세 서지는 IV부 말미 참고문헌 참조.</div>
+</section>
+
+<!-- ===================== PART I ===================== -->
+
+<section class="page p1" id="p1">
+  <span class="partbadge">Part I · 강원지역 SDOH 분석 — 개요</span>
+  <h2>SDOH란 무엇이며, 이 장은 무엇을 다루는가</h2>
+  <p class="lead"><b class="em">건강의 사회적 결정요인(SDOH)</b>은 사람이 태어나고 살아가며 나이 드는 조건 — 소득·주거·교통·의료접근성·사회적 관계 — 이 건강 결과를 좌우한다는 관점이다. 「2023 강원의 사회지표 보고서」의 지표를 SDOH 틀로 재구성하면, 도서산간 응급 대응과 직결되는 세부항목은 다음 7가지로 정리된다.</p>
+  <div class="indexlist">
+    <a href="#i1"><span class="no">①</span><span><span class="t">인구구조와 고령화</span><div class="d">고령화율 23.3%, 인구 자연감소, 지방소멸 압력</div></span></a>
+    <a href="#i2"><span class="no">②</span><span><span class="t">경제적 안정</span><div class="d">재정자립도·기초생활보장 수급률의 도농 격차</div></span></a>
+    <a href="#i3"><span class="no">③</span><span><span class="t">건강과 의료 접근성</span><div class="d">사망률·만성질환 부담과 의료자원의 지리적 편중</div></span></a>
+    <a href="#i4"><span class="no">④</span><span><span class="t">주거와 교통</span><div class="d">생활 인프라·병원까지의 실제 이동 시간</div></span></a>
+    <a href="#i5"><span class="no">⑤</span><span><span class="t">주관적 웰빙</span><div class="d">삶의 만족도, 문화·정보 접근성의 도농 격차</div></span></a>
+    <a href="#i6"><span class="no">⑥</span><span><span class="t">고령자 안전</span><div class="d">고령자 안전사고 사망률, 교통·화재·산불 안전</div></span></a>
+    <a href="#i7"><span class="no">⑦</span><span><span class="t">환경</span><div class="d">생활권 녹지 접근성의 지역 편차</div></span></a>
+  </div>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024). 11개 영역 중 본 사업과 직결되는 7개 세부항목만 발췌 구성.</div>
+  <span class="pagenum">2 / 21</span>
+</section>
+
+<section class="page p1" id="i1">
+  <span class="partbadge">Part I · SDOH 세부항목 ①</span>
+  <h2>인구구조와 고령화 — 무너지는 인구, 심화되는 고령화</h2>
+  <div class="stats">
+    <div class="stat red"><div class="n">23.3<small>%</small></div><div class="l">65세 이상 고령인구 비율 — 노령화지수 229.1 (2004년 대비 3.6배)</div></div>
+    <div class="stat red"><div class="n">0.968<small>명</small></div><div class="l">합계출산율(2022) — 평창 0.764·정선 0.827로 군 지역 더 낮음</div></div>
+    <div class="stat"><div class="n">-5.1</div><div class="l">인구 자연증가율(2022) — 영월 -12.7·평창 -11.6로 농촌 집중</div></div>
+    <div class="stat"><div class="n">-1,397<small>명</small></div><div class="l">2023년 순유출 전환 — 2019~2022 순유입에서 반전, 지방소멸 압력</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px">고령화와 인구감소는 도시부(춘천·원주·강릉)가 아니라 <b>도서산간 군 지역에 집중</b>되어 있다. 이 지리적 편중이 이후 의료 접근성·사회적 고립 문제와 그대로 겹친다.</p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.81·84·86·91</div>
+  <span class="pagenum">3 / 21</span>
+</section>
+
+<section class="page p1" id="i2">
+  <span class="partbadge">Part I · SDOH 세부항목 ②</span>
+  <h2>경제적 안정 — 완만한 개선, 그러나 도농 3배 격차</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>📊 고용·소득</h3>
+      <ul>
+        <li>고용률 63.3%·실업률 2.8%로 개선 추세, 청년실업률은 <b>5.2%</b>로 여전히 높음</li>
+        <li>1인당 GRDP 34,426천원, 1인당 개인소득 22,395천원</li>
+        <li>업무상사고 사망률 만인당 7.03 — 전국(1.10) 대비 <b>6배 이상</b></li>
+      </ul>
+    </div>
+    <div class="card red">
+      <h3>💸 재정·복지 취약성</h3>
+      <ul>
+        <li>재정자립도 24.7% — 속초 20.1% vs 화천 6.8%·고성 7.8%로 <b>도농 3배 격차</b></li>
+        <li>기초생활보장 수급자 5.6%(2013년 3.7%에서 지속 증가)</li>
+        <li>생계유지 어려움 경험 38.9% — 이혼·사별·월세·저학력 계층에서 특히 높음</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px">재정자립도·산재사망률에서 드러난 도농 격차는, 다음 항목의 건강·의료 지표에서 더 뚜렷한 형태로 반복된다.</p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.192·193·196·217·219·232</div>
+  <span class="pagenum">4 / 21</span>
+</section>
+
+<section class="page p1" id="i3">
+  <span class="partbadge">Part I · SDOH 세부항목 ③</span>
+  <h2>건강과 의료 접근성 — 가장 취약한 SDOH</h2>
+  <div class="cols">
+    <div class="card red">
+      <h3>🩺 질병 부담</h3>
+      <ul>
+        <li>주요 사인 사망률(10만명당): 암 212.7·폐렴 85.4·뇌혈관 59.5·심장질환 58.1 — 영월 심장질환 127.5, 화천 허혈성심장질환 160.2</li>
+        <li>자살률 33.1(65세 이상 54.1), 65세 이상 치매 유병률 11.1%</li>
+        <li>당뇨병 13.5%·고혈압 32.2%·비만율 33.9%로 만성질환 부담 상당</li>
+      </ul>
+    </div>
+    <div>
+      <div class="barcomp" style="margin-top:0">
+        <div class="barrow"><div class="label">병상(인구 1만명당)</div><div class="track"><div class="fill rose" style="width:77%">강원 99.9개</div></div></div>
+        <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:96%">전국 125.3개</div></div></div>
+        <div class="barrow"><div class="label">의료인력(1천명당)</div><div class="track"><div class="fill rose" style="width:79%">강원 7.9명</div></div></div>
+        <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:88%">전국 8.8명</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="stats" style="margin-top:18px">
+    <div class="stat red"><div class="n">14.8<small>km</small></div><div class="l">종합병원까지 평균 거리(최대 70km) — 병원은 15.3km</div></div>
+    <div class="stat red"><div class="n">9<small>개 군</small></div><div class="l">종합병원이 아예 없는 군(횡성·평창·정선·철원·화천·양구·인제·고성·양양)</div></div>
+    <div class="stat"><div class="n">0<small>개</small></div><div class="l">고성·양양군 병상 수 — 인제·고성 간호사 0.1명/천명</div></div>
+  </div>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.108·110·112·115~116</div>
+  <span class="pagenum">5 / 21</span>
+</section>
+
+<section class="page p1" id="i4">
+  <span class="partbadge">Part I · SDOH 세부항목 ④</span>
+  <h2>주거와 교통 — 지형이 곧 지연이다</h2>
+  <div class="stats">
+    <div class="stat red"><div class="n">53.8<small>분</small></div><div class="l">인제군 시외버스 이용 생활편의시설 접근시간(도보 14.4분→대중교통 23.8분, 평균)</div></div>
+    <div class="stat red"><div class="n">70<small>%+</small></div><div class="l">군 지역 승용차 의존도(전체 평균 62.9%) — 차 없이는 이동 곤란</div></div>
+    <div class="stat"><div class="n">3.00<small>점</small></div><div class="l">시내·마을버스 만족도(11점 척도 하위권), 고성 기차 만족도 2.12점</div></div>
+    <div class="stat"><div class="n">68.1<small>%</small></div><div class="l">화천 상수도 보급률(전체 평균 93.9%) — 기반시설 지역 격차</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px">산·계곡 지형은 "생활 인프라까지의 시간"뿐 아니라 <b class="em-red">119 구급차의 현장 도달 시간</b>도 함께 늘린다. <b>직선거리가 아닌 실제 도로 도달시간</b>이 응급 대응의 진짜 변수가 된다.</p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.63~66·248~249·355</div>
+  <span class="pagenum">6 / 21</span>
+</section>
+
+<section class="page p1" id="i5">
+  <span class="partbadge">Part I · SDOH 세부항목 ⑤</span>
+  <h2>주관적 웰빙 — 만족감은 있으나, 접근성은 갈린다</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>😊 삶의 만족</h3>
+      <ul>
+        <li>삶에 대한 만족감 11점 척도 평균 6.43점, 어제의 행복 6.40점</li>
+        <li>시군별로는 횡성·정선이 높고 원주·강릉이 낮음</li>
+      </ul>
+    </div>
+    <div class="card red">
+      <h3>📡 접근성 격차</h3>
+      <ul>
+        <li>문화·여가 인프라: 도서관 평균 4.7km·공공체육시설 4.1km·공연문화시설 7.1km — 속초 등 도시부와 영월·평창 등 군 지역 간 차이 큼</li>
+        <li>인터넷 이용률 83.1% — 전국(93.0%)보다 낮아 고령·농촌 지역의 <b>디지털 접근 격차</b> 시사</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px">삶의 만족감 자체는 낮지 않지만, 정보·문화 인프라 접근성의 도농 격차는 <b class="em">고령층의 고립을 심화</b>시키는 배경 조건이 된다.</p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.278~279·286·311</div>
+  <span class="pagenum">7 / 21</span>
+</section>
+
+<section class="page p1" id="i6">
+  <span class="partbadge">Part I · SDOH 세부항목 ⑥</span>
+  <h2>고령자 안전 — 다시 상승하는 안전사고 사망률</h2>
+  <div class="stats">
+    <div class="stat red"><div class="n">122.1</div><div class="l">고령자 안전사고 사망률(인구 10만명당, 2022) — 최근 재상승 추세, 사망자 416명</div></div>
+    <div class="stat"><div class="n">9.6</div><div class="l">교통사고 사망(인구 10만명당) — 2021년 6,605건·사망 145명</div></div>
+    <div class="stat"><div class="n">1,944<small>건</small></div><div class="l">화재 발생(2022) — 사망 29명</div></div>
+    <div class="stat"><div class="n">7,420<small>ha</small></div><div class="l">산불 피해 면적(2022)</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px">고령자 안전사고 사망률의 재상승은, 다음 파트에서 다룰 <b class="em-red">급성심장정지·낙상 등 '갑자기 쓰러지는' 사건</b>이 고령 인구에게 특히 위협적임을 뒷받침한다.</p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.316~318</div>
+  <span class="pagenum">8 / 21</span>
+</section>
+
+<section class="page p1" id="i7">
+  <span class="partbadge">Part I · SDOH 세부항목 ⑦</span>
+  <h2>환경 — 녹지 접근성도 도농 격차</h2>
+  <div class="stats">
+    <div class="stat"><div class="n">5.8<small>km</small></div><div class="l">생활권 공원까지 평균 거리</div></div>
+    <div class="stat red"><div class="n">21.4<small>km</small></div><div class="l">홍천군 생활권 공원까지 거리 — 평균의 약 3.7배</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px">대기·폐기물 등 환경 부하는 오히려 원주 등 도시부에서 높게 나타나, 환경 영역은 앞선 항목들과 달리 <b>"도시가 더 취약한"</b> 유일한 지표다. 다만 생활권 녹지 접근성은 다른 인프라와 동일하게 <b class="em-red">군 지역이 불리</b>하다.</p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) p.352</div>
+  <span class="pagenum">9 / 21</span>
+</section>
+
+<section class="page p1">
+  <span class="partbadge">Part I · 종합 — 7개 항목 중 3가지로 수렴</span>
+  <h2>본 사업과 직결되는 3대 SDOH</h2>
+  <p class="lead">앞선 7개 세부항목 가운데, 도서산간 독거 어르신의 응급 상황을 겨냥하는 본 사업과 직접 맞닿는 SDOH는 다음 세 가지로 수렴한다.</p>
+  <div class="cols3">
+    <div class="card">
+      <h3>🏥 의료 접근성 <span class="tag" style="margin:0">③</span></h3>
+      <ul><li>종합병원 평균 14.8km·최대 70km</li><li>9개 군 종합병원 전무</li><li>병원 도달 이전 초동대응이 생존을 좌우</li></ul>
+    </div>
+    <div class="card">
+      <h3>🗺️ 이웃·물리적 환경 <span class="tag" style="margin:0">④</span></h3>
+      <ul><li>산악·계곡 지형, 대중교통 취약</li><li>119 현장 도달 지연</li><li>직선거리 아닌 실제 도달시간 기준 조직화 필요</li></ul>
+    </div>
+    <div class="card red">
+      <h3>🧑‍🦳 사회적 고립 <span class="tag" style="margin:0">①</span></h3>
+      <ul><li>1인가구 중 약 1/3이 독거노인</li><li>횡성·영월 등은 절반에 육박</li><li>목격·신고할 주체의 부재</li></ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px"><b class="em">요컨대 본 사업이 대응하려는 문제는 특정 질환의 치료가 아니라, 강원의 지리·사회 조건이 만든 '응급 대응의 격차' 그 자체다.</b></p>
+  <div class="footnote">출처: 강원특별자치도 「2023 강원의 사회지표 보고서」(2024) 종합 — challenge/1. gangwon-sdoh.md</div>
+  <span class="pagenum">10 / 21</span>
+</section>
+
+<!-- ===================== PART II ===================== -->
+
+<section class="page p2" id="p2">
+  <span class="partbadge">Part II · 보건의료 문제 분석 — 1/3</span>
+  <h2>"넓은 땅, 흩어진 사람, 몰려 있는 병원"</h2>
+  <p class="lead">강원 인구는 전국의 <b class="em-red">3.0%</b>뿐이지만 면적은 <b class="em-red">16.8%</b>를 차지한다. 인구밀도가 극히 낮아 발견·신고·이송의 물리적 거리가 태생적으로 길다. 여기에 의료 자원은 소수 도시에 집중된다.</p>
+  <table class="vars">
+    <thead><tr><th>지표</th><th>강원</th><th>전국</th><th>격차</th></tr></thead>
+    <tbody>
+      <tr><td>인구 1만명당 병상</td><td>99.9개</td><td>125.3개</td><td class="arrow">-20%</td></tr>
+      <tr><td>인구 1천명당 의료인</td><td>7.9명</td><td>8.8명</td><td class="arrow">-10%</td></tr>
+      <tr><td>상급종합병원</td><td>2곳</td><td>45곳</td><td class="arrow">전국의 4.4%</td></tr>
+      <tr><td>입원 자체충족률</td><td>26.6%</td><td>평균 64.4%(도내)</td><td class="arrow">73% 역외 유출</td></tr>
+    </tbody>
+  </table>
+  <p class="lead" style="margin-top:16px">양양·고성군은 입원 자체충족률이 <b class="em-red">0%</b>다. 고성군에는 병원급 의료기관이 아예 없어 가장 가까운 병원도 25km·차량 30분 거리(속초)에 있다.</p>
+  <div class="notebox">
+    <b>거리 해석 시 유의</b> — 이 "25km·30분"은 고성군청(읍내) 소재지를 기준으로 산출된 값으로 추정된다(지자체 통계는 통상 행정 중심지를 기준점으로 삼는다). 그러나 Part I-④에서 확인했듯 강원 군 지역은 대중교통 소요시간이 최대 53.8분(인제)에 달하고 승용차 의존도가 70%를 넘는다. 즉 <b>군청에서 먼 외곽 마을일수록, 차량이 없는 독거 어르신일수록</b> 실제 병원 도달 시간은 이 수치보다 훨씬 길어진다 — 교통 인프라의 취약함이 의료 접근성 격차를 한 번 더 벌리는 것이다.
+  </div>
+  <div class="footnote">출처: 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석(강원도)」 p.13~18·41~45</div>
+  <span class="pagenum">11 / 21</span>
+</section>
+
+<section class="page p2">
+  <span class="partbadge">Part II · 보건의료 문제 분석 — 2/3</span>
+  <h2>급성질환 부담 — 전국 최고 수준</h2>
+  <p class="lead">강원은 자원만 부족한 게 아니라, <b class="em-red">급성으로 쓰러지는 질환의 부담 자체</b>가 전국에서 가장 무겁다.</p>
+  <div class="barcomp">
+    <div class="barrow"><div class="label">연령표준화 사망률</div><div class="track"><div class="fill rose" style="width:94%">강원 330.1 (전국 1위)</div></div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:85%">전국 평균 298.3</div></div></div>
+    <div class="barrow"><div class="label">심장질환 사망률</div><div class="track"><div class="fill rose" style="width:89%">강원 31.2</div></div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:77%">전국 27.1</div></div></div>
+  </div>
+  <div class="chartcap">단위: 인구 10만명당 사망자 수. 출처: 강원도 「제8기 지역보건의료계획」(2023) p.17~18</div>
+  <div class="stats" style="margin-top:20px">
+    <div class="stat red"><div class="n">79.77<small>세</small></div><div class="l">강원 남성 기대수명 — 전국 17개 시·도 중 16위(전국 81.50세)</div></div>
+    <div class="stat"><div class="n">22.0<small>%</small></div><div class="l">고혈압 진단경험률(+2.0%p) — 당뇨 9.7%(+0.9%p), 심뇌혈관 최대 위험요인</div></div>
+    <div class="stat red"><div class="n">2<small>위</small></div><div class="l">사망원인 순위 — 암 › <b>심장질환</b> › 자살 › 폐렴 › 뇌혈관질환</div></div>
+  </div>
+  <div class="footnote">출처: 강원도 「제8기(2023–2026) 지역보건의료계획」 p.17~19; 건강보험심사평가원 현황분석 p.28~29·51</div>
+  <span class="pagenum">12 / 21</span>
+</section>
+
+<section class="page p2">
+  <span class="partbadge">Part II · 보건의료 문제 분석 — 3/3</span>
+  <h2>급성심장정지 — 강원의 골든타임은 이미 무너져 있다</h2>
+  <p class="lead">앞의 구조적·질병적 취약성은 급성심장정지(OHCA) 지표에서 가장 극적으로 나타난다.</p>
+  <div class="barcomp">
+    <div class="barrow"><div class="label">생존율</div><div class="track"><div class="fill rose" style="width:51%">강원 7.2%</div></div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:66%">전국 평균 9.2%</div></div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill muted" style="width:89%">서울 12.4%</div></div></div>
+    <div class="barrow"><div class="label">일반인 CPR 시행률</div><div class="track"><div class="fill muted" style="width:96%">특별시 48.2%</div></div></div>
+    <div class="barrow"><div class="label"></div><div class="track"><div class="fill rose" style="width:40%">도·군 19.9%</div></div></div>
+  </div>
+  <div class="stats" style="margin-top:20px">
+    <div class="stat red big"><div class="n">전국 2위</div><div class="l">강원 급성심장정지 <b>발생률</b> — 인구 10만명당 95.8명, 고령·만성질환 부담(Part II-2)과 일치</div></div>
+    <div class="stat red"><div class="n">17<small>분</small></div><div class="l">강원 도서산간 119 현장 도착 평균 — 도시 지역 7분의 <b>2.4배</b> (전국 심정지 4분 이내 도착률은 1.7%로, 이는 전국 평균 기준)</div></div>
+    <div class="stat teal"><div class="n">2<small>배 이상</small></div><div class="l">CPR 시행 시 생존율(14.3%) vs 미시행(6.4%) — 약 2.2배</div></div>
+  </div>
+  <div class="keybox">
+    강원에서는 <b>① 급성심장정지가 자주 발생</b>하고, <b>② 목격·초기대처가 부족</b>하며, <b>③ 구급차 도착도 느려서</b>, 결국 생존율이 전국 평균에 못 미친다.
+  </div>
+  <div class="footnote">출처: 질병관리청 『급성심장정지조사』(발생률·생존율·CPR시행률) · 중앙응급의료센터 · 한국응급구조학회지(전국 4분이내 도착률) · 소방청·KJEMS(85개 시군구 분석)·강원도 지역필수의료 주민조사 p.39·45(강원 도서산간 현장도착시간)</div>
+  <span class="pagenum">13 / 21</span>
+</section>
+
+<!-- ===================== PART III ===================== -->
+
+<section class="page p3" id="p3">
+  <span class="partbadge">Part III · SDOH ↔ 보건의료 문제의 연결 — 1/4</span>
+  <h2>두 갈래의 근거, 이제 하나로 잇는다</h2>
+  <p class="lead">지금까지 <b class="em">Part I에서 강원의 SDOH</b>를, <b class="em-red">Part II에서 강원의 보건의료 문제</b>를 각각 살펴보았다. 그렇다면 이 둘은 서로 어떤 관계에 있을까 — 사회적 조건은 구체적으로 어떤 경로를 거쳐 낮은 생존율로 이어지는가?</p>
+  <div class="cols">
+    <div class="card">
+      <h3>Part I에서 본 것 — SDOH</h3>
+      <ul><li>의료 접근성: 종합병원 평균 14.8km, 9개 군 부재</li><li>이웃·물리환경: 산악 지형, 대중교통 취약</li><li>사회적 고립: 1인가구 약 1/3 독거노인</li></ul>
+    </div>
+    <div class="card red">
+      <h3>Part II에서 본 것 — 보건의료 문제</h3>
+      <ul><li>연령표준화 사망률 전국 1위(330.1)</li><li>급성심장정지 발생률 전국 2위(95.8/10만)</li><li>급성심장정지 생존율 7.2% — 전국 최하위권</li></ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:20px">두 파트를 잇는 열쇠는 <b class="em-i">'시간'</b>이다. 강원의 여러 보건 문제 중 <b class="em-i">급성심장정지(및 그로 대표되는 급성 쓰러짐 사건)</b>에 초점을 맞추는 이유는 세 가지다.</p>
+  <div class="cols3">
+    <div class="card ind"><h3>① 부담이 가장 크다</h3><ul><li>심장질환·연령표준화 사망률 전국 최고(Part II)</li></ul></div>
+    <div class="card ind"><h3>② SDOH가 한순간 중첩</h3><ul><li>의료접근성·물리환경·사회적고립이 단 하나의 사건에서 동시 작동</li></ul></div>
+    <div class="card ind"><h3>③ 개입 효과가 가장 크다</h3><ul><li>초동 개입이 생존율을 <b>2~3배</b> 바꿈 — 투입 대비 효과 최대</li></ul></div>
+  </div>
+  <div class="footnote">출처: reports/2. 연결논리_SDOH에서-급성심장정지로.md §1; Part I·Part II 종합</div>
+  <span class="pagenum">14 / 21</span>
+</section>
+
+<section class="page p3">
+  <span class="partbadge">Part III · SDOH ↔ 보건의료 문제의 연결 — 2/4</span>
+  <h2>생존사슬: 생존은 병원이 아니라 '현장의 첫 몇 분'에서 결정된다</h2>
+  <p class="lead">미국심장협회(AHA)의 <b>생존사슬(Chain of Survival)</b>은 다섯 고리가 끊김 없이 이어질 때만 작동한다. 앞의 세 고리는 의료인이 아니라 <b>곁에 있는 일반인·목격자</b>가 수행하며, 한 고리가 끊기면 뒤 고리도 무의미해진다.</p>
+  <div class="chainflow">
+    <div class="step hot"><div class="idx">① 조기 인지·신고</div><div class="t">목격자의 몫</div><div class="d">사람이 있어야 시작됨</div></div>
+    <div class="chainarrow">→</div>
+    <div class="step hot"><div class="idx">② 조기 CPR</div><div class="t">목격자의 몫</div><div class="d">1분 지연마다 생존율 7~10%↓</div></div>
+    <div class="chainarrow">→</div>
+    <div class="step hot"><div class="idx">③ 조기 제세동</div><div class="t">목격자의 몫</div><div class="d">3~5분 내 시행 시 생존율 49~75%</div></div>
+    <div class="chainarrow">→</div>
+    <div class="step"><div class="idx">④ 전문소생술</div><div class="t">구급대의 몫</div><div class="d">병원 전 단계</div></div>
+    <div class="chainarrow">→</div>
+    <div class="step"><div class="idx">⑤ 소생 후 통합치료</div><div class="t">병원의 몫</div><div class="d">병원 도착 이후</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px">심정지의 <b class="em-i">골든타임(4~5분)은 구급차가 도착하기 전에 이미 끝난다.</b> 강원처럼 종합병원까지 평균 14.8km인 지역에서는, 생존사슬의 뒤쪽 고리(EMS·병원)가 구조적으로 늦다.</p>
+  <div class="keybox ind">
+    그렇다면 생존을 살릴 여지는 생존사슬의 <b>앞쪽 고리(인지·CPR·제세동)에 압도적으로 쏠린다.</b> 병원이 멀수록, 곁의 첫 대응이 더 중요해지는 것이다.
+  </div>
+  <div class="footnote">출처: American Heart Association, Chain of Survival; Sudden Cardiac Arrest Foundation</div>
+  <span class="pagenum">15 / 21</span>
+</section>
+
+<section class="page p3">
+  <span class="partbadge">Part III · SDOH ↔ 보건의료 문제의 연결 — 3/4</span>
+  <h2>핵심 연결고리: SDOH는 생존사슬의 앞쪽 고리를 끊는다</h2>
+  <p class="lead">강원의 SDOH는 병원을 멀게 만드는 데 그치지 않는다. 생존을 좌우하는 <b class="em-red">생존사슬의 앞쪽 고리(목격·인지·초동 CPR) 자체를 훼손</b>한다 — 이는 정서적 주장이 아니라 국내외 실증 연구로 확증된 사실이다.</p>
+  <p class="lead">미국 애틀랜타의 대규모 관찰연구(Sasson et al., <i>NEJM</i> 2012)는 998개 근린지역·14,225건의 병원밖 심정지 사례를 분석해, 중위소득 하위 지역일수록 목격자 CPR 시행률이 유의하게 낮음을 확인했다. 국내에서도 동일한 패턴이 나타난다 — 질병관리청·한국보건사회연구원(KIHASA) 자료에서 일반인 CPR 시행률은 특별시 48.2% vs 도·군 19.9%로 2배 이상 벌어진다. 부산·울산·창원·경남 4개 지역의 2019~2021년 코호트 연구는 이 격차가 실제 생존율 차이로 이어짐을, 구급 반응시간 차이(7.0분 vs 9.0분)와 함께 정량적으로 보였다.</p>
+  <table class="vars">
+    <thead><tr><th>SDOH</th><th>영향받는 생존사슬 구간</th><th>근거 연구</th><th>Part I 연결</th></tr></thead>
+    <tbody>
+      <tr><td>사회적 고립(독거)</td><td>앞쪽 고리 ① 조기 인지·신고</td><td>강원 1인가구 약 1/3 독거노인, 고독사 발견까지 평균 26~40일</td><td>① 인구구조</td></tr>
+      <tr><td>저소득 지역</td><td>앞쪽 고리 ② 목격자 CPR</td><td>목격자 CPR 확률 약 50%↓(Sasson, <i>NEJM</i> 2012)</td><td>② 경제적 안정</td></tr>
+      <tr><td>도농 격차(한국)</td><td>앞쪽 고리 ② 목격자 CPR</td><td>일반인 CPR 시행률 특별시 48.2% vs 도·군 19.9%</td><td>③④ 의료접근성·교통</td></tr>
+      <tr><td>종합 결과</td><td>생존율</td><td>도시 8.7% vs 농촌 3.4%(2.6배), 반응시간 7.0분 vs 9.0분</td><td>Part II 결과</td></tr>
+    </tbody>
+  </table>
+  <div class="disc" style="background:var(--indigo-soft);border-color:#d3d8fb">
+    <b style="color:var(--indigo)">한 문장 요약</b> — 강원에서 사람이 급성으로 쓰러지면, 목격할 이웃도(사회적 고립), 빨리 도달할 병원도(물리적 환경) 없기에, 생존사슬의 앞쪽 고리가 끊긴다.
+  </div>
+  <div class="footnote">출처: Sasson et al., NEJM 2012;367:1607-1615 · 질병관리청·KIHASA · PMC9317767 (도농 OHCA 비교연구, 2022)</div>
+  <span class="pagenum">16 / 21</span>
+</section>
+
+<section class="page p3">
+  <span class="partbadge">Part III · SDOH ↔ 보건의료 문제의 연결 — 4/4</span>
+  <h2>그래서 무엇을 바꿀 수 있는가: 생존사슬의 앞쪽 고리는 기술로 복원된다</h2>
+  <p class="lead"><b>AI 앱 개발로 이 문제를 어떻게 해결할 수 있을까?</b> 생존사슬의 뒤쪽 고리(전문소생술·병원 치료)를 근본적으로 개선하려면 도로·병원·인력 등 물리적 인프라 확충이 필요하다 — 예산과 시간이 오래 걸리며, <b class="em-red">AI 앱 개발로 근본적으로 해결할 수 있는 영역이 아니다.</b></p>
+  <p class="lead">반면 생존사슬의 앞쪽 고리(인지·신고·목격자 CPR)는 다르다. 병원을 새로 짓지 않아도 지금 있는 스마트폰·홈캠만으로 복원할 수 있고, 그 효과는 이미 무작위·다국가 연구로 검증되어 있다. <b class="em">그래서 우리는 뒤쪽 고리의 인프라 확충이 아니라, 앞쪽 고리의 복원에 집중했다.</b></p>
+  <div class="stats">
+    <div class="stat teal"><div class="n">2.41<small>배</small></div><div class="l">스마트폰 자원자 출동 시스템의 목격자 CPR 개선 (JACC 2023)</div></div>
+    <div class="stat teal"><div class="n">1.89<small>배</small></div><div class="l">목격자 제세동 개선</div></div>
+    <div class="stat teal"><div class="n">1.22<small>배</small></div><div class="l">30일 생존 개선</div></div>
+  </div>
+  <div class="cols" style="margin-top:22px">
+    <div class="card">
+      <h3>① 목격자의 부재를 홈캠 AI로 대체</h3>
+      <ul><li>도시형 자원자 출동 모델은 '목격자가 신고한다'는 전제 위에 서 있음</li><li>강원의 독거·고립 환경에서는 그 전제 자체가 무너짐</li><li>AI 자동 감지가 끊어진 생존사슬의 '① 인지·신고' 고리를 대신 잇는다</li></ul>
+    </div>
+    <div class="card ind">
+      <h3>② 실제 도로 도달시간 기반 이웃 조직화</h3>
+      <ul><li>산·계곡 지형에서 직선거리는 무의미</li><li>도로 도달시간 10분 이내 이웃을 하나로 묶음</li><li>지형이 만든 지연을 '가장 가까운 사람'으로 상쇄</li></ul>
+    </div>
+  </div>
+  <pre style="margin-top:22px;font-family:inherit;font-size:clamp(11.5px,1.3vw,14px);color:var(--muted);
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;white-space:pre-wrap;line-height:1.7">[Part I] 강원 SDOH 현황 (배경조건: 고령·고립·지리·의료접근)
+        │  급성으로 쓰러지는 '한 순간'에 세 SDOH가 동시 작동
+        ▼
+[Part III] 생존사슬(Chain of Survival)
+   · 생존은 병원 전 '첫 4분'(앞쪽 세 고리)에서 결정 (1분당 7~10%↓)
+   · SDOH가 생존사슬의 앞쪽 고리를 끊음 → 목격자 CPR↓, 생존율 도농 8.7% vs 3.4%
+   · 생존사슬의 앞쪽 고리는 기술로 복원 가능 (자원자 출동: CPR 2.41배, 생존 1.22배)
+        │
+        ▼
+[Part IV] 앱 개발의 필요성 — 생존사슬의 앞쪽 고리 복원 설계</pre>
+  <div class="footnote">출처: Ringh et al., NEJM 2015;372:2316-2325 · JACC 2023;SAMBA RCT(JAMA Cardiology 2022)</div>
+  <span class="pagenum">17 / 21</span>
+</section>
+
+<!-- ===================== PART IV ===================== -->
+
+<section class="page p4" id="p4">
+  <span class="partbadge">Part IV · 앱 개발의 필요성 — 1/4</span>
+  <h2>문제와 해결의 정확한 연결</h2>
+  <p class="lead">우리 앱은 <b>가정 내 홈캠이 급성질환으로 쓰러지는 상황을 자동 감지 → 119 자동 신고 → 동시에 주변 이웃·가족에게 알람</b>을 보내 초동 심폐소생술 등 응급처치를 유도한다. 이는 강원의 문제 지점을 하나하나 겨냥한다.</p>
+  <table class="vars">
+    <thead><tr><th>강원의 문제 (근거)</th><th>앱이 메우는 지점</th></tr></thead>
+    <tbody>
+      <tr><td>넓은 면적·낮은 인구밀도 → 도서산간 119 현장도착 평균 17분</td><td>발생 즉시 <b>자동 신고</b>로 인지·출동 시점을 최대한 앞당김</td></tr>
+      <tr><td>고령·독거 비중 높아 목격자 없이 발견 지연</td><td>홈캠이 <b>목격자 역할</b>을 대신해 무인 상황에서도 감지·신고</td></tr>
+      <tr><td>도·군 일반인 CPR 시행률 19.9%로 낮음</td><td><b>주변인 알람</b>으로 골든타임 내 초동 CPR 시행률 제고</td></tr>
+      <tr><td>입원 자체충족률 26.6%, 병원급 없는 군 다수</td><td>병원이 먼 지역일수록 <b>병원 도착 전 초기대응</b>의 가치가 큼</td></tr>
+      <tr><td>심장질환·전체 사망률 전국 최고</td><td>생존을 좌우하는 <b>"첫 4분"</b>에 직접 개입</td></tr>
+    </tbody>
+  </table>
+  <div class="footnote">출처: reports/3. 강원도-보건의료문제-분석_급성질환-자동신고앱.md §4</div>
+  <span class="pagenum">18 / 21</span>
+</section>
+
+<section class="page p4">
+  <span class="partbadge">Part IV · 앱 개발의 필요성 — 2/4</span>
+  <h2>골든이웃 — 무엇을 만드는가</h2>
+  <p class="lead">위 근거에 기반해 설계한 서비스가 <b class="em">가칭 '골든이웃'</b>이다. 상세 아키텍처·AI 감지 로직·화면 설계는 별도의 앱 구조 문서에서 다루며, 여기서는 문제와 직결되는 골격만 제시한다.</p>
+  <div class="flow">
+    <div class="step"><div class="idx">STEP 1</div><div class="t">🎥 홈캠 AI 감지</div><div class="d">AI만 영상을 처리해 쓰러짐 판별</div></div>
+    <div class="step"><div class="idx">STEP 2</div><div class="t">📲 본인 재확인</div><div class="d">응답 없으면 위급 상황으로 판정</div></div>
+    <div class="step hot"><div class="idx">STEP 3</div><div class="t">🚑 119 + 이웃 동시</div><div class="d">자동신고와 함께 10분 거리 이웃에 즉시 알림</div></div>
+    <div class="step hot"><div class="idx">STEP 4</div><div class="t">🫀 초동 응급처치</div><div class="d">이웃이 앱 안내에 따라 CPR 등 초동조치</div></div>
+  </div>
+  <p class="lead" style="margin-top:20px">공동체 단위는 행정리(자연마을) 소속 + <b>도로 도달시간 10분 이내</b> 이웃으로 묶는다 — 직선거리가 아닌 실제 도달시간 기준이라는 Part III의 결론을 그대로 구현한 것이다.</p>
+  <div class="footnote">상세 UX·AI 판별 로직·안전장치는 후속 문서 「앱 구조 및 효과성·효율성·안정성·사용성 분석」에서 다룸</div>
+  <span class="pagenum">19 / 21</span>
+</section>
+
+<section class="page p4">
+  <span class="partbadge">Part IV · 앱 개발의 필요성 — 3/4</span>
+  <h2>이 근거는 심사 기준과 어떻게 연결되는가</h2>
+  <p class="lead">본 보고서(문제 정의)는 다음 평가 기준의 <b class="em">근거 토대</b>를 제공한다. 정량적 검증(사용자 테스트, 처리 속도, 오탐률 등)은 후속 「앱 구조」 문서에서 구체화한다.</p>
+  <div class="cols3">
+    <div class="card"><h3>🎯 활용성</h3><ul><li>강원 9개 군 종합병원 부재·독거노인 1/3이라는 <b>실제 현장 조건</b>에서 도출된 설계 — 가상 시나리오가 아님</li></ul></div>
+    <div class="card"><h3>📈 효과성</h3><ul><li>목격자 CPR 2배 이상, 자원자 출동 시스템 도입 시 생존 1.22배 — <b>국제 학술지로 검증된 개입 효과</b>를 동일 메커니즘에 적용</li></ul></div>
+    <div class="card"><h3>⚙️ 효율성</h3><ul><li>병원 신축·도로 확충 대신 <b>기존 홈캠·스마트폰 인프라</b>로 병목(첫 4분)만 정밀 타격</li></ul></div>
+  </div>
+  <div class="cols" style="margin-top:16px">
+    <div class="card red"><h3>🛡️ 안정성</h3><ul><li>2중 검증(본인 재확인) 오신고 방지, 골격 데이터만 처리해 <b>영상 프라이버시 보호</b> — 상세는 후속 문서</li></ul></div>
+    <div class="card ind"><h3>🖐️ 사용성</h3><ul><li>고령자 등록 허브를 <b>경로당</b>으로 설정, 별도 학습 없이 알림·문자 수준의 조작 — 상세는 후속 문서</li></ul></div>
+  </div>
+  <div class="footnote">본 페이지는 다음 평가 항목의 근거 위치를 안내하는 로드맵이며, 세부 수치는 앱 구조 문서에서 제시됨</div>
+  <span class="pagenum">20 / 21</span>
+</section>
+
+<section class="page p4">
+  <span class="partbadge">Part IV · 앱 개발의 필요성 — 4/4</span>
+  <h2>결론</h2>
+  <p class="lead">정부·공공기관 보고서가 그리는 강원의 상(像)은 일관된다. 인구는 적고 넓게 흩어져 있으며 급속히 고령화되고, 급성심뇌혈관 위험요인과 사망률은 전국 최고 수준이지만, 이를 감당할 병원·인력은 소수 도시에 집중되어 있다. 그 결과가 전국 평균을 밑도는 급성심장정지 생존율(7.2%)이다.</p>
+  <p class="lead">이 문제의 핵심 병목은 <b class="em">"병원 도착까지의 시간"</b>이며, 생존을 가르는 것은 쓰러진 직후의 <b class="em">자동 인지·신고·주변 초동대처</b>다. 골든이웃은 바로 이 지점에 집중하는, 강원의 지역보건의료 현실에 정확히 대응하는 근거 기반(evidence-based) 해법이다.</p>
+  <div class="disc">
+    <b>안전 고지</b> · 본 자료는 정책·기획 참고용이며 의학적 진단이 아닙니다. 응급 증상(흉통·호흡곤란·의식저하 등)은 <b>119·응급실 안내를 최우선</b>으로 하며, 이웃 초동대응은 119 신고를 대체하지 않고 병행합니다.
+  </div>
+  <p class="lead" style="margin-top:20px;font-size:13px;color:var(--muted)">
+  <b>참고문헌</b> — 강원특별자치도 「2023 강원의 사회지표 보고서」(2024); 건강보험심사평가원 「2023 지자체별 맞춤형 지역보건의료현황 분석(강원도)」(2023); 강원도 「제8기(2023–2026) 지역보건의료계획」(2023); 질병관리청 『급성심장정지조사』; 소방청 구급활동 통계; KJEMS(85개 시군구 분석); 강원도 지역필수의료 주민조사; Sasson C, et al. <i>NEJM</i> 2012;367:1607-1615; Ringh M, et al. <i>NEJM</i> 2015;372:2316-2325; <i>JACC</i> 2023 (자원자 출동 시스템 메타분석); Disparities in Survival Outcomes of OHCA between Urban and Rural Areas, PMC9317767 (2022).
+  </p>
+  <div class="footnote">다음 문서 — 「골든이웃 앱 구조 및 효과성·효율성·안정성·사용성 분석」에서 구현 세부와 정량적 검증을 다룸</div>
+  <span class="pagenum">21 / 21</span>
+</section>
+
+</body>
+</html>
